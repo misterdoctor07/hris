@@ -111,17 +111,15 @@ $pendingLeaveCount = $leaveRow['total'];
 // Count pending OT applications
 $pendingOTCount = 0;
 if (!empty($requestingOfficers)) {
-    $otQuery = "SELECT COUNT(*) AS total FROM overtime_application ot
-                INNER JOIN employee_details ed ON ot.idno = ed.idno
-                WHERE ot.app_status = 'Pending' AND ed.designation IN ('$requestingOfficersStr')";
-
-    if ($designation == '17' || $designation == '114' || $designation == '105' || $designation == '93')  {
-        $sqlOT = mysqli_query($con, $otQuery);
-    } elseif ($designation == '50' || $designation == '89') {
-        $sqlOT = mysqli_query($con, $otQuery . " AND ed.company='$companyFilter'");
-    } else {
-        $sqlOT = mysqli_query($con, $otQuery . " AND ed.company='$companyFilter' AND ed.department='$department'");
-    }
+    $otQuery = "SELECT COUNT(*) AS total 
+                FROM overtime_application ot
+                INNER JOIN employee_profile ep ON ep.idno = ot.idno 
+                INNER JOIN employee_details ed ON ed.idno = ep.idno 
+                WHERE ot.idno != '$userId' 
+                AND ot.app_status = 'Pending'
+                AND ($whereClause)";
+    
+    $sqlOT = mysqli_query($con, $otQuery);
 
     if (!$sqlOT) {
         die("Error: " . mysqli_error($con));

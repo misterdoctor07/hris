@@ -1,7 +1,7 @@
 <?php
+// Get the logged-in user ID
 $userId = $_SESSION['idno'];
-
-// Fetch user details (designation and other relevant info)
+// Fetch user details 
 $userQuery = mysqli_query($con, "SELECT ep.lastname, jt.jobtitle, ed.designation, ed.department 
                                  FROM employee_details ed 
                                  INNER JOIN employee_profile ep ON ep.idno = ed.idno 
@@ -9,16 +9,26 @@ $userQuery = mysqli_query($con, "SELECT ep.lastname, jt.jobtitle, ed.designation
                                  WHERE ed.idno = '$userId'");
 $userDetails = mysqli_fetch_assoc($userQuery);
 // Extract user designation
-$designation = $userDetails['designation'];
+$designation = $userDetails['designation']; 
 $department = $userDetails['department'];
-// Find the corresponding requesting officers 
-$sqlProtocol = mysqli_query($con, "SELECT requestingofficer FROM leave_protocols WHERE approvingofficer = '$designation'");
+// Fetch requesting officers, companies, and departments
+$sqlProtocol = mysqli_query($con, "SELECT requestingofficer, company, department FROM leave_protocols WHERE approvingofficer = '$userId'");
 $requestingOfficers = [];
+$requestingCompany = [];
+$requestingDepartment = [];
+
 if (mysqli_num_rows($sqlProtocol) > 0) {
     while ($protocol = mysqli_fetch_assoc($sqlProtocol)) {
-        $requestingOfficers[] = $protocol['requestingofficer'];
+        if ($protocol['requestingofficer']) $requestingOfficers[] = $protocol['requestingofficer'];
+        if ($protocol['company']) $requestingCompany[] = $protocol['company'];
+        if ($protocol['department']) $requestingDepartment[] = $protocol['department'];
     }
 }
+
+// Convert to strings for SQL IN clauses
+$requestingOfficersStr = !empty($requestingOfficers) ? "'" . implode("','", $requestingOfficers) . "'" : null;
+$requestingCompStr = !empty($requestingCompany) ? "'" . implode("','", $requestingCompany) . "'" : null;
+$requestingDeptStr = !empty($requestingDepartment) ? "'" . implode("','", $requestingDepartment) . "'" : null;
 // Convert requesting officers array into a string for SQL query
 $requestingOfficersStr = implode("','", $requestingOfficers);
 
@@ -78,62 +88,99 @@ if (isset($_GET['disapproved']) && isset($_GET['id'])) {
                     <?php
                     $x = 1;
 
-                    $sqlCompany = mysqli_query($con, "SELECT company FROM employee_details WHERE idno='{$_SESSION['idno']}'");
-                    if ($companyRow = mysqli_fetch_assoc($sqlCompany)) {
-                        $companyFilter = $companyRow['company'];
+                    // Initialize an empty array for conditions
+                    $conditions = [];
+
+                    // Query to fetch the approver's combinations
+                    $approverQuery = "SELECT company, department, requestingofficer, shift 
+                                    FROM leave_protocols 
+                                    WHERE approvingofficer = '$userId'";
+                    $result = mysqli_query($con, $approverQuery);
+
+                    if (!$result) {
+                        die("Database query failed: " . mysqli_error($con));
                     }
 
-                    // If there are requesting officers, apply the filter in the query
-                    if (!empty($requestingOfficers)) {
-                        if($designation == '17' || $designation == '114' || $designation == '105'){
-                            $sqlEmployee = mysqli_query($con, "SELECT ot.*, ot.id as otid, ep.*, ed.*
-                            FROM overtime_application ot 
-                            INNER JOIN employee_profile ep ON ep.idno = ot.idno 
-                            INNER JOIN employee_details ed ON ed.idno = ep.idno 
-                            WHERE ed.designation IN ('$requestingOfficersStr')
-                            AND ot.idno != '$userId'
-                            ORDER BY 
-                                CASE WHEN ot.app_status='Pending' THEN 1 ELSE 2 END, 
-                                ot.datearray DESC");
+                    // Loop through each row and build a condition
+                    while ($row = mysqli_fetch_assoc($result)) {
+                        $clauseParts = [];
 
-                        }else if($designation == '50' || $designation == '89'){
-                        $sqlEmployee = mysqli_query($con, "SELECT ot.*, ot.id as otid, ep.*, ed.*
-                            FROM overtime_application ot 
-                            INNER JOIN employee_profile ep ON ep.idno = ot.idno 
-                            INNER JOIN employee_details ed ON ed.idno = ep.idno 
-                            WHERE ed.designation IN ('$requestingOfficersStr') AND ed.company='$companyFilter'
-                            AND ot.idno != '$userId'
-                            ORDER BY 
-                                CASE WHEN ot.app_status='Pending' THEN 1 ELSE 2 END, 
-                                ot.datearray DESC");
-                        }else{
-                            $sqlEmployee = mysqli_query($con, "SELECT ot.*, ot.id as otid, ep.*, ed.*
-                            FROM overtime_application ot 
-                            INNER JOIN employee_profile ep ON ep.idno = ot.idno 
-                            INNER JOIN employee_details ed ON ed.idno = ep.idno 
-                            WHERE ed.designation IN ('$requestingOfficersStr') AND ed.company='$companyFilter' AND ed.department = '$department'
-                            AND ot.idno != '$userId'
-                            ORDER BY 
-                                CASE WHEN ot.app_status='Pending' THEN 1 ELSE 2 END, 
-                                ot.datearray DESC");
+                        // Build conditions based on non-null values
+                        if (!empty($row['shift'])) {
+                            $clauseParts[] = "ed.startshift = '{$row['shift']}'";
                         }
+                        if (!empty($row['company'])) {
+                            $clauseParts[] = "ed.company = '{$row['company']}'";
+                        }
+                        if (!empty($row['department'])) {
+                            $clauseParts[] = "ed.department = '{$row['department']}'";
+                        }
+                        if (!empty($row['requestingofficer'])) {
+                            $clauseParts[] = "ed.designation = '{$row['requestingofficer']}'";
+                        }
+
+                        // Combine the conditions for this specific row
+                        if (!empty($clauseParts)) {
+                            $conditions[] = '(' . implode(' AND ', $clauseParts) . ')';
+                        }
+                    }
+
+                    // Join all conditions with OR to match any valid combination
+                    $whereClause = !empty($conditions) ? implode(' OR ', $conditions) : '1=1';
                         
+                    // Build the final query
+                    $query = "SELECT ot.*, ot.id as otid, ep.*, ed.* 
+                    FROM overtime_application ot 
+                    INNER JOIN employee_profile ep ON ep.idno = ot.idno 
+                    INNER JOIN employee_details ed ON ed.idno = ep.idno 
+                    WHERE ot.idno != '$userId' 
+                    AND ($whereClause)
+                    ORDER BY 
+                        CASE WHEN ot.app_status='Pending' THEN 1 ELSE 2 END, 
+                        ot.datearray DESC,
+                        ot.timearray DESC";
 
-                        if (mysqli_num_rows($sqlEmployee) > 0) {
-                            while ($company = mysqli_fetch_array($sqlEmployee)) {
-                                $appStatus = $company['app_status'];
-                                $statusText = $appStatus;
+                    // Debugging: Print the final query
+                    // echo "Final Query: " . $query;
 
-                                if (!empty($appStatus)) {
-                                    if (strpos($appStatus, 'Approved-') === 0) {
-                                        $statusParts = explode('-', $appStatus);
-                                        $statusText = 'Approved by: ' . $statusParts[1];
-                                    } elseif (strpos($appStatus, 'Disapproved') === 0) {
-                                        $statusText = 'Disapproved';
-                                    }
-                                }
 
-                                echo "<tr>";
+                    // Execute query
+                    $sqlEmployee = mysqli_query($con, $query);
+
+                    // Check if query was successful
+                    if (!$sqlEmployee) {
+                    die("Query failed: " . mysqli_error($con));
+                    }
+
+
+                    // Fetch and display results
+                    if (mysqli_num_rows($sqlEmployee) > 0) {
+                    $x = 1;
+                    while ($company = mysqli_fetch_array($sqlEmployee)) {
+                    $appStatus = $company['app_status'];
+                    $idno = $company['idno'];
+                    $style = "class='primary'"; // Default style
+
+                    if (strpos($appStatus, 'Approved') !== false) {
+                        $style = "class='success'";
+                    } elseif (strpos($appStatus, 'Disapproved') !== false) {
+                        $style = "class='danger'";
+                    } elseif (strpos($appStatus, 'Pending') !== false) {
+                        $style = "class='warning'";
+                    }
+                    $statusText = $appStatus;
+
+                    $sqlDepartment = mysqli_query($con, "SELECT ed.department, d.department, ed.*, d.*
+                                    FROM employee_details ed
+                                    INNER JOIN department d ON d.id = ed.department
+                                    WHERE idno = '$idno'");
+
+                    if(mysqli_num_rows ($sqlDepartment) > 0) {
+                        $row = mysqli_fetch_assoc($sqlDepartment);
+                        $department = $row['department'];
+                    }
+
+                                echo "<tr $style>";
                                 echo "<td align='center'>$x.</td>";
                                 echo "<td align='center'>{$company['idno']}</td>";
                                 echo "<td align='center'>{$company['lastname']}, {$company['firstname']}</td>";
@@ -165,9 +212,6 @@ if (isset($_GET['disapproved']) && isset($_GET['id'])) {
                         } else {
                             echo "<tr><td colspan='12' align='center'>No records found!</td></tr>";
                         }
-                    } else {
-                        echo "<tr><td colspan='12' align='center'>No records found for the requesting officers!</td></tr>";
-                    }
                     ?>
                 </tbody>
             </table>

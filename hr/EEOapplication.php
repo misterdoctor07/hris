@@ -201,7 +201,6 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                         INNER JOIN employee_details ed ON eeo.idno = ed.idno
                         WHERE ed.company = '$companyCode'
                         AND (eeo.dateEEO BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
-                        AND eeo.type_EEO = 'Non-medical'
                         AND eeo.eeo_status != 'Cancelled' 
                         AND eeo.eeo_status NOT LIKE '%Approved%'
                         AND eeo.eeo_status NOT LIKE '%Disapproved%'");  
@@ -250,7 +249,6 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                         AND d.department = '$departmentName'
                         AND eeo.dateEEO IS NOT NULL
                         AND ('$fromDate' = '' OR '$toDate' = '' OR DATE(eeo.dateEEO) BETWEEN '$fromDate' AND '$toDate')
-                        AND eeo.type_EEO = 'Non-medical'
                         AND eeo.eeo_status NOT LIKE '%Approved%' 
                         AND eeo.eeo_status NOT LIKE '%Disapproved%' 
                         AND eeo.eeo_status NOT LIKE 'Cancelled%'");
@@ -291,7 +289,6 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                         WHERE ed.company = '$companyCode' 
                         AND d.department = '$departmentName'
                         AND (eeo.dateEEO BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
-                        AND eeo.type_EEO = 'Non-medical'
                         ORDER BY 
                             CASE 
                                 WHEN eeo.eeo_status = 'Pending' THEN 1

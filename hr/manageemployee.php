@@ -98,18 +98,18 @@ if (!$sqlCompanies) {
                     echo "<table class='table table-bordered table-striped table-condensed'>
                         <thead>
                             <tr>
-                                <th>No.</th>
-                                <th>Emp ID</th>
-                                <th>Employee Name</th>
-                                <th>Date of Birth</th>
-                                <th>Job Title</th>
-                                <th>Department</th>
-                                <th>Company</th>
-                                <th>Status</th>
-                                <th>Date Hired</th>
-                                <th>Shift</th>
-                                <th>Work Area</th>
-                                <th>Action</th>
+                                <th style = 'text-align: center;'>No.</th>
+                                <th style = 'text-align: center;'>Emp ID</th>
+                                <th style = 'text-align: center;'>Employee Name</th>
+                                <th style = 'text-align: center;'>Date of Birth</th>
+                                <th style = 'text-align: center;'>Job Title</th>
+                                <th style = 'text-align: center;'>Department</th>
+                                <th style = 'text-align: center;'>Company</th>
+                                <th style = 'text-align: center;'>Status</th>
+                                <th style = 'text-align: center;'>Date Hired</th>
+                                <th style = 'text-align: center;'>Shift</th>
+                                <th style = 'text-align: center;'>Work Area</th>
+                                <th style = 'text-align: center;'>Action</th>
                             </tr>
                         </thead>
                         <tbody>";
@@ -125,22 +125,23 @@ if (!$sqlCompanies) {
                         $jobTitle = htmlspecialchars($employee['jobtitle']); 
 
                         echo "<tr>
-                            <td>{$x}.</td>
-                            <td>{$employee['idno']}</td>
-                            <td>{$employee['lastname']}, {$employee['firstname']} {$employee['middlename']} {$employee['suffix']}</td>
-                            <td>" . date('M-d-Y', strtotime($employee['birthdate'])) . "</td>
-                            <td>{$jobTitle}</td>
-                            <td>{$employee['department']}</td>
-                            <td>{$employee['company']}</td>
-                            <td>{$status}</td>
-                            <td>{$dateHired}</td>
-                            <td>{$shift}</td>
-                            <td>{$employee['location']}</td>
+                            <td align='center'>{$x}.</td>
+                            <td align='center'>{$employee['idno']}</td>
+                            <td align='center'>{$employee['lastname']}, {$employee['firstname']} {$employee['middlename']} {$employee['suffix']}</td>
+                            <td align='center'>" . date('M-d-Y', strtotime($employee['birthdate'])) . "</td>
+                            <td align='center'>{$jobTitle}</td>
+                            <td align='center'>{$employee['department']}</td>
+                            <td align='center'>{$employee['company']}</td>
+                            <td align='center'>{$status}</td>
+                            <td align='center'>{$dateHired}</td>
+                            <td align='center'>{$shift}</td>
+                            <td align='center'>{$employee['location']}</td>
                             <td align='center'>
                                 <a href='?viewemployee&id={$employee['id']}' class='btn btn-success btn-xs' title='View Employee Details'><i class='fa fa-eye'></i></a>
                                 <a href='?editemployee&id={$employee['id']}' class='btn btn-primary btn-xs' title='Edit Employee'><i class='fa fa-pencil'></i></a>
                                 <a href='?employeemovement&idno={$employee['idno']}' class='btn btn-default btn-xs' title='Move Employee'><i class='fa fa-mail-forward'></i></a>
-                                <a href='?applyleaveforemp&idno={$employee['idno']}' class='btn btn-warning btn-xs' title='File Leave for Employee'><i class='fa fa-file-text'></i></a>
+                                <a href='?applyleaveforemp&idno={$employee['idno']}' class='btn btn-warning btn-xs' title='File Leave for Employee'><i class='fa fa-clipboard'></i></a>
+                                <a href='?applyEEOforemp&idno={$employee['idno']}' class='btn btn-danger btn-xs' title='File EEO for Employee'><i class='fa fa-file-text'></i></a>
                             </td>
                         </tr>";
                         $x++;

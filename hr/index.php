@@ -124,11 +124,11 @@ date_default_timezone_set("Asia/Manila");
               $row = mysqli_fetch_assoc($result);
               $leave_count = $row['total'];
           
-              // // Count pending overtime applications
-              // $query = "SELECT COUNT(*) AS total FROM overtime_application WHERE app_status != 'Pending' AND app_status != 'Cancelled' AND app_status != 'Disapproved' AND remarks != 'POSTED'";
-              // $result = mysqli_query($con, $query);
-              // $row = mysqli_fetch_assoc($result);
-              // $overtime_count = $row['total'];
+              // Count pending overtime applications
+              $query = "SELECT COUNT(*) AS total FROM overtime_application WHERE app_status != 'Pending' AND app_status != 'Cancelled' AND app_status != 'Disapproved' AND remarks != 'POSTED'";
+              $result = mysqli_query($con, $query);
+              $row = mysqli_fetch_assoc($result);
+              $overtime_count = $row['total'];
 
               // Count pending missed log applications for the same company
               $query = "SELECT COUNT(*) AS total FROM missed_log_application 
@@ -144,13 +144,12 @@ date_default_timezone_set("Asia/Manila");
               $query = "SELECT COUNT(*) AS total FROM emergencyearlyout 
                         WHERE eeo_status NOT LIKE '%Approved%'
                         AND eeo_status NOT LIKE '%Disapproved%' 
-                        AND eeo_status != 'Cancelled'
-                        AND type_EEO = 'Non-medical'";
+                        AND eeo_status != 'Cancelled'";
               $result = mysqli_query($con, $query);
               $row = mysqli_fetch_assoc($result);
               $EEO_count = $row['total'];
 
-              $totalCount = $leave_count + $EEO_count + $missedlog_count;
+              $totalCount = $leave_count + $EEO_count + $missedlog_count + $overtime_count;
               ?>
 
 
@@ -171,11 +170,11 @@ date_default_timezone_set("Asia/Manila");
                     <span class="badge" style="color: white; background-color: red;"><?php echo $leave_count; ?></span>
                   <?php } ?>
                 </a></li>
-                <!-- <li><a href="?overtimeapplication">Overtime Applications
+                <li><a href="?overtimeapplication">Overtime Applications
                   <?php if ($overtime_count > 0) { ?>
                     <span class="badge" style="color:white; background-color:red;"><?php echo $overtime_count; ?></span>
                   <?php } ?>
-                </a></li> -->
+                </a></li>
                 <li><a href="?missedloginapplication">Missed Log Application
                   <?php if ($missedlog_count > 0) { ?>
                     <span class="badge" style="color:white; background-color:red;"><?php echo $missedlog_count; ?></span>
@@ -279,6 +278,7 @@ date_default_timezone_set("Asia/Manila");
             if(isset($_GET['errorcatching'])){include('errorcatching.php');}
             if(isset($_GET['fetch_employees'])){include('fetch_employees.php');}
             if(isset($_GET['EEOapplication'])){include('EEOapplication.php');}
+            if(isset($_GET['applyEEOforemp'])){include('applyEEOforemp.php');}
           ?>
           <!-- /col-lg-3 -->
         </div>

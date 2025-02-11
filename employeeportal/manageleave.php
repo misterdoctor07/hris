@@ -1,7 +1,7 @@
 <div class="col-lg-12">
             <div class="content-panel">
               <div class="panel-heading">
-              <h4><a href="?main"><i class="fa fa-arrow-left"></i> HOME</a> | <i class="fa fa-file-text"></i> MANAGE LEAVE <a href="?applyleave" style="float:right;" class="btn btn-primary"><i class="fa fa-plus"></i> Apply Leave</a></h4>              
+              <h4><a href="?main"><i class="fa fa-arrow-left"></i> HOME</a> | <i class="fa fa-file-text"></i> LEAVE APPLICATION HISTORY <a href="?applyleave" style="float:right;" class="btn btn-primary"><i class="fa fa-plus"></i> Apply Leave</a></h4>              
             </div>
               <div class="panel-body">
                 <table class="table table-bordered table-striped table-condensed">
