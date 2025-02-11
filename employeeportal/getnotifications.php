@@ -110,29 +110,24 @@ $pendingLeaveCount = $leaveRow['total'];
 
 // Count pending OT applications
 $pendingOTCount = 0;
-if (!empty($requestingOfficers)) {
-    $otQuery = "SELECT COUNT(*) AS total 
-                FROM overtime_application ot
-                INNER JOIN employee_profile ep ON ep.idno = ot.idno 
-                INNER JOIN employee_details ed ON ed.idno = ep.idno 
-                WHERE ot.idno != '$userId' 
-                AND ot.app_status = 'Pending'
-                AND ($whereClause)";
-    
-    $sqlOT = mysqli_query($con, $otQuery);
+$otQuery = "SELECT COUNT(*) AS total 
+            FROM overtime_application ot
+            INNER JOIN employee_profile ep ON ep.idno = ot.idno 
+            INNER JOIN employee_details ed ON ed.idno = ep.idno 
+            WHERE ot.idno != '$userId' 
+            AND ot.app_status = 'Pending'
+            AND ($whereClause)";
 
-    if (!$sqlOT) {
-        die("Error: " . mysqli_error($con));
-    }
-
-    $otRow = mysqli_fetch_assoc($sqlOT);
-
-    if (!$otRow) {
-        die("Error: No OT data found");
-    }
-
-    $pendingOTCount = $otRow['total'];
+$sqlOT = mysqli_query($con, $otQuery);
+if (!$sqlOT) {
+    die("Error: " . mysqli_error($con));
 }
+$otRow = mysqli_fetch_assoc($sqlOT);
+if (!$otRow) {
+    die("Error: No OT data found");
+}
+$pendingOTCount = $otRow['total'];
+
 
 // Count pending missed log applications
 $pendingMLCount = 0;
