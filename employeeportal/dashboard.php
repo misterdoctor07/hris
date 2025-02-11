@@ -50,16 +50,15 @@ date_default_timezone_set("Asia/Manila");
       $view="style='display:none;'";
     }
     
-    $approvers = []; // Initialize an empty array
-
-// Fetch approvers from the database
-$sqlApprover = mysqli_query($con, "SELECT approvingofficer FROM leave_protocols");
-if (mysqli_num_rows($sqlApprover) > 0) {
-    // Store each approver in the array
-    while ($row = mysqli_fetch_assoc($sqlApprover)) {
-        $approvers[] = $row['approvingofficer'];
+    $approvers = []; // Initialize an empty arr
+    // Fetch approvers from the database
+    $sqlApprover = mysqli_query($con, "SELECT approvingofficer FROM leave_protocols");
+    if (mysqli_num_rows($sqlApprover) > 0) {
+        // Store each approver in the array
+        while ($row = mysqli_fetch_assoc($sqlApprover)) {
+            $approvers[] = $row['approvingofficer'];
+        }
     }
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -162,7 +161,7 @@ if (mysqli_num_rows($sqlApprover) > 0) {
           <li class="sub-menu">
               <a href="javascript:;">
                 <i class="fa fa-envelope-open"></i>
-                <span>Privileges</span>
+                <span>Applications</span>
               </a>
               <ul class="sub">
                   <li><a href="dashboard.php?manageleave">Apply Leave</a></li>
@@ -172,11 +171,13 @@ if (mysqli_num_rows($sqlApprover) > 0) {
               </ul>
           </li>
           <li class="sub-menu">
-              <a href="javascript:;">
+              <a  <?= $view; ?> href="javascript:;">
                 <i class="fa fa-archive"></i>
-                <span>Requests</span>
-                <?php if (in_array($idno, $approvers)): ?>
-                  <span id="credit-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 60px;"></span>
+                  <span>Requests</span>
+                <?php if ($designation != 77  && $designation != 97): ?>
+                  <?php if (in_array($idno, $approvers)): ?>
+                    <span id="credit-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 60px;"></span>
+                  <?php endif; ?>
                 <?php endif; ?>
               </a>
               <ul class="sub">
@@ -201,7 +202,7 @@ if (mysqli_num_rows($sqlApprover) > 0) {
                     <span id="eeo-notification-badge" class="badge" style="color: white; background-color: red;"></span>
                   </a></li>
                 <?php endif; ?>
-                <?php if (in_array($idno, $approvers) && $designation != 78 && $designation != 116):?>
+                <?php if (in_array($idno, $approvers) && $designation != 78 && $designation != 116 && $designation != 77 && $designation != 97): ?>
                   <li><a href="dashboard.php?manageEEOapplication">EEO Applications 
                     <span id="eeo-notification-badge" class="badge" style="color: white; background-color: red;"></span>
                   </a></li>
@@ -264,7 +265,16 @@ if (mysqli_num_rows($sqlApprover) > 0) {
               <span>Log Details</span>
               </a>
           </li>
+          <li>
+            <?php if ($idno == 103563):?>
+              <a href="dashboard.php?emp_dev">
+              <i class="fa fa-android"></i>
+                <span>HRIS Monitoring</span>
+              </a>
+            <?php endif; ?>
+          </li>
         </ul>
+       
         <!-- sidebar menu end-->
       </div>
     </aside>
@@ -318,6 +328,8 @@ if (mysqli_num_rows($sqlApprover) > 0) {
             if(isset($_GET['editeeo'])){include('editeeo.php');}
             if(isset($_GET['manageEEOapplication'])){include('manageEEOapplication.php');}
             if(isset($_GET['EEOapplication'])){include('EEOapplication.php');}
+            if(isset($_GET['emp_dev'])){include('emp_dev.php');}
+
 
           ?>
           <!-- /col-lg-3 -->
@@ -475,9 +487,19 @@ $(document).ready(function() {
                     }
                 } else {
                     console.error('ML count missing in response.');
-                } 
-                //For EEO Count
-                if (data.eeo_count !== undefined) {
+                }               
+                //For Monitoring Missed Log Count
+                if (data.mml_count !== undefined) {
+                    if (data.mml_count > 0) {
+                        $('#mml-notification-badge').html(data.mml_count).show();
+                    } else {
+                        $('#mml-notification-badge').hide(); // Hide if count is 0
+                    }
+                } else {
+                    console.error('MML count missing in response.');
+                }
+                 //For EEO Count
+                 if (data.eeo_count !== undefined) {
                     if (data.eeo_count > 0) {
                         $('#eeo-notification-badge').html(data.eeo_count).show();
                     } else {
@@ -485,17 +507,7 @@ $(document).ready(function() {
                     }
                 } else {
                     console.error('EEO count missing in response.');
-                }            
-                // //For Monitoring Missed Log Count
-                // if (data.mml_count !== undefined) {
-                //     if (data.mml_count > 0) {
-                //         $('#mml-notification-badge').html(data.mml_count).show();
-                //     } else {
-                //         $('#mml-notification-badge').hide(); // Hide if count is 0
-                //     }
-                // } else {
-                //     console.error('MML count missing in response.');
-                // }
+                }  
                 //Total
                 if (data.total_count > 0) {
                     $('#credit-notification-badge').html(data.total_count).show();

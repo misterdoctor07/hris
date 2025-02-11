@@ -386,8 +386,8 @@ date_default_timezone_set("Asia/Manila");
     </div>
 </div>
 <?php
-echo "X-Forwarded-For: " . ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? 'Not Set') . "<br>";
-echo "Remote IP: " . $_SERVER['REMOTE_ADDR'];
+// echo "X-Forwarded-For: " . ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? 'Not Set') . "<br>";
+// echo "Remote IP: " . $_SERVER['REMOTE_ADDR'];
 ?>
 <?php
   if (isset($_POST['submit'])) {

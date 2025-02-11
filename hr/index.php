@@ -347,7 +347,11 @@ date_default_timezone_set("Asia/Manila");
             Licensing information: https://templatemag.com/license/
           -->
           Created with Dashio template by <a href="#">Eczekiel H. Aboy</a>
-          <p>Updated by UM Interns 2024</p>
+          <p>
+            Updated by • 
+            <a href="https://facebook.com/MackGwapo07" target="_blank">M.I.Misa</a> & 
+            <a href="https://facebook.com/misterdoctor07" target="_blank">J.M.Lapeceros</a>
+          </p>
         </div>
         <a href="index.html#" class="go-top">
           <i class="fa fa-angle-up"></i>
