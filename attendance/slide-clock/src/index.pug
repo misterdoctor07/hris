@@ -1,0 +1,6 @@
+-for(var j = 0; j < 6; j++)
+	.column
+		-for(var i = 0; i < (j === 0 ? 3 : (10 - !(j % 2) * 4)); i++)
+			.num=i
+	-if(j % 2 === 1 && j < 5)
+		.colon
