@@ -274,25 +274,51 @@ if (!$sqlCompanies) {
                                     $pto = 0;
                                 }
                                 
-                        
+                                //Birthday Leave
                                 if ($years >= 1) {
-                                $bdayleave = 1; // Set bdayleave to 1 if the employee has completed 1 year
-                            }
-                                    $earlyout = 0;
-                                    if ($monthsEmployed >= 0){
-                                    $earlyout = 2;
-                                    }
+                                    $bdayleave = 1; // Set bdayleave to 1 if the employee has completed 1 year
+                                }
+
+                                //Early Out 
+                                $jan_earlyout = 0;
+                                $feb_earlyout = 0;
+                                $mar_earlyout = 0;
+                                $apr_earlyout = 0;
+                                $may_earlyout = 0;
+                                $jun_earlyout = 0;
+                                $jul_earlyout = 0;
+                                $aug_earlyout = 0;
+                                $sep_earlyout = 0;
+                                $oct_earlyout = 0;
+                                $nov_earlyout = 0;
+                                $dec_earlyout = 0;
+
+                                if ($monthsEmployed >= 0){
+                                    $jan_earlyout = 2;
+                                    $feb_earlyout = 2;
+                                    $mar_earlyout = 2;
+                                    $apr_earlyout = 2;
+                                    $may_earlyout = 2;
+                                    $jun_earlyout = 2;
+                                    $jul_earlyout = 2;
+                                    $aug_earlyout = 2;
+                                    $sep_earlyout = 2;
+                                    $oct_earlyout = 2;
+                                    $nov_earlyout = 2;
+                                    $dec_earlyout = 2;
+                                }
         
-        
-        
+                                //Updating Leave Data
                                 $sqlCheckCredits = mysqli_query($con, "SELECT * FROM leave_credits WHERE idno = '$company[idno]'");
         
                                         if (mysqli_num_rows($sqlCheckCredits) > 0) {
                                             // Update the existing record
-                                            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET vacationleave = '$vacationleaves', sickleave = '$sickleave', pto = '$pto', bdayleave = '$bdayleave', earlyout = '$earlyout' WHERE idno = '$company[idno]'");
-        
-        
-        
+                                            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits 
+                                                SET vacationleave = '$vacationleaves', sickleave = '$sickleave', pto = '$pto', bdayleave = '$bdayleave', 
+                                                    jan_earlyout = '$jan_earlyout',feb_earlyout = '$feb_earlyout', mar_earlyout = '$mar_earlyout', apr_earlyout = '$apr_earlyout',
+                                                    may_earlyout = '$may_earlyout', jun_earlyout = '$jun_earlyout', jul_earlyout = '$jul_earlyout', aug_earlyout = '$aug_earlyout' ,
+                                                    sep_earlyout = '$sep_earlyout', oct_earlyout = '$oct_earlyout', nov_earlyout = '$nov_earlyout', dec_earlyout = '$dec_earlyout'   
+                                                WHERE idno = '$company[idno]'");
                                         } else {
                                             // Insert a new record
                                             $sqlInsertCredits = mysqli_query($con, "INSERT INTO leave_credits (idno, vacationleave) VALUES ('$company[idno]', '$vacationleaves')");

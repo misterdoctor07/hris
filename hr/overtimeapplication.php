@@ -155,7 +155,7 @@ if (!$sqlCompanies) {
                     INNER JOIN employee_details ed ON ot.idno = ed.idno
                     WHERE ed.company = '$companyCode' 
                     AND ot.app_status NOT IN ('Pending', 'Cancelled', 'Disapproved')
-                    AND ot.remarks != 'POSTED'");
+                    AND ot.hr_remarks != 'POSTED'");
                 $count = mysqli_fetch_assoc($sqlCount)['total'];
                 
                 echo "<li class='$active' style='position: relative;'>
@@ -189,14 +189,14 @@ if (!$sqlCompanies) {
             while ($department = mysqli_fetch_array($sqlDepartments)) {
                 $departmentName = $department['department'];
                 
-                // Fetch count of pending leave applications for the department
+                // Fetch count of pending overtime applications for the department
                 $sqlDeptCount = mysqli_query($con, "SELECT COUNT(*) AS total FROM overtime_application ot
                     INNER JOIN employee_details ed ON ot.idno = ed.idno
                     INNER JOIN department d ON d.id = ed.department
                     WHERE ed.company = '$companyCode' 
                     AND d.department = '$departmentName'
                     AND ot.app_status NOT IN ('Pending', 'Cancelled', 'Disapproved') 
-                    AND ot.remarks != 'POSTED'");
+                    AND ot.hr_remarks != 'POSTED'");
                 $deptCount = mysqli_fetch_assoc($sqlDeptCount)['total'];
 
                 // Assign unique ID using company and department names
@@ -232,7 +232,7 @@ if (!$sqlCompanies) {
             WHERE ed.company = '$companyCode' AND d.department = '$departmentName'
             ORDER BY 
                 CASE 
-                    WHEN ot.app_status NOT IN ('Pending', 'Cancelled', 'Disapproved') AND ot.remarks != 'POSTED' THEN 1 
+                    WHEN ot.app_status NOT IN ('Pending', 'Cancelled', 'Disapproved') AND ot.hr_remarks != 'POSTED' THEN 1 
                     ELSE 2 
                 END, 
             ot.datearray DESC");
@@ -255,7 +255,8 @@ if (!$sqlCompanies) {
                     <th style="text-align: center;">Reason</th>
                     <th width="9%" style="text-align: center;">Date/Time Applied</th>
                     <th width="9%" style="text-align: center;">Status</th>
-                    <th style="text-align: center;">Remarks</th>
+                    <th width="15%"  style="text-align: center;">HR's Remarks</th>
+                    <th width="15%"  style="text-align: center;">Approver's Remarks</th>
                     <th width="6%" style="text-align: center;">Action</th>
                 </tr>
             </thead>
@@ -271,32 +272,45 @@ if (!$sqlCompanies) {
 
             if (mysqli_num_rows($sqlEmployee) > 0) {
                 while ($emp = mysqli_fetch_array($sqlEmployee)) {
+                    $status = $emp['app_status'];
+
+                                        // Determine the row class based on the applic_status
+                                        if (strpos($status, 'Disapproved') !== false || strpos($status, 'Disapproved') !== false) {
+                                            $rowClass = "danger"; // Red
+                                        } elseif (strpos($status, 'Approved') !== false) {
+                                            $rowClass = "success"; // Green
+                                        } elseif ($status == "Pending") {
+                                            $rowClass = "warning"; // Yellow
+                                        } else {
+                                            $rowClass = ""; // No class for other cases
+                                        }
                     ?>
-                    <tr>
-                        <td align='center'><?=$x++;?>.</td>
-                        <td align='center'><?=$emp['idno'];?></td>
-                        <td align='center'><?=$emp['lastname']. ','.$emp['firstname'];?></td>
-                        <td align='center'><?=date('m/d/Y', strtotime($emp['otdate']));?></td>
-                        <td align='center'><?=$emp['ottime'];?></td>
-                        <td align='left'><?=$emp['reasons'];?></td>
-                        <td align='center'><?=$emp['datearray']."".$emp['timearray'];?></td>
-                        <td align='center'><?=$emp['app_status'];?></td>
-                        <td align='left'><?=$emp['remarks'];?></td>
-                        <td align="center">
-                            <?php if ($emp['remarks'] != 'POSTED'): ?>
+                    <tr class="<?= $rowClass ?>">
+                        <td style="text-align: center; vertical-align: middle;"><?=$x++;?>.</td>
+                        <td style="text-align: center; vertical-align: middle;"><?=$emp['idno'];?></td>
+                        <td style="text-align: center; vertical-align: middle;"><?=$emp['lastname']. ','.$emp['firstname'];?></td>
+                        <td style="text-align: center; vertical-align: middle;"><?=date('m/d/Y', strtotime($emp['otdate']));?></td>
+                        <td style="text-align: center; vertical-align: middle;"><?=$emp['ottime'];?></td>
+                        <td style="text-align: left; vertical-align: middle;"><?=$emp['reasons'];?></td>
+                        <td style="text-align: center; vertical-align: middle;"><?=$emp['datearray']."".$emp['timearray'];?></td>
+                        <td style="text-align: center; vertical-align: middle;"><?=$emp['app_status'];?></td>
+                        <td style="text-align: left; vertical-align: middle;"><?=$emp['hr_remarks'];?></td>
+                        <td style="text-align: left; vertical-align: middle;"><?=$emp['approver_remarks'];?></td>
+                        <td style="text-align: center; vertical-align: middle;">
+                            <?php if (strpos($emp['hr_remarks'], 'POSTED') === false): ?>
                                 <?php if ($emp['app_status'] != 'Disapproved' && $emp['app_status'] != 'Cancelled' && $emp['app_status'] != 'Pending'): ?>
-                                    <a href="?overtimeapplication&post&id=<?=$emp['otid'];?>&remarks=<?=$emp['remarks'];?>" 
+                                    <a href="?overtimeapplication&post&id=<?=$emp['otid'];?>&remarks=<?=$emp['hr_remarks'];?>" 
                                        class="btn btn-success btn-xs confirm-post" 
                                        title="Post">
                                         <i class='fa fa-upload'></i>
                                     </a>
                                 <?php endif; ?>
-                                <a href="?overtimeapplication&addremarks&id=<?=$emp['otid'];?>&remarks=<?=$emp['remarks'];?>" 
-                                   class="btn btn-primary btn-xs"
-                                   title="Remarks">
-                                    <i class='fa fa-edit'></i>
-                                </a>
                             <?php endif; ?>
+                            <a href="?overtimeapplication&addremarks&id=<?=$emp['otid'];?>&hr_remarks=<?=$emp['hr_remarks'];?>" 
+                               class="btn btn-primary btn-xs"
+                               title="Remarks">
+                                <i class='fa fa-comment'></i>
+                            </a>
                         </td>
                     </tr>
                     <?php
@@ -325,8 +339,19 @@ if (!$sqlCompanies) {
 if (isset($_GET['post'])) {
     $id = mysqli_real_escape_string($con, $_GET['id']);
     
-    // Update remarks in overtime_application to "POSTED"
-    $sqlUpdateOvertime = mysqli_query($con, "UPDATE overtime_application SET remarks='POSTED' WHERE id='$id'");
+    // Retrieve current remarks
+    $sqlCurrentRemarks = mysqli_query($con, "SELECT hr_remarks FROM overtime_application WHERE id='$id'");
+    if ($sqlCurrentRemarks && mysqli_num_rows($sqlCurrentRemarks) > 0) {
+        $currentRemarks = mysqli_fetch_assoc($sqlCurrentRemarks)['hr_remarks'];
+        $newRemarks = "POSTED";
+
+        // If there are existing remarks, append them
+        if (!empty($currentRemarks)) {
+            $newRemarks .= " - Note: " . $currentRemarks;
+        }
+
+    // Update overtime application status
+    $sqlUpdateOvertime = mysqli_query($con, "UPDATE overtime_application SET hr_remarks='$newRemarks' WHERE id='$id'");
 
     if ($sqlUpdateOvertime) {
         // Retrieve the idno and otdate values
@@ -344,7 +369,7 @@ if (isset($_GET['post'])) {
                 // Insert a new attendance row if the date doesn't exist
                 $sqlInsertAttendance = mysqli_query($con, 
                     "INSERT INTO attendance (idno, logindate, loginam, logoutam, loginpm, logoutpm, remarks) 
-                    VALUES ('$idno', '$otdate', '00:00:00', '00:00:00', '00:00:00', '00:00:00', 'OT')");
+                    VALUES ('$idno', '$otdate', '0', '0', '0', '0', 'OT')");
                 
                 if (!$sqlInsertAttendance) {
                     echo "<script>alert('Error inserting new attendance record for overtime date: $otdate');</script>";
@@ -360,6 +385,7 @@ if (isset($_GET['post'])) {
             
             echo "<script>alert('Overtime application successfully posted!'); window.location='?overtimeapplication';</script>";
         }
+    }
     } else {
         echo "<script>alert('Unable to post overtime application!'); window.location='?overtimeapplication';</script>";
     }
@@ -368,7 +394,7 @@ if (isset($_GET['post'])) {
 // Check if the user clicked 'Add Remarks'
 if (isset($_GET['addremarks'])) {
     $id = $_GET['id'];
-    $remarks = urldecode($_GET['remarks']); // Use urldecode to handle special characters
+    $remarks = urldecode($_GET['hr_remarks']); // Use urldecode to handle special characters
 ?>
     <!-- Remarks Form -->
     <div class="modal-overlay">
@@ -403,10 +429,10 @@ if (isset($_POST['submitRemarks'])) {
     $remarks = mysqli_real_escape_string($con, $_POST['remarks']); // Sanitize input
 
     // Update remarks in the database
-    $sqlUpdateRemarks = "UPDATE leave_application SET remarks = '$remarks' WHERE id = '$id'";
+    $sqlUpdateRemarks = "UPDATE overtime_application SET hr_remarks = '$remarks' WHERE id = '$id'";
     if (mysqli_query($con, $sqlUpdateRemarks)) {
         echo "<script>alert('Remarks updated successfully.');</script>";
-        echo "<script>window.location.href='?manageleaveapplication';</script>"; // Redirect after update
+        echo "<script>window.location.href='?overtimeapplication';</script>"; // Redirect after update
     } else {
         echo "<script>alert('Error updating remarks: " . mysqli_error($con) . "');</script>";
     }
@@ -463,7 +489,7 @@ $(document).ready(function() {
         confirmButtons.forEach(button => {
             button.addEventListener('click', function(event) {
                 // Display the confirmation dialog
-                const confirmAction = confirm("Are you sure you want to POST this leave?");
+                const confirmAction = confirm("Are you sure you want to POST this overtime?");
                 
                 // If the user clicks "Cancel", prevent the link's default action
                 if (!confirmAction) {

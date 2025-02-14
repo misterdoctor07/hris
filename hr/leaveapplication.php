@@ -507,7 +507,7 @@ if (isset($_GET['done'])) {
 }
 if (isset($_GET['post'])) {
     $id = $_GET['id'];
-    
+
     // Sanitize the input
     $id = mysqli_real_escape_string($con, $id);
     
@@ -521,6 +521,7 @@ if (isset($_GET['post'])) {
     } else {
         echo "Error: Could not retrieve start shift for employee with ID $id.";
     }
+    
 
     // Retrieve leave credits
     $sqlCredits = mysqli_query($con, "SELECT * FROM leave_credits WHERE idno='$idno'");
@@ -871,4 +872,73 @@ document.addEventListener("DOMContentLoaded", function () {
         return a.localeCompare(b); // String comparison
     }
 });
+
+// JavaScript function to update displayed leave credits
+function updateCredits(leaveType) {
+    const credits = {
+        VL: <?= isset($credits['VL']) ? $credits['VL'] : 0; ?>,
+        PTO: <?= isset($credits['PTO']) ? $credits['PTO'] : 0; ?>,
+        BLP: <?= isset($credits['BLP']) ? $credits['BLP'] : 0; ?>,
+        EO: <?= isset($credits['EO']) ? $credits['EO'] : 0; ?>,
+        SPL: <?=isset($credits['SPL']) ? $credits['SPL'] :0; ?>
+    };
+
+    let creditInfo = document.getElementById('credit-info');
+    let nofdays = document.getElementById('nofdays');
+    let startDate = document.getElementsByName('startDate')[0];
+    let endDate = document.getElementsByName('endDate')[0];
+    let reasonField = document.getElementsByName('reasons')[0];
+
+    // Define leave types that should not be disabled even with 0 credits
+    const excludedLeaveTypes = ['MTL', 'PTL', 'BL', 'MDL', 'EEO', 'LTL'];
+
+    // Check if the selected leave type is in the excluded list
+    if (excludedLeaveTypes.includes(leaveType)) {
+        creditInfo.textContent = ''; 
+        creditInfo.style.color = ''; 
+        
+        nofdays.disabled = false; 
+        startDate.disabled = false;
+        endDate.disabled = false; 
+        reasonField.disabled = false; 
+
+        // Reset the attributes and styles
+        nofdays.max = ''; 
+        nofdays.value = 1; 
+        nofdays.style.backgroundColor = '';
+        startDate.style.backgroundColor = '';
+        endDate.style.backgroundColor = '';
+        reasonField.style.backgroundColor = '';
+    } else if (credits[leaveType] !== undefined && credits[leaveType] > 0) {
+        creditInfo.textContent = `Remaining Credits: ${credits[leaveType]}`; 
+        creditInfo.style.color = '';
+        nofdays.disabled = false; 
+        startDate.disabled = false; 
+        endDate.disabled = false; 
+        reasonField.disabled = false; 
+
+        // Set max attribute of "No. of Days" to remaining credits
+        nofdays.max = credits[leaveType];
+        nofdays.value = 1;  
+        nofdays.style.backgroundColor = ''; 
+        startDate.style.backgroundColor = '';
+        endDate.style.backgroundColor = '';
+        reasonField.style.backgroundColor = '';
+    } else {
+        // No remaining credits for selected leave type, disable all fields
+        creditInfo.textContent = 'No available credits for this leave type.';
+        creditInfo.style.color = 'red';
+        nofdays.disabled = true; 
+        startDate.disabled = true; 
+        endDate.disabled = true; 
+        reasonField.disabled = true; 
+        nofdays.style.backgroundColor = '#f0f0f0';
+        startDate.style.backgroundColor = '#f0f0f0';
+        endDate.style.backgroundColor = '#f0f0f0';
+        reasonField.style.backgroundColor = '#f0f0f0';
+        nofdays.max = 0;
+        nofdays.value = 0; 
+    }
+    checkSubmitButton();
+}
 </script>

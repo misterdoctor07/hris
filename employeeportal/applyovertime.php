@@ -12,7 +12,8 @@
                       <th width="10%" style="text-align: center;">Time of OT</th>
                       <th style="text-align: center;">Reasons</th>
                       <th width="15%" style="text-align: center;">Status</th>
-                      <th style="text-align: center;">Remarks</th>
+                      <th width="15%" style="text-align: center;">HR's Remarks</th>
+                      <th width="15%" style="text-align: center;">Approver's Remarks</th>
                       <th width="5%" style="text-align: center;">Action</th>
                     </tr>
                   </thead>
@@ -42,11 +43,14 @@
                             echo "<td align='center'>" . date("g:i A", strtotime($company['ottime'])) . "</td>";
                             echo "<td>$company[reasons]</td>";
                             echo "<td align='center'>$company[app_status]</td>";
-                            echo "<td>$company[remarks]</td>";
+                            echo "<td>$company[hr_remarks]</td>";
+                            echo "<td>$company[approver_remarks]</td>";
                             ?>
-                            <td align="center">                                 
-                              <a href="?editovertime&id=<?= $company['id']; ?>" class="btn btn-success btn-xs" title="Edit Overtime" <?= !$isPending ? 'disabled' : ''; ?>><i class='fa fa-edit'></i></a>
-                              <a href="?applyovertime&id=<?= $company['id']; ?>&delete" class="btn btn-danger btn-xs" title="Delete Overtime" <?= !$isPending ? 'disabled' : ''; ?> onclick="return confirm('Do you wish to delete this item?'); return false;"><i class='fa fa-trash'></i></a>
+                            <td align="center">
+                                <?php if (strpos($company['app_status'], 'Approved') === false && strpos($company['app_status'], 'Disapproved') === false): ?> 
+                                    <a href="?editovertime&id=<?= $company['id']; ?>" class="btn btn-success btn-xs" title="Edit Overtime" <?= !$isPending ? 'disabled' : ''; ?>><i class='fa fa-edit'></i></a>
+                                    <a href="?applyovertime&id=<?= $company['id']; ?>&delete" class="btn btn-danger btn-xs" title="Delete Overtime" <?= !$isPending ? 'disabled' : ''; ?> onclick="return confirm('Do you wish to delete this item?'); return false;"><i class='fa fa-trash'></i></a>
+                                <?php endif; ?>
                             </td>
                             <?php
                           echo "</tr>";

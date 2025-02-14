@@ -11,6 +11,20 @@ $userDetails = mysqli_fetch_assoc($userQuery);
 // Extract user designation
 $designation = $userDetails['designation']; 
 $department = $userDetails['department'];
+//Identifying jobtitle
+$sqlDetails = "SELECT ed.designation, ed.* 
+               FROM employee_details ed 
+               WHERE ed.idno = '$userId'";
+
+$result = mysqli_query($con, $sqlDetails);
+
+// if ($result && mysqli_num_rows($result) > 0) {
+//     $row = mysqli_fetch_assoc($result);
+//     $jobtitle = !empty($row['designation']) ? $row['designation'] : '';
+// } else {
+//     $jobtitle = ''; // Fallback if no record is found
+// }
+
 // Fetch requesting officers, companies, and departments
 $sqlProtocol = mysqli_query($con, "SELECT requestingofficer, company, department FROM leave_protocols WHERE approvingofficer = '$userId'");
 $requestingOfficers = [];
@@ -29,16 +43,17 @@ if (mysqli_num_rows($sqlProtocol) > 0) {
 $requestingOfficersStr = !empty($requestingOfficers) ? "'" . implode("','", $requestingOfficers) . "'" : null;
 $requestingCompStr = !empty($requestingCompany) ? "'" . implode("','", $requestingCompany) . "'" : null;
 $requestingDeptStr = !empty($requestingDepartment) ? "'" . implode("','", $requestingDepartment) . "'" : null;
+
 // Convert requesting officers array into a string for SQL query
 $requestingOfficersStr = implode("','", $requestingOfficers);
 
-// Handle approval action for overtime
+// Handle approval action for overtime application
 if (isset($_GET['approved']) && isset($_GET['id'])) {
     $id = intval($_GET['id']); 
-
+    $datetime = date('M j, Y - g:i A');
     // Update query to approve only the specific overtime application
     $approval = "{$userDetails['lastname']} ({$userDetails['jobtitle']})";
-    $sqlUpdate = mysqli_query($con, "UPDATE overtime_application SET app_status='Approved - $approval' WHERE id='$id'");
+    $sqlUpdate = mysqli_query($con, "UPDATE overtime_application SET app_status='Approved - $approval [$datetime]' WHERE id='$id'");
 
     if ($sqlUpdate) {
         echo "<script>alert('Overtime application successfully approved!'); window.location='?manageovertimeapplication';</script>";
@@ -47,18 +62,31 @@ if (isset($_GET['approved']) && isset($_GET['id'])) {
     }
 }
 
-// Handle disapproval action for overtime
+// Handle disapproval action for overtime application
 if (isset($_GET['disapproved']) && isset($_GET['id'])) {
-    $id = intval($_GET['id']);
-
-    // Update query to disapprove only the specific overtime application
+    $id = intval($_GET['id']); 
+    $datetime = date('M j, Y - g:i A');
+    // Update query to approve only the specific missed log application
     $approval = "{$userDetails['lastname']} ({$userDetails['jobtitle']})";
-    $sqlUpdate = mysqli_query($con, "UPDATE overtime_application SET app_status='Disapproved - $approval' WHERE id='$id'");
+    $sqlUpdate = mysqli_query($con, "UPDATE overtime_application SET app_status='Disapproved - $approval [$datetime]' WHERE id='$id'");
 
     if ($sqlUpdate) {
         echo "<script>alert('Overtime application successfully disapproved!'); window.location='?manageovertimeapplication';</script>";
     } else {
         echo "<script>alert('Unable to disapprove overtime application!'); window.location='?manageovertimeapplication';</script>";
+    }
+}
+
+// Handle undo action for overtime application
+if (isset($_GET['undo']) && isset($_GET['id'])) {
+    $id = intval($_GET['id']); 
+
+    $sqlUpdate = mysqli_query($con, "UPDATE overtime_application SET app_status='Pending' WHERE id='$id'");
+
+    if ($sqlUpdate) {
+        echo "<script>alert('Action successfully undone!'); window.location='?manageovertimeapplication';</script>";
+    } else {
+        echo "<script>alert('Action taken was not successful!'); window.location='?manageovertimeapplication';</script>";
     }
 }
 ?>
@@ -80,7 +108,8 @@ if (isset($_GET['disapproved']) && isset($_GET['id'])) {
                         <th style="text-align: center;">Reason</th>
                         <th width="9%" style="text-align: center;">Date/Time Applied</th>
                         <th width="9%" style="text-align: center;">Status</th>
-                        <th style="text-align: center;">Remarks</th>
+                        <th style="text-align: center;">HR's Remarks</th>
+                        <th style="text-align: center;">Approver's Remarks</th>
                         <th width="6%" style="text-align: center;">Action</th>
                     </tr>
                 </thead>
@@ -128,17 +157,46 @@ if (isset($_GET['disapproved']) && isset($_GET['id'])) {
                     // Join all conditions with OR to match any valid combination
                     $whereClause = !empty($conditions) ? implode(' OR ', $conditions) : '1=1';
                         
-                    // Build the final query
-                    $query = "SELECT ot.*, ot.id as otid, ep.*, ed.* 
-                    FROM overtime_application ot 
-                    INNER JOIN employee_profile ep ON ep.idno = ot.idno 
-                    INNER JOIN employee_details ed ON ed.idno = ep.idno 
-                    WHERE ot.idno != '$userId' 
-                    AND ($whereClause)
-                    ORDER BY 
-                        CASE WHEN ot.app_status='Pending' THEN 1 ELSE 2 END, 
-                        ot.datearray DESC,
-                        ot.timearray DESC";
+                    //Type in where clause
+                    $type = ($designation == '93') 
+                    ? "ot.ot_type = 'IT-related'" 
+                    : '1=1';
+
+                    if($designation == '93'){
+                        $query = "SELECT ot.*, ot.id as otid, ep.*, ed.* 
+                        FROM overtime_application ot 
+                        INNER JOIN employee_profile ep ON ep.idno = ot.idno 
+                        INNER JOIN employee_details ed ON ed.idno = ep.idno 
+                        WHERE ot.idno != '$userId' 
+                        AND ($whereClause)
+                        OR ($type)
+                        ORDER BY 
+                            CASE 
+                                WHEN ot.app_status = 'Pending' THEN 1 
+                                WHEN ot.app_status LIKE 'Approved%' THEN 2 
+                                WHEN ot.app_status LIKE 'Disapproved%' THEN 3
+                                WHEN ot.app_status LIKE 'Cancelled%' THEN 4 
+                            ELSE 5 END, 
+                            ot.datearray DESC,
+                            ot.timearray DESC";
+                    }else{
+                        // Build the final query
+                        $query = "SELECT ot.*, ot.id as otid, ep.*, ed.* 
+                        FROM overtime_application ot 
+                        INNER JOIN employee_profile ep ON ep.idno = ot.idno 
+                        INNER JOIN employee_details ed ON ed.idno = ep.idno 
+                        WHERE ot.idno != '$userId' 
+                        AND ($whereClause)
+                        ORDER BY 
+                            CASE 
+                                WHEN ot.app_status = 'Pending' THEN 1 
+                                WHEN ot.app_status LIKE 'Approved%' THEN 2 
+                                WHEN ot.app_status LIKE 'Disapproved%' THEN 3
+                                WHEN ot.app_status LIKE 'Cancelled%' THEN 4 
+                            ELSE 5 END, 
+                            ot.datearray DESC,
+                            ot.timearray DESC";
+                    }
 
                     // Debugging: Print the final query
                     // echo "Final Query: " . $query;
@@ -189,23 +247,17 @@ if (isset($_GET['disapproved']) && isset($_GET['id'])) {
                                 echo "<td align='left'>{$company['reasons']}</td>";
                                 echo "<td align='center'>{$company['datearray']} {$company['timearray']}</td>";
                                 echo "<td align='center'>$statusText</td>";
-                                echo "<td align='left'>{$company['remarks']}</td>";
-                                ?>
-                                <td align="center">
-                                    <a href="?manageovertimeapplication&id=<?= $company['otid']; ?>&approved" class="btn btn-success btn-xs" title="Approve" 
-                                       onclick="return confirm('Do you wish to approve this overtime application?');">
-                                       <i class='fa fa-thumbs-up'></i>
-                                    </a>
-
-                                    <a href="?manageovertimeapplication&id=<?= $company['otid']; ?>&disapproved" class="btn btn-danger btn-xs" title="Disapprove" 
-                                       onclick="return confirm('Do you wish to disapprove this overtime application?');">
-                                       <i class='fa fa-thumbs-down'></i>
-                                    </a>
-                                    <a href="?manageovertimeapplication&addremarks&id=<?=$company['otid'];?>&remarks=<?=$company['remarks'];?>" class="btn btn-primary btn-xs" title="Remarks">
-                                        <i class='fa fa-edit'></i></a>
-                                </td>
-
-                                <?php
+                                echo "<td align='left'>{$company['hr_remarks']}</td>";
+                                echo "<td align='left'>{$company['approver_remarks']}</td>";
+                                echo "<td align='center'>";
+                                        if ($appStatus == "Pending" || $appStatus == 'Çancelled') {
+                                            echo "<a href='?manageovertimeapplication&id={$company['otid']}&approved' class='btn btn-success btn-xs' title='Approve' onclick=\"return confirm('Do you wish to approve this overtime application?'); return false;\"><i class='fa fa-thumbs-up'></i></a>";
+                                            echo "<a href='?manageovertimeapplication&id={$company['otid']}&disapproved' class='btn btn-danger btn-xs' title='Disapprove' onclick=\"return confirm('Do you wish to disapprove this overtime application?'); return false;\"><i class='fa fa-thumbs-down'></i></a>";
+                                            echo "<a href='?manageovertimeapplication&addremarks&id={$company['otid']}&approver_remarks' class='btn btn-primary btn-xs' title='Remarks');\"><i class='fa fa-comment'></i></a>";
+                                        } else {
+                                            echo "<a href='?manageovertimeapplication&id={$company['otid']}&undo' class='btn btn-warning btn-xs' title='Undo Action' onclick=\"return confirm('Do you wish to undo the action taken?'); return false;\"><i class='fa fa-rotate-left'></i></a>";
+                                        }
+                                echo "</td>";
                                 echo "</tr>";
                                 $x++;
                             }
@@ -223,7 +275,7 @@ if (isset($_GET['disapproved']) && isset($_GET['id'])) {
 // Check if the user clicked 'Add Remarks'
 if (isset($_GET['addremarks'])) {
     $id = $_GET['id'];
-    $remarks = urldecode($_GET['remarks']); // Use urldecode to handle special characters
+    $remarks = urldecode($_GET['approver_remarks']); // Use urldecode to handle special characters
 ?>
     <!-- Remarks Form -->
     <div class="modal-overlay">
@@ -258,7 +310,7 @@ if (isset($_POST['submitRemarks'])) {
     $remarks = mysqli_real_escape_string($con, $_POST['remarks']); // Sanitize input
 
     // Update remarks in the database
-    $sqlUpdateRemarks = "UPDATE overtime_application SET remarks = '$remarks' WHERE id = '$id'";
+    $sqlUpdateRemarks = "UPDATE overtime_application SET approver_remarks = '$remarks' WHERE id = '$id'";
     if (mysqli_query($con, $sqlUpdateRemarks)) {
         echo "<script>alert('Remarks updated successfully.');</script>";
         echo "<script>window.location.href='?manageovertimeapplication';</script>"; // Redirect after update

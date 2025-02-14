@@ -75,6 +75,10 @@ $idno = ($jobtitle == '78' || $jobtitle == '116')
 $type = ($jobtitle == '78' || $jobtitle == '116') 
     ? "eeo.type_EEO = 'Medical'" 
     : '1=1';
+//OT Type in where clause
+$ottype = ($jobtitle == '93') 
+    ? "ot.ot_type = 'IT-related'" 
+    : '1=1';
 //Status in where clause
 $status = ($jobtitle == '78' || $jobtitle == '116') 
     ? "eeo.eeo_status = 'Pending'" 
@@ -108,26 +112,41 @@ $leaveQuery = "SELECT COUNT(*) AS total
 
 $pendingLeaveCount = $leaveRow['total'];
 
-// Count pending OT applications
+// Initialize pending OT count
 $pendingOTCount = 0;
-$otQuery = "SELECT COUNT(*) AS total 
-            FROM overtime_application ot
-            INNER JOIN employee_profile ep ON ep.idno = ot.idno 
-            INNER JOIN employee_details ed ON ed.idno = ep.idno 
-            WHERE ot.idno != '$userId' 
-            AND ot.app_status = 'Pending'
-            AND ($whereClause)";
 
-$sqlOT = mysqli_query($con, $otQuery);
+// Define the base query
+$baseQuery = "SELECT COUNT(*) AS total 
+    FROM overtime_application ot
+    INNER JOIN employee_profile ep ON ep.idno = ot.idno 
+    INNER JOIN employee_details ed ON ed.idno = ep.idno 
+    WHERE ot.idno != '$userId' 
+    AND ot.app_status = 'Pending'
+    AND ($whereClause)";
+
+// Execute the base query
+$sqlOT = mysqli_query($con, $baseQuery);
 if (!$sqlOT) {
     die("Error: " . mysqli_error($con));
 }
-$otRow = mysqli_fetch_assoc($sqlOT);
-if (!$otRow) {
-    die("Error: No OT data found");
-}
-$pendingOTCount = $otRow['total'];
+$pendingOTCount = mysqli_fetch_assoc($sqlOT)['total'] ?? 0;
 
+// Additional condition for job title 93
+if ($jobtitle == '93') {
+    $additionalQuery = "SELECT COUNT(*) AS total 
+        FROM overtime_application ot
+        INNER JOIN employee_profile ep ON ep.idno = ot.idno 
+        INNER JOIN employee_details ed ON ed.idno = ep.idno 
+        WHERE ot.idno != '$userId' 
+        AND ot.app_status = 'Pending'
+        AND ($ottype)";
+
+    $sqlOT1 = mysqli_query($con, $additionalQuery);
+    if (!$sqlOT1) {
+        die("Error: " . mysqli_error($con));
+    }
+    $pendingOTCount += mysqli_fetch_assoc($sqlOT1)['total'] ?? 0;
+}
 
 // Count pending missed log applications
 $pendingMLCount = 0;

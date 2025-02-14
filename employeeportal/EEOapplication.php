@@ -211,8 +211,8 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                         AND (eeo.dateEEO BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
                         AND eeo.type_EEO = 'Medical'
                         AND eeo.eeo_status != 'Cancelled' 
-                        AND eeo.eeo_status NOT LIKE 'Approved%'
-                        AND eeo.eeo_status NOT LIKE 'Disapproved%'
+                        AND eeo.eeo_status NOT LIKE '%Approved%'
+                        AND eeo.eeo_status NOT LIKE '%Disapproved%'
                         AND eeo.idno != '$userId'");  
                     $count = mysqli_fetch_assoc($sqlCount)['total'];
                     
@@ -260,8 +260,8 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                         AND eeo.dateEEO IS NOT NULL
                         AND ('$fromDate' = '' OR '$toDate' = '' OR DATE(eeo.dateEEO) BETWEEN '$fromDate' AND '$toDate')
                         AND eeo.type_EEO = 'Medical'
-                        AND eeo.eeo_status NOT LIKE 'Approved%' 
-                        AND eeo.eeo_status NOT LIKE 'Disapproved%' 
+                        AND eeo.eeo_status NOT LIKE '%Approved%' 
+                        AND eeo.eeo_status NOT LIKE '%Disapproved%' 
                         AND eeo.eeo_status NOT LIKE 'Cancelled%'
                         AND eeo.idno != '$userId'");
                         $deptCount = mysqli_fetch_assoc($sqlDeptCount)['total'];
@@ -326,14 +326,13 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                             <tr>
                                 <th width="2%" style="text-align: center;">No.</th>
                                 <th width="7%" style="text-align: center;">Employee Name</th>
-                                <th width="5%" style="text-align: center;">Type of EEO</th>
                                 <th width="7%" style="text-align: center;">Date of EEO</th>
                                 <th width="5%" style="text-align: center;">Time of EEO</th>
                                 <th style="text-align: center;">Reason</th>
                                 <th width="10%" style="text-align: center;">Date and Time Applied</th>
                                 <th width="10%" style="text-align: center;">Status</th>
-                                <th style="text-align: center;">Approver's Remarks</th>
-                                <th style="text-align: center;">Acknowledged by:</th>
+                                <th width="18%"  style="text-align: center;">Approver's Remarks</th>
+                                <th width="10%"  style="text-align: center;">Acknowledged by:</th>
                                 <th width="6%" style="text-align: center;">Action</th>
                             </tr>
                         </thead>
@@ -362,17 +361,16 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                                 }
                                 ?>
                                 <tr <?= $style; ?>>
-                                    <td align='center'><?= $x++; ?>.</td>
-                                    <td align='center'><?= $emp['lastname'] . ', ' . $emp['firstname']; ?></td>
-                                    <td align='center'><?= $emp['type_EEO']?></td>
-                                    <td align='center'><?= date('m/d/Y', strtotime($emp['dateEEO'])); ?></td>
-                                    <td align='center'><?= date("g:i A", strtotime($emp['timeEEO'])); ?></td>
-                                    <td align='left'><?= $emp['reason'] ?></td>
-                                    <td align='center'><?= date('m/d/Y', strtotime($emp['date_applied'])) . "<br>" . date('g:i:s A', strtotime($emp['time_applied'])); ?></td>
-                                    <td align='center'><?= $emp['eeo_status'] ?></td>
-                                    <td align='left'><?= $emp['approvers_remarks'] ?></td>
-                                    <td align='center'><?= $emp['acknowledged'] ?></td>
-                                    <td align="center">
+                                    <td style='text-align: center; vertical-align: middle;'><?= $x++; ?>.</td>
+                                    <td style='text-align: center; vertical-align: middle;'><?= $emp['lastname'] . ', ' . $emp['firstname']; ?></td>
+                                    <td style='text-align: center; vertical-align: middle;'><?= date('m/d/Y', strtotime($emp['dateEEO'])); ?></td>
+                                    <td style='text-align: center; vertical-align: middle;'><?= date("g:i A", strtotime($emp['timeEEO'])); ?></td>
+                                    <td style='text-align: justify; vertical-align: middle;'><?= $emp['reason'] ?></td>
+                                    <td style='text-align: center; vertical-align: middle;'><?= date('m/d/Y', strtotime($emp['date_applied'])) . "<br>" . date('g:i:s A', strtotime($emp['time_applied'])); ?></td>
+                                    <td style='text-align: center; vertical-align: middle;'><?= $emp['eeo_status'] ?></td>
+                                    <td style='text-align: justify; vertical-align: middle;'><?= $emp['approvers_remarks'] ?></td>
+                                    <td style='text-align: center; vertical-align: middle;'><?= $emp['acknowledged'] ?></td>
+                                    <td style='text-align: center; vertical-align: middle;'>
                                         <?php if (strpos($emp['eeo_status'], 'Approved') === false && strpos($emp['eeo_status'], 'Disapproved') === false): ?>
                                             <a href="?EEOapplication&addremarks&id=<?= $emp['eeoid']; ?>&remarks=<?= $emp['approvers_remarks']; ?>" 
                                             class="btn btn-primary btn-xs" title="Remarks">
@@ -527,7 +525,7 @@ if (isset($_POST['submitRemarks'])) {
     $remarks = mysqli_real_escape_string($con, $_POST['remarks']); // Sanitize input
     
     // Update remarks in the database
-    $sqlUpdateRemarks = "UPDATE emergencyearlyout SET remarks = '$remarks' WHERE id = '$id'";
+    $sqlUpdateRemarks = "UPDATE emergencyearlyout SET approvers_remarks = '$remarks' WHERE id = '$id'";
     if (mysqli_query($con, $sqlUpdateRemarks)) {
         echo "<script>alert('Remarks updated successfully.');</script>";
         echo "<script>window.location.href='?EEOapplication';</script>";

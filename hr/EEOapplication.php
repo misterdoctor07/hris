@@ -202,8 +202,7 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                         WHERE ed.company = '$companyCode'
                         AND (eeo.dateEEO BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
                         AND eeo.eeo_status != 'Cancelled' 
-                        AND eeo.eeo_status NOT LIKE '%Approved%'
-                        AND eeo.eeo_status NOT LIKE '%Disapproved%'");  
+                        AND eeo.eeo_status NOT LIKE '%*%'");  
                     $count = mysqli_fetch_assoc($sqlCount)['total'];
                     
                     // Display company name with badge
@@ -249,8 +248,7 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                         AND d.department = '$departmentName'
                         AND eeo.dateEEO IS NOT NULL
                         AND ('$fromDate' = '' OR '$toDate' = '' OR DATE(eeo.dateEEO) BETWEEN '$fromDate' AND '$toDate')
-                        AND eeo.eeo_status NOT LIKE '%Approved%' 
-                        AND eeo.eeo_status NOT LIKE '%Disapproved%' 
+                        AND eeo.eeo_status NOT LIKE '%*%' 
                         AND eeo.eeo_status NOT LIKE 'Cancelled%'");
                         $deptCount = mysqli_fetch_assoc($sqlDeptCount)['total'];
 
@@ -292,8 +290,8 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                         ORDER BY 
                             CASE 
                                 WHEN eeo.eeo_status = 'Pending' THEN 1
-                                WHEN eeo.eeo_status LIKE '%Approved%' THEN 2
-                                WHEN eeo.eeo_status LIKE '%Disapproved%' THEN 3
+                                WHEN eeo.eeo_status LIKE '%*%' THEN 2
+                                WHEN eeo.eeo_status LIKE '%*Disapproved%' THEN 3
                                 ELSE 4
                             END,
                             eeo.date_applied,
@@ -319,8 +317,8 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                                 <th style="text-align: center;">Reason</th>
                                 <th width="10%" style="text-align: center;">Date and Time Applied</th>
                                 <th width="10%" style="text-align: center;">Status</th>
-                                <th style="text-align: center;">Approver's Remarks</th>
-                                <th style="text-align: center;">Acknowledged by:</th>
+                                <th width="15%"  style="text-align: center;">Approver's Remarks</th>
+                                <th width="10%"  style="text-align: center;">Acknowledged by:</th>
                                 <th width="6%" style="text-align: center;">Action</th>
                             </tr>
                         </thead>
@@ -348,18 +346,18 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                                 }
                                 ?>
                                 <tr <?= $style; ?>>
-                                    <td align='center'><?= $x++; ?>.</td>
-                                    <td align='center'><?= $emp['idno']; ?></td>
-                                    <td align='center'><?= $emp['lastname'] . ', ' . $emp['firstname']; ?></td>
-                                    <td align='center'><?= $emp['type_EEO']?></td>
-                                    <td align='center'><?= date('m/d/Y', strtotime($emp['dateEEO'])); ?></td>
-                                    <td align='center'><?= date("g:i A", strtotime($emp['timeEEO'])); ?></td>
-                                    <td align='left'><?= $emp['reason'] ?></td>
-                                    <td align='center'><?= date('m/d/Y', strtotime($emp['date_applied'])) . "<br>" . date('g:i:s A', strtotime($emp['time_applied'])); ?></td>
-                                    <td align='center'><?= $emp['eeo_status'] ?></td>
-                                    <td align='left'><?= $emp['approvers_remarks'] ?></td>
-                                    <td align='left'><?= $emp['acknowledged'] ?></td>
-                                    <td align="center">
+                                    <td style='text-align: center; vertical-align: middle;'><?= $x++; ?>.</td>
+                                    <td style='text-align: center; vertical-align: middle;'><?= $emp['idno']; ?></td>
+                                    <td style='text-align: center; vertical-align: middle;'><?= $emp['lastname'] . ', ' . $emp['firstname']; ?></td>
+                                    <td style='text-align: center; vertical-align: middle;'><?= $emp['type_EEO']?></td>
+                                    <td style='text-align: center; vertical-align: middle;'><?= date('m/d/Y', strtotime($emp['dateEEO'])); ?></td>
+                                    <td style='text-align: center; vertical-align: middle;'><?= date("g:i A", strtotime($emp['timeEEO'])); ?></td>
+                                    <td style='text-align: justify; vertical-align: middle;'><?= $emp['reason'] ?></td>
+                                    <td style='text-align: center; vertical-align: middle;'><?= date('m/d/Y', strtotime($emp['date_applied'])) . "<br>" . date('g:i:s A', strtotime($emp['time_applied'])); ?></td>
+                                    <td style='text-align: center; vertical-align: middle;'><?= $emp['eeo_status'] ?></td>
+                                    <td style='text-align: justify; vertical-align: middle;'><?= $emp['approvers_remarks'] ?></td>
+                                    <td style='text-align: justify; vertical-align: middle;'><?= $emp['acknowledged'] ?></td>
+                                    <td style='text-align: center; vertical-align: middle;'>
                                         <?php if (strpos($emp['eeo_status'], 'Approved') === false && strpos($emp['eeo_status'], 'Disapproved') === false): ?>
                                             <a href="?EEOapplication&addremarks&id=<?= $emp['eeoid']; ?>&remarks=<?= $emp['approvers_remarks']; ?>" 
                                             class="btn btn-primary btn-xs" title="Remarks">
@@ -386,6 +384,13 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                                             class="btn btn-warning btn-xs" title="Undo Action" 
                                             onclick="return confirm('Do you wish to undo the action taken?');">
                                             <i class='fa fa-undo'></i>
+                                            </a>
+                                        <?php endif; ?>
+                                        <?php if (strpos($emp['eeo_status'], '*') === false && strpos($emp['eeo_status'], 'Pending') === false): ?>
+                                            <a href="?EEOapplication&done&id=<?= $emp['eeoid']; ?>&done" 
+                                                class="btn btn-success btn-xs confirm-done" 
+                                                title="Done">
+                                                <i class='fa fa-check-square-o'></i>
                                             </a>
                                         <?php endif; ?>
                                     </td>
@@ -514,7 +519,7 @@ if (isset($_POST['submitRemarks'])) {
     $remarks = mysqli_real_escape_string($con, $_POST['remarks']); // Sanitize input
     
     // Update remarks in the database
-    $sqlUpdateRemarks = "UPDATE emergencyearlyout SET remarks = '$remarks' WHERE id = '$id'";
+    $sqlUpdateRemarks = "UPDATE emergencyearlyout SET approvers_remarks = '$remarks' WHERE id = '$id'";
     if (mysqli_query($con, $sqlUpdateRemarks)) {
         echo "<script>alert('Remarks updated successfully.');</script>";
         echo "<script>window.location.href='?EEOapplication';</script>";

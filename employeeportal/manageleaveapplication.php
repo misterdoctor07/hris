@@ -93,6 +93,7 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                         <th style="text-align: center;">Reason</th>
                         <th width="7%" style="text-align: center;">Date Applied</th>
                         <th width="6%" style="text-align: center;">Status</th>
+                        <th style="text-align: center;">HR's Remarks</th>
                         <th style="text-align: center;">Remarks</th>
                         <th width="6%" style="text-align: center;">Action</th>
                     </tr>
@@ -149,12 +150,16 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                             WHERE la.idno != '$userId' 
                             AND ($whereClause)
                             ORDER BY 
-                                CASE WHEN la.appstatus='Pending' THEN 1 ELSE 2 END, 
+                                CASE 
+                                    WHEN la.appstatus = 'Pending' THEN 1 
+                                    WHEN la.appstatus LIKE '%Approved%' THEN 2 
+                                    WHEN la.appstatus LIKE '%Dispproved%' THEN 3
+                                    WHEN la.appstatus LIKE '%Cancelled%' THEN 4  
+                                    ELSE 5 END, 
                                 la.datearray DESC";
 
                     // Debugging: Print the final query
                     // echo "Final Query: " . $query;
-
 
                     // Execute query
                     $sqlEmployee = mysqli_query($con, $query);
@@ -193,6 +198,7 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                             echo "<td align='left'>{$company['reason']}</td>";
                             echo "<td align='center'>" . date('m/d/Y', strtotime($company['datearray'])) . "</td>";
                             echo "<td align='center'>$statusText</td>";
+                            echo "<td align='left'>{$company['remarks']}</td>";
                             echo "<td align='left'>{$company['approver_remarks']}</td>";
                             echo "<td align='center'>";
                             if ($appStatus == "Pending") {

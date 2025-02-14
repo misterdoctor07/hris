@@ -125,7 +125,12 @@ date_default_timezone_set("Asia/Manila");
               $leave_count = $row['total'];
           
               // Count pending overtime applications
-              $query = "SELECT COUNT(*) AS total FROM overtime_application WHERE app_status != 'Pending' AND app_status != 'Cancelled' AND app_status != 'Disapproved' AND remarks != 'POSTED'";
+              $query = "SELECT COUNT(*) AS total 
+                FROM overtime_application 
+                WHERE app_status != 'Pending' 
+                AND app_status != 'Cancelled' 
+                AND app_status != 'Disapproved' 
+                AND hr_remarks != 'POSTED'";
               $result = mysqli_query($con, $query);
               $row = mysqli_fetch_assoc($result);
               $overtime_count = $row['total'];
@@ -142,8 +147,7 @@ date_default_timezone_set("Asia/Manila");
 
               // Count pending EEO applications for the same company
               $query = "SELECT COUNT(*) AS total FROM emergencyearlyout 
-                        WHERE eeo_status NOT LIKE '%Approved%'
-                        AND eeo_status NOT LIKE '%Disapproved%' 
+                        WHERE eeo_status NOT LIKE '%*%' 
                         AND eeo_status != 'Cancelled'";
               $result = mysqli_query($con, $query);
               $row = mysqli_fetch_assoc($result);
