@@ -185,11 +185,11 @@ date_default_timezone_set("Asia/Manila");
                   <li <?= $view; ?>><a href="dashboard.php?manageleaveapplication">Leave Applications 
                     <span id="leave-notification-badge" class="badge" style="color: white; background-color: red;"></span>
                   </a></li>
-                  <li <?= $view; ?>><a href="dashboard.php?manageovertimeapplication">OT Applications 
-                    <span id="ot-notification-badge" class="badge" style="color: white; background-color: red;"></span>
-                  </a></li>
                   <li <?= $view; ?>><a href="dashboard.php?managemissedlogapplication">Missed Log Application 
                     <span id="ml-notification-badge" class="badge" style="color: white; background-color: red;"></span>
+                  </a></li>
+                  <li <?= $view; ?>><a href="dashboard.php?manageovertimeapplication">OT Applications 
+                    <span id="ot-notification-badge" class="badge" style="color: white; background-color: red;"></span>
                   </a></li>
                 <?php endif; ?>
                 <?php if ($designation == 77 || $designation == 97): ?>

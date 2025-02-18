@@ -385,13 +385,20 @@ $checklist = mysqli_fetch_array($result);
         if(mysqli_num_rows($sqlCheck)>0){
             $table="leave_credits";
             $values="SET vacationleave='$vecay',vlused='$vlused',sickleave='$sicky',slused='$slused',pto='$pty',ptoused='$ptoused',bdayleave='$bdayleave', 
-            blp_used='$blp_used', jan_earlyout='$jan_earlyout', jan_eo_used='$jan_eo_used', spl='$spl',  spl_used='$spl_used'
-
-            ,updatedby='$addedby',updateddatetime='$datenow' WHERE idno='$idno'";
+            blp_used='$blp_used', jan_earlyout='$jan_earlyout', jan_eo_used='$jan_eo_used', feb_earlyout='$feb_earlyout', feb_eo_used='$feb_eo_used', mar_earlyout='$mar_earlyout', mar_eo_used='$mar_eo_used',
+            apr_earlyout='$apr_earlyout', apr_eo_used='$apr_eo_used', may_earlyout='$may_earlyout', may_eo_used='$may_eo_used', jun_earlyout='$jun_earlyout', jun_eo_used='$jun_eo_used',
+            jul_earlyout='$jul_earlyout', jul_eo_used='$jul_eo_used', aug_earlyout='$aug_earlyout', aug_eo_used='$aug_eo_used', sep_earlyout='$sep_earlyout', sep_eo_used='$sep_eo_used',
+            oct_earlyout='$oct_earlyout', oct_eo_used='$oct_eo_used', nov_earlyout='$nov_earlyout', nov_eo_used='$nov_eo_used', dec_earlyout='$dec_earlyout', dec_eo_used='$dec_eo_used',
+            spl='$spl',  spl_used='$spl_used',updatedby='$addedby',updateddatetime='$datenow' WHERE idno='$idno'";
             $sqlAddEmployee=mysqli_query($con,"UPDATE $table $values");
         }else{
-            $table="leave_credits(idno,vacationleave,vlused,sickleave,slused,pto,ptoused,bdayleave,blp_used,jan_earlyout,jan_eo_used,spl,spl_used,addedby,addeddatetime)";
-            $values="VALUES('$idno','$vecay','$vlused','$sicky','$slused','$pty','$ptoused','$bdayleave','$blp_used','$jan_earlyout','$jan_eo_used','$spl','$spl_used','$addedby','$datenow')";
+            $table="leave_credits(idno,vacationleave,vlused,sickleave,slused,pto,ptoused,bdayleave,blp_used,jan_earlyout,jan_eo_used,feb_earlyout,feb_eo_used,
+            mar_earlyout,mar_eo_used,apr_earlyout,apr_eo_used,may_earlyout,may_eo_used,jun_earlyout,jun_eo_used,jul_earlyout,jul_eo_used,aug_earlyout,aug_eo_used,
+            sep_earlyout,sep_eo_used,oct_earlyout,oct_eo_used,nov_earlyout,nov_eo_used,dec_earlyout,dec_eo_used,spl,spl_used,addedby,addeddatetime)";
+            $values="VALUES('$idno','$vecay','$vlused','$sicky','$slused','$pty','$ptoused','$bdayleave','$blp_used','$jan_earlyout','$jan_eo_used','$feb_earlyout','$feb_eo_used',
+            '$mar_earlyout','$mar_eo_used','$apr_earlyout','$apr_eo_used','$may_earlyout','$may_eo_used','$jun_earlyout','$jun_eo_used','$jul_earlyout','$jul_eo_used',
+            '$aug_earlyout','$aug_eo_used','$sep_earlyout','$sep_eo_used','$oct_earlyout','$oct_eo_used','$nov_earlyout','$nov_eo_used','$dec_earlyout','$dec_eo_used',
+            '$spl','$spl_used','$addedby','$datenow')";
             $sqlAddEmployee=mysqli_query($con,"INSERT INTO $table $values");
         }
       if($sqlAddEmployee){

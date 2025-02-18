@@ -123,6 +123,21 @@
     padding: 4px 8px;
     font-size: 12px;
 }
+/* Sorting Columns */
+th.sortable {
+    cursor: pointer;
+    position: relative;
+}
+
+th.sortable.asc::after {
+    content: '↑'; /* Ascending arrow icon */
+    color: #000;
+}
+
+th.sortable.desc::after {
+    content: '↓'; /* Descending arrow icon */
+    color: #000;
+}
 </style>
 
 <?php
@@ -137,10 +152,32 @@ if (!$sqlCompanies) {
 <div class="col-lg-12">
     <div class="content-panel">
         <div class="panel-heading">
-            <h4>
-                <a href="?main"><i class="fa fa-arrow-left"></i> HOME</a> | 
-                <i class="fa fa-clock-o"></i> OVERTIME APPLICATION
-            </h4>
+            <div class="flex-container" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <!-- Left Section -->
+                <div class="flex-item-left" style="display: flex; align-items: center; gap: 10px;">
+                    <h4>
+                        <a href="?main"><i class="fa fa-arrow-left"></i> HOME</a> | 
+                        <i class="fa fa-clock-o"></i> OVERTIME APPLICATION
+                    </h4>
+                </div>
+
+                <!-- Date Filter Section -->
+                <div class="date-filter" style="display: flex; align-items: center; gap: 10px;">
+                    <label for="fromDate">From:</label>
+                    <input type="date" id="fromDate" class="form-control" value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>" style="width: 150px;">
+                    <label for="toDate">To:</label>
+                    <input type="date" id="toDate" class="form-control" value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>" style="width: 150px;">
+                    <button type="button" onclick="filterByDate()" class="btn btn-primary">Filter</button>
+                    <button type="button" onclick="resetFilter()" class="btn btn-default">Reset</button>
+                </div>
+
+                <!-- Export to Excel Button -->
+                <div class="export-btn" style="display: flex; align-items: center; margin-left: auto">
+                    <form>
+                        <button type="button" onclick="tablesToExcel('Overtime_Applications_Report')" class="btn btn-success">EXPORT TO EXCEL</button>
+                    </form>
+                </div>
+            </div>
         </div>
 
         <!-- Company Tabs Navigation -->
@@ -151,9 +188,12 @@ if (!$sqlCompanies) {
                 $companyCode = $company['company'];
                 
                 // Fetch count of pending overtime applications for the company
+                $fromDate = isset($_GET['fromDate']) ? $_GET['fromDate'] : null;
+                $toDate = isset($_GET['toDate']) ? $_GET['toDate'] : null;
                 $sqlCount = mysqli_query($con, "SELECT COUNT(*) AS total FROM overtime_application ot
                     INNER JOIN employee_details ed ON ot.idno = ed.idno
                     WHERE ed.company = '$companyCode' 
+                    AND (ot.datearray BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
                     AND ot.app_status NOT IN ('Pending', 'Cancelled', 'Disapproved')
                     AND ot.hr_remarks != 'POSTED'");
                 $count = mysqli_fetch_assoc($sqlCount)['total'];
@@ -181,7 +221,9 @@ if (!$sqlCompanies) {
             // Fetch unique departments for the company
             $sqlDepartments = mysqli_query($con, "SELECT DISTINCT d.department FROM employee_details ed
             INNER JOIN department d ON d.id = ed.department
-            WHERE ed.company = '$companyCode' ORDER BY d.department");
+            WHERE ed.company = '$companyCode' 
+            AND ed.status != 'RESIGNED'
+            ORDER BY d.department");
 
             echo "<ul class='nav nav-pills' style='margin-top: 10px;'>";
             $deptActive = 'active';
@@ -190,10 +232,13 @@ if (!$sqlCompanies) {
                 $departmentName = $department['department'];
                 
                 // Fetch count of pending overtime applications for the department
+                $fromDate = isset($_GET['fromDate']) ? $_GET['fromDate'] : null;
+                $toDate = isset($_GET['toDate']) ? $_GET['toDate'] : null;
                 $sqlDeptCount = mysqli_query($con, "SELECT COUNT(*) AS total FROM overtime_application ot
                     INNER JOIN employee_details ed ON ot.idno = ed.idno
                     INNER JOIN department d ON d.id = ed.department
                     WHERE ed.company = '$companyCode' 
+                    AND (ot.datearray BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
                     AND d.department = '$departmentName'
                     AND ot.app_status NOT IN ('Pending', 'Cancelled', 'Disapproved') 
                     AND ot.hr_remarks != 'POSTED'");
@@ -224,12 +269,16 @@ if (!$sqlCompanies) {
                 echo "<div id='dept-$companyCode-$deptId' class='tab-pane fade $deptActive'>";
 
         // Fetch employees based on company
+        $fromDate = isset($_GET['fromDate']) ? $_GET['fromDate'] : null;
+        $toDate = isset($_GET['toDate']) ? $_GET['toDate'] : null;
         $sqlEmployee = mysqli_query($con, "SELECT ot.*, ot.id as otid, ep.*, ed.*, d.department 
             FROM overtime_application ot 
             INNER JOIN employee_profile ep ON ep.idno = ot.idno 
             INNER JOIN employee_details ed ON ed.idno = ep.idno 
             INNER JOIN department d ON d.id = ed.department
-            WHERE ed.company = '$companyCode' AND d.department = '$departmentName'
+            WHERE ed.company = '$companyCode' 
+            AND d.department = '$departmentName'
+            AND (ot.datearray BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
             ORDER BY 
                 CASE 
                     WHEN ot.app_status NOT IN ('Pending', 'Cancelled', 'Disapproved') AND ot.hr_remarks != 'POSTED' THEN 1 
@@ -247,16 +296,16 @@ if (!$sqlCompanies) {
         <table class="table table-bordered table-striped table-condensed">
             <thead>
                 <tr>
-                    <th width="2%" style="text-align: center;">No.</th>
-                    <th width="6%" style="text-align: center;">Employee ID</th>
-                    <th width="8%" style="text-align: center;">Employee Name</th>
-                    <th width="5%" style="text-align: center;">OT Date</th>
-                    <th width="5%" style="text-align: center;">OT Time</th>
-                    <th style="text-align: center;">Reason</th>
-                    <th width="9%" style="text-align: center;">Date/Time Applied</th>
-                    <th width="9%" style="text-align: center;">Status</th>
-                    <th width="15%"  style="text-align: center;">HR's Remarks</th>
-                    <th width="15%"  style="text-align: center;">Approver's Remarks</th>
+                    <th class="sortable" data-column="0" width="2%" style="text-align: center;">No.</th>
+                    <th class="sortable" data-column="1" width="6%" style="text-align: center;">Employee ID</th>
+                    <th class="sortable" data-column="2" width="10%" style="text-align: center;">Employee Name</th>
+                    <th class="sortable" data-column="3" width="6%" style="text-align: center;">OT Date</th>
+                    <th class="sortable" data-column="4" width="5%" style="text-align: center;">OT Time</th>
+                    <th class="sortable" data-column="5" style="text-align: center;">Reason</th>
+                    <th class="sortable" data-column="6" width="9%" style="text-align: center;">Date/Time Applied</th>
+                    <th class="sortable" data-column="7" width="9%" style="text-align: center;">Status</th>
+                    <th class="sortable" data-column="8" width="15%"  style="text-align: center;">HR's Remarks</th>
+                    <th class="sortable" data-column="9" width="15%"  style="text-align: center;">Approver's Remarks</th>
                     <th width="6%" style="text-align: center;">Action</th>
                 </tr>
             </thead>
@@ -288,11 +337,13 @@ if (!$sqlCompanies) {
                     <tr class="<?= $rowClass ?>">
                         <td style="text-align: center; vertical-align: middle;"><?=$x++;?>.</td>
                         <td style="text-align: center; vertical-align: middle;"><?=$emp['idno'];?></td>
-                        <td style="text-align: center; vertical-align: middle;"><?=$emp['lastname']. ','.$emp['firstname'];?></td>
-                        <td style="text-align: center; vertical-align: middle;"><?=date('m/d/Y', strtotime($emp['otdate']));?></td>
-                        <td style="text-align: center; vertical-align: middle;"><?=$emp['ottime'];?></td>
+                        <td style="text-align: center; vertical-align: middle;">
+                            <span style="font-weight: bold; font-size: 1.1em;"><?=$emp['lastname'];?></span>, <?=$emp['firstname'];?>
+                        </td>
+                        <td style="text-align: center; vertical-align: middle;"><?=date('M j, Y', strtotime($emp['otdate']));?></td>
+                        <td style="text-align: center; vertical-align: middle;"><?= date("g:i A", strtotime($emp['ottime'])); ?></td>
                         <td style="text-align: left; vertical-align: middle;"><?=$emp['reasons'];?></td>
-                        <td style="text-align: center; vertical-align: middle;"><?=$emp['datearray']."".$emp['timearray'];?></td>
+                        <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['datearray'])) . "<br>" . date('g:i A', strtotime($emp['timearray'])); ?></td>
                         <td style="text-align: center; vertical-align: middle;"><?=$emp['app_status'];?></td>
                         <td style="text-align: left; vertical-align: middle;"><?=$emp['hr_remarks'];?></td>
                         <td style="text-align: left; vertical-align: middle;"><?=$emp['approver_remarks'];?></td>
@@ -376,7 +427,7 @@ if (isset($_GET['post'])) {
                 }
             } else {
                 // Update the existing attendance row with "OT" in the remarks column
-                $sqlUpdateAttendance = mysqli_query($con, "UPDATE attendance SET remarks = 'Code OT' WHERE idno='$idno' AND logindate='$otdate'");
+                $sqlUpdateAttendance = mysqli_query($con, "UPDATE attendance SET remarks = 'Code OT', status = 'ot' WHERE idno='$idno' AND logindate='$otdate'");
                 
                 if (!$sqlUpdateAttendance) {
                     echo "<script>alert('Error updating attendance for overtime date: $otdate');</script>";
@@ -498,7 +549,7 @@ $(document).ready(function() {
             });
         });
     });
-
+//Function to for the search bar
     function filterTable(input) {
         // Get the input field and table
         const searchValue = input.value.toLowerCase();
@@ -512,4 +563,135 @@ $(document).ready(function() {
             row.style.display = rowText.includes(searchValue) ? '' : 'none';
         });
     }
+//Function to Export Table to Excel
+    function tablesToExcel() {
+        const dataType = 'application/vnd.ms-excel';
+        let tableHTML = '';
+
+        // Define filenames based on the outer tab index
+        const filenames = ['NESI1_Overtime_Application_Report.xls', 'NESI2_Overtime_Application_Report.xls', 'NEWIND_Overtime_Application_Report.xls'];
+
+        // Get all outer tabs
+        const outerTabs = document.querySelectorAll('.nav-tabs li a');
+        let activeTabIndex = -1;
+
+        // Find the index of the active outer tab
+        outerTabs.forEach((tab, index) => {
+            if (tab.parentElement.classList.contains('active')) {
+                activeTabIndex = index; // Set the index of the active tab
+            }
+        });
+
+        // Set the filename based on the active tab index
+        const filename = (activeTabIndex >= 0 && activeTabIndex < filenames.length) ? filenames[activeTabIndex] : 'Overtime_Application_Report.xls';
+
+        // Get the currently active outer tab
+        const activeOuterTab = outerTabs[activeTabIndex];
+        if (activeOuterTab) {
+            const outerTabHref = activeOuterTab.getAttribute('href'); // Get the href of the active outer tab
+            const activeOuterTabPane = document.querySelector(outerTabHref); // Get the corresponding tab pane
+
+            // Gather all inner tabs and their corresponding tables from the active outer tab pane
+            const innerTabs = activeOuterTabPane.querySelectorAll('.nav-pills li a');
+            innerTabs.forEach(innerTab => {
+                // Get the inner tab name and remove any trailing numbers
+                let innerTabName = innerTab.textContent.trim();
+                innerTabName = innerTabName.replace(/\s+\d+$/, ''); // Remove trailing space and number
+
+                const innerTabContent = document.querySelector(innerTab.getAttribute('href')); // Get the corresponding inner tab content
+
+                // Check if the inner tab content has a table
+                const table = innerTabContent.querySelector('table');
+                if (table) {
+                    // Add inner tab name as a header before the table
+                    tableHTML += `<h3>${innerTabName}</h3>`; // Add header for the table
+
+                    // Clone the table to modify it
+                    const clonedTable = table.cloneNode(true);
+                    
+                    // Add inline styles for borders
+                    clonedTable.style.borderCollapse = 'collapse'; // Collapse borders
+                    clonedTable.querySelectorAll('th, td').forEach(cell => {
+                        cell.style.border = '1px solid black'; // Add border to each cell
+                        cell.style.padding = '5px'; // Optional: Add padding for better spacing
+                    });
+
+                    tableHTML += clonedTable.outerHTML + '<br>'; // Append each table's HTML
+                }
+            });
+
+            // Create a download link
+            const downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+
+            // Create a Blob with the combined table HTML
+            const blob = new Blob([tableHTML], {
+                type: dataType
+            });
+
+            // Create a URL for the Blob
+            const url = URL.createObjectURL(blob);
+            downloadLink.href = url;
+            downloadLink.download = filename; // Set the correct filename
+
+            // Trigger the download
+            downloadLink.click();
+
+            // Clean up
+            document.body.removeChild(downloadLink);
+        }
+    }
+function filterByDate() {
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
+
+    if (fromDate && toDate) {
+            window.location.href = `?overtimeapplication&fromDate=${fromDate}&toDate=${toDate}`;
+        } else {
+            alert('Please select both "From" and "To" dates.');
+    }
+}
+function resetFilter() {
+    window.location.href = '?overtimeapplication';
+}
+//Sorting Columns
+document.addEventListener("DOMContentLoaded", function () {
+    const headers = document.querySelectorAll(".sortable");
+    headers.forEach(header => {
+        header.addEventListener("click", function () {
+            const table = header.closest("table");
+            const tbody = table.querySelector("tbody");
+            const columnIndex = parseInt(header.getAttribute("data-column"));
+            const isAscending = header.classList.contains("asc");
+            
+            // Clear existing sorting classes
+            headers.forEach(h => h.classList.remove("asc", "desc"));
+
+            // Toggle sorting order
+            header.classList.toggle("asc", !isAscending);
+            header.classList.toggle("desc", isAscending);
+
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+            rows.sort((a, b) => {
+                const aText = a.cells[columnIndex].innerText.trim();
+                const bText = b.cells[columnIndex].innerText.trim();
+
+                // Handle numeric vs. string comparison
+                return isAscending
+                    ? compareValues(bText, aText)
+                    : compareValues(aText, bText);
+            });
+
+            // Append sorted rows back to the table body
+            rows.forEach(row => tbody.appendChild(row));
+        });
+    });
+
+    function compareValues(a, b) {
+        if (!isNaN(a) && !isNaN(b)) {
+            return parseFloat(a) - parseFloat(b); // Numeric comparison
+        }
+        return a.localeCompare(b); // String comparison
+    }
+});
 </script>

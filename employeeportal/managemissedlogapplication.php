@@ -85,7 +85,7 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                     <tr>
                         <th width="2%" style="text-align: center;">No.</th>
                         <th width="6%" style="text-align: center;">Employee ID</th>
-                        <th width="7%" style="text-align: center;">Employee Name</th>
+                        <th width="10%" style="text-align: center;">Employee Name</th>
                         <th width="5%" style="text-align: center;">Department</th>
                         <th width="5%" style="text-align: center;">Work Area</th>
                         <th width="7%" style="text-align: center;">Date of Missed Time IN/OUT</th>
@@ -94,8 +94,8 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                         <th style="text-align: center;">Reason</th>
                         <th width="10%" style="text-align: center;">Date and Time Applied</th>
                         <th width="10%" style="text-align: center;">Status</th>
-                        <th style="text-align: center;">HR Remarks</th>
-                        <th style="text-align: center;">Monitoring Remarks</th>
+                        <th style="text-align: center;">HR's Remarks</th>
+                        <th style="text-align: center;">Monitoring's Remarks</th>
                         <th style="text-align: center;">Remarks</th>
                         <th width="6%" style="text-align: center;">Action</th>
                     </tr>
@@ -199,23 +199,27 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                                 echo "<tr $style>";
                                 echo "<td align='center'>$x.</td>";
                                 echo "<td align='center'>$idno</td>";
-                                echo "<td align='center'>{$company['lastname']}, {$company['firstname']}</td>";
+                                echo "<td align='center'>
+                                        <span style='font-weight: bold; font-size: 1.1em;'>{$company['lastname']}</span>, {$company['firstname']}
+                                    </td>";
                                 echo "<td align='center'>$department</td>"; 
                                 echo "<td align='center'>{$company['location']}</td>";
-                                echo "<td align='center'>" . date('m/d/Y', strtotime($company['datemissed'])) . "</td>";
+                                echo "<td align='center'>" . date('M j, Y', strtotime($company['datemissed'])) . "</td>";
                                 echo "<td align='center'>{$company['incident']}</td>";
                                 echo "<td align='center'>" . date("g:i A", strtotime($company['mttime'])) . "</td>";
                                 echo "<td align='left'>{$company['reason']}</td>";
-                                echo "<td align='center'>" . date('m/d/Y', strtotime($company['date_applied'])) . "<br>" . date('g:i:s A', strtotime($company['time_applied'])) . "</td>";
+                                echo "<td align='center'>" . date('M j, Y', strtotime($company['date_applied'])) . "<br>" . date('g:i:s A', strtotime($company['time_applied'])) . "</td>";
                                 echo "<td align='center'>$statusText</td>";
                                 echo "<td align='left'>{$company['remarks']}</td>";
-                                echo "<td align='left'>{$company['monitoring_remarks']}</td>";
+                                echo "<td style='text-align: " . (($company['monitoring_remarks'] == 'verified') ? 'center' : 'justify') . "; vertical-align: middle;'>
+                                        {$company['monitoring_remarks']}
+                                    </td>";
                                 echo "<td align='left'>{$company['approver_remarks']}</td>";
                                 echo "<td align='center'>";
                                         if ($appStatus == "Pending") {
                                             echo "<a href='?managemissedlogapplication&id={$company['mlid']}&approved' class='btn btn-success btn-xs' title='Approve' onclick=\"return confirm('Do you wish to approve this missed log application?'); return false;\"><i class='fa fa-thumbs-up'></i></a>";
                                             echo "<a href='?managemissedlogapplication&id={$company['mlid']}&disapproved' class='btn btn-danger btn-xs' title='Disapprove' onclick=\"return confirm('Do you wish to disapprove this missed log application?'); return false;\"><i class='fa fa-thumbs-down'></i></a>";
-                                            echo "<a href='?managemissedlogapplication&addremarks&id={$company['mlid']}&approver_remarks' class='btn btn-primary btn-xs' title='Remarks');\"><i class='fa fa-edit'></i></a>";
+                                            echo "<a href='?managemissedlogapplication&addremarks&id={$company['mlid']}&approver_remarks' class='btn btn-primary btn-xs' title='Remarks');\"><i class='fa fa-comment'></i></a>";
                                         } else {
                                             echo "<a href='?managemissedlogapplication&id={$company['mlid']}&undo' class='btn btn-warning btn-xs' title='Undo Action' onclick=\"return confirm('Do you wish to undo the action taken?'); return false;\"><i class='fa fa-exchange'></i></a>";
                                         }

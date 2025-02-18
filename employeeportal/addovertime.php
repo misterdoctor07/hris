@@ -49,10 +49,10 @@
   }
 </style>
 <script type="text/javascript">
-      function SubmitDetails(){        
-          return confirm('Do you wish to submit details?');        
-      }
-    </script>
+    function SubmitDetails(){        
+        return confirm('Do you wish to submit details?');        
+    }
+</script>
     <div class="row">
       <div class="col-lg-12">
       <h4 style="text-indent: 10px;"><a href="?applyovertime"><i class="fa fa-arrow-left"></i> BACK</a> | <i class="fa fa-file-text"></i> OVERTIME APPLICATION</h4>      
@@ -126,7 +126,7 @@
 
 <script>
   function updateLabelText(toggle) {
-    const labelText = document.POSTElementById("label-text");
+    const labelText = document.getElementById("label-text");
     labelText.textContent = toggle.checked ? "IT-related" : "Not IT-related";
   }
 </script>

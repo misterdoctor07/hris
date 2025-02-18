@@ -13,9 +13,24 @@ if (mysqli_num_rows($sqlCredits) > 0) {
     $credits['SL'] = $credit['sickleave'] - $credit['slused'];
     $credits['PTO'] = $credit['pto'] - $credit['ptoused'];
     $credits['BLP'] = $credit['bdayleave'] - $credit['blp_used'];
-    $credits['EO'] = $credit['jan_earlyout'] - $credit['jan_eo_used'];
     $credits['SPL'] = $credit['spl'] - $credit['spl_used'];
 }
+
+// Store EO credits for all months
+$eo_credits = [
+    '01' => $credit['jan_earlyout'] - $credit['jan_eo_used'],
+    '02' => $credit['feb_earlyout'] - $credit['feb_eo_used'],
+    '03' => $credit['mar_earlyout'] - $credit['mar_eo_used'],
+    '04' => $credit['apr_earlyout'] - $credit['apr_eo_used'],
+    '05' => $credit['may_earlyout'] - $credit['may_eo_used'],
+    '06' => $credit['jun_earlyout'] - $credit['jun_eo_used'],
+    '07' => $credit['jul_earlyout'] - $credit['jul_eo_used'],
+    '08' => $credit['aug_earlyout'] - $credit['aug_eo_used'],
+    '09' => $credit['sep_earlyout'] - $credit['sep_eo_used'],
+    '10' => $credit['oct_earlyout'] - $credit['oct_eo_used'],
+    '11' => $credit['nov_earlyout'] - $credit['nov_eo_used'],
+    '12' => $credit['dec_earlyout'] - $credit['dec_eo_used']
+];
 // Fetch user birthdate
 $sqlBirthDate = mysqli_query($con, "SELECT birthdate FROM employee_profile WHERE idno='$userId'");
 if (mysqli_num_rows($sqlBirthDate) > 0) {
@@ -81,7 +96,7 @@ if(mysqli_num_rows($sqlStartShift)>0){
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Start Date</label>
                     <div class="col-sm-8">
-                        <input type="date" name="startDate" class="form-control" required onchange="checkCredits(); checkSubmitButton();">
+                        <input type="date" name="startDate" class="form-control" required onchange="updateCredits(document.querySelector('select[name=leavetype]').value); checkSubmitButton();">
                         <span id="date-warning" style="color: red; display: none;">*You must file for leave at least 3 days in advance.</span>
                     </div>
                 </div>
@@ -113,11 +128,14 @@ if (isset($_GET['submit'])) {
     $nofdays = $_GET['nofdays'];
     $startDate = $_GET['startDate'];
     $endDate = $_GET['endDate']; 
-    $reasons = isset($_GET['reasons']) ? urldecode($_GET['reasons']) : ''; // Decode the input
-    $reasons = mysqli_real_escape_string($con, $reasons); // Sanitize for SQL    
+    $reasons = isset($_GET['reasons']) ? urldecode($_GET['reasons']) : ''; // Decode input
+    $reasons = mysqli_real_escape_string($con, $reasons); // Sanitize input
     $datenow = date('Y-m-d H:i:s'); 
 
-    // Check if there's already an existing record for the selected leave type within the same date range
+    // Extract month from startDate
+    $leaveMonth = date('m', strtotime($startDate));
+
+    // Check if leave already exists
     $sqlCheck = mysqli_query($con, "SELECT * FROM leave_application 
                                      WHERE idno='$idno' 
                                      AND leavetype='$leavetype' 
@@ -128,18 +146,23 @@ if (isset($_GET['submit'])) {
     if (mysqli_num_rows($sqlCheck) > 0) {
         echo "<script>alert('Leave application already exists for the selected dates and leave type!');</script>";
     } else {
-        // Insert the leave application
+        // Insert leave application
         $sqlInsertLeave = mysqli_query($con, "INSERT INTO leave_application 
                                               (idno, leavetype, numberofdays, dayfrom, dayto, reason, datearray, appstatus) 
                                               VALUES 
                                               ('$idno', '$leavetype', '$nofdays', '$startDate', '$endDate', '$reasons', '$datenow', 'Pending')");
 
-        // Check if the leave application was successfully inserted
-        if ($sqlInsertLeave) {
-                echo "<script>alert('Leave application submitted successfully!');</script>";
-        }else {
-                echo "<script>alert('Failed to insert leave application. Please try again.');</script>";
-         }
+        // Deduct from the correct EO column
+        if ($leavetype === 'EO') {
+            $eoColumn = strtolower(date('M', strtotime($startDate))) . '_eo_used'; // Example: feb_eo_used
+            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET $eoColumn = $eoColumn + $nofdays WHERE idno='$idno'");
+        }
+
+        if ($sqlInsertLeave && ($leavetype !== 'EO' || $sqlUpdateCredits)) {
+            echo "<script>alert('Leave application submitted successfully!');</script>";
+        } else {
+            echo "<script>alert('Failed to insert leave application. Please try again.');</script>";
+        }
     }
 }
 ?>
@@ -166,7 +189,6 @@ function checkSubmitButton() {
         VL: <?= isset($credits['VL']) ? $credits['VL'] : 0; ?>,
         PTO: <?= isset($credits['PTO']) ? $credits['PTO'] : 0; ?>,
         BLP: <?= isset($credits['BLP']) ? $credits['BLP'] : 0; ?>,
-        EO: <?= isset($credits['EO']) ? $credits['EO'] : 0; ?>,
         SPL: <?= isset($credits['SPL']) ? $credits['SPL'] : 0; ?>
     };
 
@@ -190,70 +212,86 @@ function checkSubmitButton() {
 }
 // JavaScript function to update displayed leave credits
 function updateCredits(leaveType) {
-    const credits = {
-        VL: <?= isset($credits['VL']) ? $credits['VL'] : 0; ?>,
-        PTO: <?= isset($credits['PTO']) ? $credits['PTO'] : 0; ?>,
-        BLP: <?= isset($credits['BLP']) ? $credits['BLP'] : 0; ?>,
-        EO: <?= isset($credits['EO']) ? $credits['EO'] : 0; ?>,
-        SPL: <?=isset($credits['SPL']) ? $credits['SPL'] :0; ?>
-    };
+    const startDateField = document.getElementsByName('startDate')[0];
+    const endDateField = document.getElementsByName('endDate')[0];
+    const nofdays = document.getElementsByName('nofdays')[0];
+    const reasonField = document.getElementsByName('reason')[0];
+    const creditInfo = document.getElementById("credit-info");
 
-    let creditInfo = document.getElementById('credit-info');
-    let nofdays = document.getElementById('nofdays');
-    let startDate = document.getElementsByName('startDate')[0];
-    let endDate = document.getElementsByName('endDate')[0];
-    let reasonField = document.getElementsByName('reasons')[0];
+    const startDateValue = new Date(startDateField.value);
+    const startMonth = (startDateValue.getMonth() + 1).toString().padStart(2, '0'); // Get month as two-digit
+
+    // PHP-generated EO credits array in JavaScript
+    const eoCredits = <?= json_encode($eo_credits); ?>;
+
+    let remainingCredits = 0;
+    if (leaveType === 'EO') {
+        remainingCredits = eoCredits[startMonth] || 0;
+    } else {
+        const generalCredits = {
+            VL: <?= isset($credits['VL']) ? $credits['VL'] : 0; ?>,
+            PTO: <?= isset($credits['PTO']) ? $credits['PTO'] : 0; ?>,
+            BLP: <?= isset($credits['BLP']) ? $credits['BLP'] : 0; ?>,
+            SPL: <?= isset($credits['SPL']) ? $credits['SPL'] : 0; ?>
+        };
+        remainingCredits = generalCredits[leaveType] || 0;
+    }
 
     // Define leave types that should not be disabled even with 0 credits
     const excludedLeaveTypes = ['MTL', 'PTL', 'BL', 'MDL', 'EEO', 'LTL'];
 
-    // Check if the selected leave type is in the excluded list
     if (excludedLeaveTypes.includes(leaveType)) {
         creditInfo.textContent = ''; 
         creditInfo.style.color = ''; 
         
         nofdays.disabled = false; 
-        startDate.disabled = false;
-        endDate.disabled = false; 
+        startDateField.disabled = false;
+        endDateField.disabled = false; 
         reasonField.disabled = false; 
 
-        // Reset the attributes and styles
+        // Reset attributes and styles
         nofdays.max = ''; 
         nofdays.value = 1; 
         nofdays.style.backgroundColor = '';
-        startDate.style.backgroundColor = '';
-        endDate.style.backgroundColor = '';
+        startDateField.style.backgroundColor = '';
+        endDateField.style.backgroundColor = '';
         reasonField.style.backgroundColor = '';
-    } else if (credits[leaveType] !== undefined && credits[leaveType] > 0) {
-        creditInfo.textContent = `Remaining Credits: ${credits[leaveType]}`; 
+    } else if (remainingCredits > 0) {
+        creditInfo.textContent = `Remaining Credits: ${remainingCredits}`; 
         creditInfo.style.color = '';
         nofdays.disabled = false; 
-        startDate.disabled = false; 
-        endDate.disabled = false; 
+        startDateField.disabled = false; 
+        endDateField.disabled = false; 
         reasonField.disabled = false; 
 
         // Set max attribute of "No. of Days" to remaining credits
-        nofdays.max = credits[leaveType];
+        nofdays.max = remainingCredits;
         nofdays.value = 1;  
         nofdays.style.backgroundColor = ''; 
-        startDate.style.backgroundColor = '';
-        endDate.style.backgroundColor = '';
+        startDateField.style.backgroundColor = '';
+        endDateField.style.backgroundColor = '';
         reasonField.style.backgroundColor = '';
+
+        // Automatically pick the end date based on start date and no. of days
+        let tempStartDate = new Date(startDateField.value);
+        tempStartDate.setDate(tempStartDate.getDate() + (parseInt(nofdays.value) - 1));
+        endDateField.valueAsDate = tempStartDate;
     } else {
         // No remaining credits for selected leave type, disable all fields
         creditInfo.textContent = 'No available credits for this leave type.';
         creditInfo.style.color = 'red';
         nofdays.disabled = true; 
-        startDate.disabled = true; 
-        endDate.disabled = true; 
+        // startDateField.disabled = true; 
+        endDateField.disabled = true; 
         reasonField.disabled = true; 
         nofdays.style.backgroundColor = '#f0f0f0';
-        startDate.style.backgroundColor = '#f0f0f0';
-        endDate.style.backgroundColor = '#f0f0f0';
+        startDateField.style.backgroundColor = '#f0f0f0';
+        endDateField.style.backgroundColor = '#f0f0f0';
         reasonField.style.backgroundColor = '#f0f0f0';
         nofdays.max = 0;
         nofdays.value = 0; 
     }
+
     checkSubmitButton();
 }
 

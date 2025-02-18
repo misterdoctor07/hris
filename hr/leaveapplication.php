@@ -304,7 +304,9 @@ th.sortable.desc::after {
                     // Fetch unique departments for the company
                     $sqlDepartments = mysqli_query($con, "SELECT DISTINCT d.department FROM employee_details ed
                         INNER JOIN department d ON d.id = ed.department
-                        WHERE ed.company = '$companyCode' ORDER BY d.department");
+                        WHERE ed.company = '$companyCode' 
+                        AND ed.status != 'RESIGNED'
+                        ORDER BY d.department");
 
                     echo "<ul class='nav nav-pills' style='margin-top: 10px;'>";
                     $deptActive = 'active';
@@ -387,14 +389,14 @@ th.sortable.desc::after {
                             <tr>
                                 <th class="sortable" data-column="0" width="2%" style="text-align: center;">No.</th>
                                 <th class="sortable" data-column="1" width="6%" style="text-align: center;">Employee ID</th>
-                                <th class="sortable" data-column="2" width="8%" style="text-align: center;">Employee Name</th>
+                                <th class="sortable" data-column="2" width="10%" style="text-align: center;">Employee Name</th>
                                 <th class="sortable" data-column="3" width="6%" style="text-align: center;">Leave Type</th>
                                 <th class="sortable" data-column="4" width="6%" style="text-align: center;">No. of Days</th>
-                                <th class="sortable" data-column="5" width="5%" style="text-align: center;">From</th>
-                                <th class="sortable" data-column="6" width="5%" style="text-align: center;">To</th>
+                                <th class="sortable" data-column="5" width="6%" style="text-align: center;">From</th>
+                                <th class="sortable" data-column="6" width="6%" style="text-align: center;">To</th>
                                 <th class="sortable" data-column="7" style="text-align: center;">Reason</th>
                                 <th class="sortable" data-column="8" width="7%" style="text-align: center;">Date Applied</th>
-                                <th class="sortable" data-column="9" width="6%" style="text-align: center;">Status</th>
+                                <th class="sortable" data-column="9" width="7%" style="text-align: center;">Status</th>
                                 <th class="sortable" data-column="10" style="text-align: center;">HR Remarks</th>
                                 <th class="sortable" data-column="11" style="text-align: center;">Approver Remarks</th>
                                 <th width="6%" style="text-align: center;">Action</th>
@@ -423,19 +425,23 @@ th.sortable.desc::after {
                                 }
                                 ?>
                                 <tr class="<?= $rowClass ?>">
-                                    <td align="center"><?= $x++; ?>.</td>
-                                    <td align="center"><?= $emp['idno']; ?></td>
-                                    <td align="center"><?= $emp['lastname'] . ', ' . $emp['firstname']; ?></td>
-                                    <td align="center"><?= $emp['leavetype']?></td>
-                                    <td align="center"><?= $emp['numberofdays']?></td>
-                                    <td align="center"><?= date('m/d/Y', strtotime($emp['dayfrom'])); ?></td>
-                                    <td align="center"><?= date('m/d/Y', strtotime($emp['dayto'])); ?></td>
-                                    <td align='left'><?= $emp['reason'] ?></td>
-                                    <td align='left'><?= date('m/d/Y', strtotime($emp['datearray'])) ?></td>
-                                    <td align='left'><?= $emp['appstatus'] ?></td>
-                                    <td align='left'><?=$emp['remarks'];?></td>
-                                    <td align='left'><?=$emp['approver_remarks'];?></td>
-                                    <td align="center">
+                                <td style="text-align: center; vertical-align: middle;"><?= $x++; ?>.</td>
+                                    <td style="text-align: center; vertical-align: middle;"><?= $emp['idno']; ?></td>
+                                    <td style="text-align: center; vertical-align: middle;">
+                                        <span style="font-weight: bold; font-size: 1.1em;"><?=$emp['lastname'];?></span>, <?=$emp['firstname'];?>
+                                    </td>
+                                    <td style="text-align: center; vertical-align: middle;"><?= $emp['leavetype']?></td>
+                                    <td style="text-align: center; vertical-align: middle;"><?= $emp['numberofdays']?></td>
+                                    <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['dayfrom'])); ?></td>
+                                    <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['dayto'])); ?></td>
+                                    <td style="text-align: justify; vertical-align: middle;"><?= $emp['reason'] ?></td>
+                                    <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['datearray'])) ?></td>
+                                    <td style="text-align: center; vertical-align: middle;"><?= $emp['appstatus'] ?></td>
+                                    <td style="text-align: <?= ($emp['remarks'] == 'POSTED') ? 'center' : 'justify'; ?>; vertical-align: middle;">
+                                        <?=$emp['remarks'];?>
+                                    </td>
+                                    <td style="text-align: justify; vertical-align: middle;"><?=$emp['approver_remarks'];?></td>
+                                    <td style="text-align: center; vertical-align: middle;">
                                     <?php if (strpos($emp['remarks'], 'POSTED') === false && strpos($emp['appstatus'], '*Approved') === false && strpos($emp['appstatus'], '*Disapproved') === false): ?>
                                         <?php 
                                         // Check if the application status is neither 'Cancelled' nor 'Pending'
@@ -465,7 +471,7 @@ th.sortable.desc::after {
                                         <a href="?leaveapplication&addremarks&id=<?=$emp['laid'];?>&remarks=<?=$emp['remarks'];?>" 
                                         class="btn btn-primary btn-xs"
                                         title="Remarks">
-                                            <i class='fa fa-edit'></i>
+                                            <i class='fa fa-comment'></i>
                                         </a>
                                 </td>
                                 </tr>

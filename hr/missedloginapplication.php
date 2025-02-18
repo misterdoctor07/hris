@@ -173,7 +173,9 @@ if (!$sqlCompanies) {
                     // Fetch unique departments for the company
                     $sqlDepartments = mysqli_query($con, "SELECT DISTINCT d.department FROM employee_details ed
                         INNER JOIN department d ON d.id = ed.department
-                        WHERE ed.company = '$companyCode' ORDER BY d.department");
+                        AND ed.status != 'RESIGNED'
+                        WHERE ed.company = '$companyCode' 
+                        ORDER BY d.department");
 
                     echo "<ul class='nav nav-pills' style='margin-top: 10px;'>";
                     $deptActive = 'active';
@@ -256,7 +258,7 @@ if (!$sqlCompanies) {
                             <tr>
                                 <th class="sortable" data-column="0" width="2%" style="text-align: center;">No.</th>
                                 <th class="sortable" data-column="1" width="6%" style="text-align: center;">Employee ID</th>
-                                <th class="sortable" data-column="2" width="7%" style="text-align: center;">Employee Name</th>
+                                <th class="sortable" data-column="2" width="10%" style="text-align: center;">Employee Name</th>
                                 <th class="sortable" data-column="3" width="5%" style="text-align: center;">Department</th>
                                 <th class="sortable" data-column="4" width="5%" style="text-align: center;">Work Area</th>
                                 <th class="sortable" data-column="5" width="7%" style="text-align: center;">Date of Missed Time IN/OUT</th>
@@ -296,21 +298,25 @@ if (!$sqlCompanies) {
                                         }
                                         ?>
                                         <tr class="<?= $rowClass ?>">
-                                            <td align='center'><?= $x++; ?>.</td>
-                                            <td align='center'><?= $emp['idno']; ?></td>
-                                            <td align='center'><?= $emp['lastname'] . ', ' . $emp['firstname']; ?></td>
-                                            <td align='center'><?= $emp['department']?></td>
-                                            <td align='center'><?= $emp['location']?></td>
-                                            <td align='center'><?= date('m/d/Y', strtotime($emp['datemissed'])); ?></td>
-                                            <td align='center'><?= $emp['incident'] ?></td>
-                                            <td align='center'><?= date("g:i A", strtotime($emp['mttime'])); ?></td>
-                                            <td align='left'><?= $emp['reason'] ?></td>
-                                            <td align='center'><?= date('m/d/Y', strtotime($emp['date_applied'])) . " " . date('g:i:s A', strtotime($emp['time_applied'])); ?></td>
-                                            <td align='center'><?= $emp['applic_status'] ?></td>
-                                            <td align='left'><?= $emp['remarks'] ?></td>
-                                            <td align='left'><?= $emp['monitoring_remarks'] ?></td>
-                                            <td align='left'><?= $emp['approver_remarks'] ?></td>
-                                            <td align="center">
+                                            <td style="text-align: center; vertical-align: middle;"><?= $x++; ?>.</td>
+                                            <td style="text-align: center; vertical-align: middle;"><?= $emp['idno']; ?></td>
+                                            <td style="text-align: center; vertical-align: middle;">
+                                                <span style="font-weight: bold; font-size: 1.1em;"><?=$emp['lastname'];?></span>, <?=$emp['firstname'];?>
+                                            </td>
+                                            <td style="text-align: center; vertical-align: middle;"><?= $emp['department']?></td>
+                                            <td style="text-align: center; vertical-align: middle;"><?= $emp['location']?></td>
+                                            <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['datemissed'])); ?></td>
+                                            <td style="text-align: center; vertical-align: middle;"><?= $emp['incident'] ?></td>
+                                            <td style="text-align: center; vertical-align: middle;"><?= date("g:i A", strtotime($emp['mttime'])); ?></td>
+                                            <td style="text-align: justify; vertical-align: middle;"><?= $emp['reason'] ?></td>
+                                            <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['date_applied'])) . "<br>" . date('g:i A', strtotime($emp['time_applied'])); ?></td>
+                                            <td style="text-align: center; vertical-align: middle;"><?= $emp['applic_status'] ?></td>
+                                            <td style="text-align: justify; vertical-align: middle;"><?= $emp['remarks'] ?></td>
+                                            <td style="text-align: <?= ($emp['monitoring_remarks'] == 'verified') ? 'center' : 'justify'; ?>; vertical-align: middle;">
+                                                <?=$emp['monitoring_remarks'];?>
+                                            </td>
+                                            <td style="text-align: justify; vertical-align: middle;"><?= $emp['approver_remarks'] ?></td>
+                                            <td style="text-align: center; vertical-align: middle;">
                                                 <?php if (strpos($emp['applic_status'], '*Approved') === false && strpos($emp['applic_status'], '*Disapproved') === false): ?>
                                                     <?php if ($emp['applic_status'] != 'Cancelled' && $emp['applic_status'] != 'Pending'): ?>
                                                         <a href="?missedloginapplication&done&id=<?= $emp['mlid']; ?>&remarks=<?= $emp['remarks']; ?>" 
@@ -323,7 +329,7 @@ if (!$sqlCompanies) {
                                                 <a href="?missedloginapplication&addremarks&id=<?= $emp['mlid']; ?>&remarks=<?= $emp['remarks']; ?>" 
                                                     class="btn btn-primary btn-xs"
                                                     title="Remarks">
-                                                    <i class='fa fa-edit'></i>
+                                                    <i class='fa fa-comment'></i>
                                                 </a>
                                             </td>
                                         </tr>

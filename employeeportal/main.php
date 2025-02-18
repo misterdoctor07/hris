@@ -152,15 +152,48 @@
             $ptoused=$leave['ptoused']??0;
             $bday=$leave['bdayleave']??0;
             $bdayused=$leave['blp_used']??0;
-            $earlyout=$leave['earlyout']??0;
-            $eo_used=$leave['eo_used']??0;
+            $jan_earlyout=$leave['jan_earlyout']??0;
+            $jan_eo_used=$leave['jan_eo_used']??0;
+            $feb_earlyout=$leave['feb_earlyout']??0;
+            $feb_eo_used=$leave['feb_eo_used']??0;
+            $mar_earlyout=$leave['mar_earlyout']??0;
+            $mar_eo_used=$leave['mar_eo_used']??0;
+            $apr_earlyout=$leave['apr_earlyout']??0;
+            $apr_eo_used=$leave['apr_eo_used']??0;
+            $may_earlyout=$leave['may_earlyout']??0;
+            $may_eo_used=$leave['may_eo_used']??0;
+            $jun_earlyout=$leave['jun_earlyout']??0;
+            $jun_eo_used=$leave['jun_eo_used']??0;
+            $jul_earlyout=$leave['jul_earlyout']??0;
+            $jul_eo_used=$leave['jul_eo_used']??0;
+            $aug_earlyout=$leave['aug_earlyout']??0;
+            $aug_eo_used=$leave['aug_eo_used']??0;
+            $sep_earlyout=$leave['sep_earlyout']??0;
+            $sep_eo_used=$leave['sep_eo_used']??0;
+            $oct_earlyout=$leave['oct_earlyout']??0;
+            $oct_eo_used=$leave['oct_eo_used']??0;
+            $nov_earlyout=$leave['nov_earlyout']??0;
+            $nov_eo_used=$leave['nov_eo_used']??0;
+            $dec_earlyout=$leave['dec_earlyout']??0;
+            $dec_eo_used=$leave['dec_eo_used']??0;
             $spl=$leave['spl']??0;
             $splused=$leave['spl_used']??0;
             $vlrem=$vl-$vlused;
             $slrem=$sl-$slused;
             $ptorem=$pto-$ptoused;
             $blprem=$bday-$bdayused;
-            $eorem=$earlyout-$eo_used;
+            $jan_eorem=$jan_earlyout-$jan_eo_used;
+            $feb_eorem=$feb_earlyout-$feb_eo_used;
+            $mar_eorem=$mar_earlyout-$mar_eo_used;
+            $apr_eorem=$apr_earlyout-$apr_eo_used;
+            $may_eorem=$may_earlyout-$may_eo_used;
+            $jun_eorem=$jun_earlyout-$jun_eo_used;
+            $jul_eorem=$jul_earlyout-$jul_eo_used;
+            $aug_eorem=$aug_earlyout-$aug_eo_used;
+            $sep_eorem=$sep_earlyout-$sep_eo_used;
+            $oct_eorem=$oct_earlyout-$oct_eo_used;
+            $nov_eorem=$nov_earlyout-$nov_eo_used;
+            $dec_eorem=$dec_earlyout-$dec_eo_used;
             $splrem=$spl-$splused;
           }else{
             $vl="";
@@ -171,8 +204,30 @@
             $ptoused="";
             $bday="";
             $bdayused="";
-            $earlyout="";
-            $eo_used="";
+            $jan_earlyout="";
+            $jan_eo_used="";
+            $feb_earlyout="";
+            $feb_eo_used="";
+            $mar_earlyout="";
+            $mar_eo_used="";
+            $apr_earlyout="";
+            $apr_eo_used="";
+            $may_earlyout="";
+            $may_eo_used="";
+            $jun_earlyout="";
+            $jun_eo_used="";
+            $jul_earlyout="";
+            $jul_eo_used="";
+            $aug_earlyout="";
+            $aug_eo_used="";
+            $sep_earlyout="";
+            $sep_eo_used="";
+            $oct_earlyout="";
+            $oct_eo_used="";
+            $nov_earlyout="";
+            $nov_eo_used="";
+            $dec_earlyout="";
+            $dec_eo_used="";
             $vlrem="";
             $slrem="";
             $ptorem="";
@@ -714,25 +769,46 @@ $breakdown_html .= "</ul>";
                             </table>
                         </div>
                       </div>
+                      <?php
+                      // Get the current month in lowercase (e.g., "feb" for February)
+                      $currentMonth = strtolower(date("M"));
+                      ?>
+  
                       <div class="col-md-4 detailed" style="margin-top:10px">
-                        <h4>EO Credits</h4>
-                        <div class="col-lg-12">
-                            <table width="100%">
-                                <tr>
-                                    <td width="50%">Credits:</td>
-                                    <td><?=$earlyout;?></td>
-                                </tr>
-                                <tr>
-                                    <td width="30%">Used:</td>
-                                    <td><?=$eo_used;?></td>
-                                </tr>
-                                <tr>
-                                    <td width="30%">Remaining:</td>
-                                    <td><?=$eorem;?></td>
-                                </tr>
-                            </table>
-                        </div>
-                        
+                          <h4 style="display: inline-block; margin-right: 10px;">EO Credits</h4>
+          
+                          <!-- Dropdown for Month Selection -->
+                          <select id="monthSelect" class="form-control" style="display: inline-block; height: auto; width: auto; color: #68c3ab; padding: 0; margin: 0 auto;" onchange="updateEOCredits()">
+                              <option value="jan" <?= ($currentMonth == "jan") ? "selected" : ""; ?>>January</option>
+                              <option value="feb" <?= ($currentMonth == "feb") ? "selected" : ""; ?>>February</option>
+                              <option value="mar" <?= ($currentMonth == "mar") ? "selected" : ""; ?>>March</option>
+                              <option value="apr" <?= ($currentMonth == "apr") ? "selected" : ""; ?>>April</option>
+                              <option value="may" <?= ($currentMonth == "may") ? "selected" : ""; ?>>May</option>
+                              <option value="jun" <?= ($currentMonth == "jun") ? "selected" : ""; ?>>June</option>
+                              <option value="jul" <?= ($currentMonth == "jul") ? "selected" : ""; ?>>July</option>
+                              <option value="aug" <?= ($currentMonth == "aug") ? "selected" : ""; ?>>August</option>
+                              <option value="sep" <?= ($currentMonth == "sep") ? "selected" : ""; ?>>September</option>
+                              <option value="oct" <?= ($currentMonth == "oct") ? "selected" : ""; ?>>October</option>
+                              <option value="nov" <?= ($currentMonth == "nov") ? "selected" : ""; ?>>November</option>
+                              <option value="dec" <?= ($currentMonth == "dec") ? "selected" : ""; ?>>December</option>
+                          </select>
+          
+                          <div class="col-lg-12">
+                              <table width="100%" id="eoTable">
+                                  <tr>
+                                      <td width="50%">Credits:</td>
+                                      <td id="eoCredits"><?=$jan_earlyout;?></td> 
+                                  </tr>
+                                  <tr>
+                                      <td width="30%">Used:</td>
+                                      <td id="eoUsed"><?=$jan_eo_used;?></td> 
+                                  </tr>
+                                  <tr>
+                                      <td width="30%">Remaining:</td>
+                                      <td id="eoRemaining"><?=$jan_eorem;?></td> 
+                                  </tr>
+                              </table>
+                          </div>
                       </div>
                       <div class="col-md-4 detailed" style="margin-top:10px">
                         <h4>SPL CREDITS</h4>
@@ -769,3 +845,104 @@ $breakdown_html .= "</ul>";
             </div>
             <!-- /col-lg-12 -->
           </div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    updateEOCredits(); // Load data for the default month on page load
+});
+
+function updateEOCredits() {
+    var selectedMonth = document.getElementById("monthSelect").value;
+
+    // Fetch data dynamically using AJAX
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "fetch_eo_credits.php?month=" + selectedMonth, true);
+    xhr.onload = function() {
+        if (xhr.status == 200) {
+            var data = JSON.parse(xhr.responseText);
+            document.getElementById("eoCredits").innerText = data.credits;
+            document.getElementById("eoUsed").innerText = data.used;
+            document.getElementById("eoRemaining").innerText = data.remaining;
+        }
+    };
+    xhr.send();
+}
+// JavaScript function to update the values based on the selected month
+function updateEOCredits() {
+    var selectedMonth = document.getElementById('monthSelect').value;
+
+    // Define the month values for earlyout, used, and remaining
+    var eoCredits, eoUsed, eoRemaining;
+
+    switch(selectedMonth) {
+        case "jan":
+            eoCredits = <?=$jan_earlyout;?>;
+            eoUsed = <?=$jan_eo_used;?>;
+            eoRemaining = <?=$jan_eorem;?>;
+            break;
+        case "feb":
+            eoCredits = <?=$feb_earlyout;?>;
+            eoUsed = <?=$feb_eo_used;?>;
+            eoRemaining = <?=$feb_eorem;?>;
+            break;
+        case "mar":
+            eoCredits = <?=$mar_earlyout;?>;
+            eoUsed = <?=$mar_eo_used;?>;
+            eoRemaining = <?=$mar_eorem;?>;
+            break;
+        case "apr":
+            eoCredits = <?=$apr_earlyout;?>;
+            eoUsed = <?=$apr_eo_used;?>;
+            eoRemaining = <?=$apr_eorem;?>;
+            break;
+        case "may":
+            eoCredits = <?=$may_earlyout;?>;
+            eoUsed = <?=$may_eo_used;?>;
+            eoRemaining = <?=$may_eorem;?>;
+            break;
+        case "jun":
+            eoCredits = <?=$jun_earlyout;?>;
+            eoUsed = <?=$jun_eo_used;?>;
+            eoRemaining = <?=$jun_eorem;?>;
+            break;
+        case "jul":
+            eoCredits = <?=$jul_earlyout;?>;
+            eoUsed = <?=$jul_eo_used;?>;
+            eoRemaining = <?=$jul_eorem;?>;
+            break;
+        case "aug":
+            eoCredits = <?=$aug_earlyout;?>;
+            eoUsed = <?=$aug_eo_used;?>;
+            eoRemaining = <?=$aug_eorem;?>;
+            break;
+        case "sep":
+            eoCredits = <?=$sep_earlyout;?>;
+            eoUsed = <?=$sep_eo_used;?>;
+            eoRemaining = <?=$sep_eorem;?>;
+            break;
+        case "oct":
+            eoCredits = <?=$oct_earlyout;?>;
+            eoUsed = <?=$oct_eo_used;?>;
+            eoRemaining = <?=$oct_eorem;?>;
+            break;
+        case "nov":
+            eoCredits = <?=$nov_earlyout;?>;
+            eoUsed = <?=$nov_eo_used;?>;
+            eoRemaining = <?=$nov_eorem;?>;
+            break;
+        case "dec":
+            eoCredits = <?=$dec_earlyout;?>;
+            eoUsed = <?=$dec_eo_used;?>;
+            eoRemaining = <?=$dec_eorem;?>;
+            break;
+        // Add other months here if needed
+        default:
+    }
+
+    // Update the table with the selected month's values
+    document.getElementById('eoCredits').innerText = eoCredits;
+    document.getElementById('eoUsed').innerText = eoUsed;
+    document.getElementById('eoRemaining').innerText = eoRemaining;
+}
+</script>

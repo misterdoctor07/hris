@@ -174,14 +174,14 @@ date_default_timezone_set("Asia/Manila");
                     <span class="badge" style="color: white; background-color: red;"><?php echo $leave_count; ?></span>
                   <?php } ?>
                 </a></li>
-                <li><a href="?overtimeapplication">Overtime Applications
-                  <?php if ($overtime_count > 0) { ?>
-                    <span class="badge" style="color:white; background-color:red;"><?php echo $overtime_count; ?></span>
-                  <?php } ?>
-                </a></li>
                 <li><a href="?missedloginapplication">Missed Log Application
                   <?php if ($missedlog_count > 0) { ?>
                     <span class="badge" style="color:white; background-color:red;"><?php echo $missedlog_count; ?></span>
+                  <?php } ?>
+                </a></li>
+                <li><a href="?overtimeapplication">Overtime Applications
+                  <?php if ($overtime_count > 0) { ?>
+                    <span class="badge" style="color:white; background-color:red;"><?php echo $overtime_count; ?></span>
                   <?php } ?>
                 </a></li>
                 <li><a href="?EEOapplication">EEO Applications

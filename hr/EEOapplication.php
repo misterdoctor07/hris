@@ -229,7 +229,9 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                     // Fetch unique departments for the company
                     $sqlDepartments = mysqli_query($con, "SELECT DISTINCT d.department FROM employee_details ed
                         INNER JOIN department d ON d.id = ed.department
-                        WHERE ed.company = '$companyCode' ORDER BY d.department");
+                        WHERE ed.company = '$companyCode' 
+                        AND ed.status != 'RESIGNED'
+                        ORDER BY d.department");
 
                     echo "<ul class='nav nav-pills' style='margin-top: 10px;'>";
                     $deptActive = 'active';

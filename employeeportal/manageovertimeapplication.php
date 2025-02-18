@@ -102,8 +102,8 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                     <tr>
                         <th width="2%" style="text-align: center;">No.</th>
                         <th width="6%" style="text-align: center;">Employee ID</th>
-                        <th width="8%" style="text-align: center;">Employee Name</th>
-                        <th width="5%" style="text-align: center;">OT Date</th>
+                        <th width="10%" style="text-align: center;">Employee Name</th>
+                        <th width="6%" style="text-align: center;">OT Date</th>
                         <th width="5%" style="text-align: center;">OT Time</th>
                         <th style="text-align: center;">Reason</th>
                         <th width="9%" style="text-align: center;">Date/Time Applied</th>
@@ -241,22 +241,26 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                                 echo "<tr $style>";
                                 echo "<td align='center'>$x.</td>";
                                 echo "<td align='center'>{$company['idno']}</td>";
-                                echo "<td align='center'>{$company['lastname']}, {$company['firstname']}</td>";
-                                echo "<td align='center'>" . date('m/d/Y', strtotime($company['otdate'])) . "</td>";
-                                echo "<td align='center'>{$company['ottime']}</td>";
+                                echo "<td align='center'>
+                                        <span style='font-weight: bold; font-size: 1.1em;'>{$company['lastname']}</span>, {$company['firstname']}
+                                    </td>";
+                                echo "<td align='center'>" . date('M j, Y', strtotime($company['otdate'])) . "</td>";
+                                echo "<td align='center'>" . date("g:i A", strtotime($company['ottime'])) . "</td>";
                                 echo "<td align='left'>{$company['reasons']}</td>";
-                                echo "<td align='center'>{$company['datearray']} {$company['timearray']}</td>";
+                                echo "<td align='center'>" . date('M j, Y', strtotime($company['datearray'])) . "<br>" . date('g:i:s A', strtotime($company['timearray'])) . "</td>";
                                 echo "<td align='center'>$statusText</td>";
                                 echo "<td align='left'>{$company['hr_remarks']}</td>";
                                 echo "<td align='left'>{$company['approver_remarks']}</td>";
                                 echo "<td align='center'>";
-                                        if ($appStatus == "Pending" || $appStatus == 'Çancelled') {
-                                            echo "<a href='?manageovertimeapplication&id={$company['otid']}&approved' class='btn btn-success btn-xs' title='Approve' onclick=\"return confirm('Do you wish to approve this overtime application?'); return false;\"><i class='fa fa-thumbs-up'></i></a>";
-                                            echo "<a href='?manageovertimeapplication&id={$company['otid']}&disapproved' class='btn btn-danger btn-xs' title='Disapprove' onclick=\"return confirm('Do you wish to disapprove this overtime application?'); return false;\"><i class='fa fa-thumbs-down'></i></a>";
-                                            echo "<a href='?manageovertimeapplication&addremarks&id={$company['otid']}&approver_remarks' class='btn btn-primary btn-xs' title='Remarks');\"><i class='fa fa-comment'></i></a>";
-                                        } else {
-                                            echo "<a href='?manageovertimeapplication&id={$company['otid']}&undo' class='btn btn-warning btn-xs' title='Undo Action' onclick=\"return confirm('Do you wish to undo the action taken?'); return false;\"><i class='fa fa-rotate-left'></i></a>";
-                                        }
+                                    if ($appStatus == "Pending" || $appStatus == "Cancelled") {
+                                        echo "<a href='?manageovertimeapplication&id={$company['otid']}&approved' class='btn btn-success btn-xs' title='Approve' onclick=\"return confirm('Do you wish to approve this overtime application?'); return false;\"><i class='fa fa-thumbs-up'></i></a>&nbsp;";
+                                        
+                                        echo "<a href='?manageovertimeapplication&id={$company['otid']}&disapproved' class='btn btn-danger btn-xs' title='Disapprove' onclick=\"return confirm('Do you wish to disapprove this overtime application?'); return false;\"><i class='fa fa-thumbs-down'></i></a>&nbsp;";
+                                        
+                                        echo "<a href='?manageovertimeapplication&addremarks&id={$company['otid']}&approver_remarks' class='btn btn-primary btn-xs' title='Remarks'><i class='fa fa-comment'></i></a>";
+                                    } else {
+                                        echo "<a href='?manageovertimeapplication&id={$company['otid']}&undo' class='btn btn-warning btn-xs' title='Undo Action' onclick=\"return confirm('Do you wish to undo the action taken?'); return false;\"><i class='fa fa-rotate-left'></i></a>";
+                                    }                                
                                 echo "</td>";
                                 echo "</tr>";
                                 $x++;
