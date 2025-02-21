@@ -100,17 +100,17 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
             <table class="table table-bordered table-striped table-condensed" id="hidden-table-info">
                 <thead>
                     <tr>
-                        <th width="2%" style="text-align: center;">No.</th>
-                        <th width="6%" style="text-align: center;">Employee ID</th>
-                        <th width="10%" style="text-align: center;">Employee Name</th>
-                        <th width="6%" style="text-align: center;">OT Date</th>
-                        <th width="5%" style="text-align: center;">OT Time</th>
-                        <th style="text-align: center;">Reason</th>
-                        <th width="9%" style="text-align: center;">Date/Time Applied</th>
-                        <th width="9%" style="text-align: center;">Status</th>
-                        <th style="text-align: center;">HR's Remarks</th>
-                        <th style="text-align: center;">Approver's Remarks</th>
-                        <th width="6%" style="text-align: center;">Action</th>
+                        <th width="2%" style="text-align: center; background-color:#20273a; color: white;">No.</th>
+                        <th width="6%" style="text-align: center; background-color:#20273a; color: white;">Employee ID</th>
+                        <th width="10%" style="text-align: center; background-color:#20273a; color: white;">Employee Name</th>
+                        <th width="6%" style="text-align: center; background-color:#20273a; color: white;">OT Date</th>
+                        <th width="5%" style="text-align: center; background-color:#20273a; color: white;">OT Time</th>
+                        <th style="text-align: center; background-color:#20273a; color: white;">Reason</th>
+                        <th width="9%" style="text-align: center; background-color:#20273a; color: white;">Date/Time Applied</th>
+                        <th width="9%" style="text-align: center; background-color:#20273a; color: white;">Status</th>
+                        <th style="text-align: center; background-color:#20273a; color: white;">HR's Remarks</th>
+                        <th style="text-align: center; background-color:#20273a; color: white;">Approver's Remarks</th>
+                        <th width="6%" style="text-align: center; background-color:#20273a; color: white;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -239,19 +239,21 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                     }
 
                                 echo "<tr $style>";
-                                echo "<td align='center'>$x.</td>";
-                                echo "<td align='center'>{$company['idno']}</td>";
-                                echo "<td align='center'>
+                                echo "<td style='text-align: center; vertical-align: middle'>$x.</td>";
+                                echo "<td style='text-align: center; vertical-align: middle'>{$company['idno']}</td>";
+                                echo "<td style='text-align: justify; vertical-align: middle'>
                                         <span style='font-weight: bold; font-size: 1.1em;'>{$company['lastname']}</span>, {$company['firstname']}
                                     </td>";
-                                echo "<td align='center'>" . date('M j, Y', strtotime($company['otdate'])) . "</td>";
-                                echo "<td align='center'>" . date("g:i A", strtotime($company['ottime'])) . "</td>";
-                                echo "<td align='left'>{$company['reasons']}</td>";
-                                echo "<td align='center'>" . date('M j, Y', strtotime($company['datearray'])) . "<br>" . date('g:i:s A', strtotime($company['timearray'])) . "</td>";
-                                echo "<td align='center'>$statusText</td>";
-                                echo "<td align='left'>{$company['hr_remarks']}</td>";
-                                echo "<td align='left'>{$company['approver_remarks']}</td>";
-                                echo "<td align='center'>";
+                                echo "<td style='text-align: center; vertical-align: middle'>" . date('M j, Y', strtotime($company['otdate'])) . "</td>";
+                                echo "<td style='text-align: center; vertical-align: middle'>" . date("g:i A", strtotime($company['ottime'])) . "</td>";
+                                echo "<td style='text-align: justify; vertical-align: middle'>{$company['reasons']}</td>";
+                                echo "<td style='text-align: center; vertical-align: middle'>" . date('M j, Y', strtotime($company['datearray'])) . "<br>" . date('g:i:s A', strtotime($company['timearray'])) . "</td>";
+                                echo "<td style='text-align: center; vertical-align: middle'>$statusText</td>";
+                                echo "<td style='text-align: " . (($company['hr_remarks'] == 'POSTED') ? 'center' : 'justify') . "; vertical-align: middle;'>
+                                        {$company['hr_remarks']}
+                                    </td>";
+                                echo "<td style='text-align: justify; vertical-align: middle'>{$company['approver_remarks']}</td>";
+                                echo "<td style='text-align: center; vertical-align: middle'>";
                                     if ($appStatus == "Pending" || $appStatus == "Cancelled") {
                                         echo "<a href='?manageovertimeapplication&id={$company['otid']}&approved' class='btn btn-success btn-xs' title='Approve' onclick=\"return confirm('Do you wish to approve this overtime application?'); return false;\"><i class='fa fa-thumbs-up'></i></a>&nbsp;";
                                         

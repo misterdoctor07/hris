@@ -109,19 +109,19 @@ if (isset($_GET['disapproved']) && isset($_GET['id'])) {
             <table class="table table-bordered table-striped table-condensed" id="hidden-table-info">
                 <thead>
                     <tr>
-                        <th width="2%" style="text-align: center;">No.</th>
-                        <th width="6%" style="text-align: center;">Employee ID</th>
-                        <th width="7%" style="text-align: center;">Employee Name</th>
-                        <th width="5%" style="text-align: center;">Department</th>
-                        <th width="7%" style="text-align: center;">Type of EEO</th>
-                        <th width="7%" style="text-align: center;">Date of EEO</th>
-                        <th width="7%" style="text-align: center;">Time of EEO</th>
-                        <th style="text-align: center;">Reason</th>
-                        <th width="10%" style="text-align: center;">Date and Time Applied</th>
-                        <th width="10%" style="text-align: center;">Status</th>
-                        <th style="text-align: center;">Approver's Remarks</th>
-                        <th width="9%" style="text-align: center;">Acknowledged by:</th>
-                        <th width="6%" style="text-align: center;">Action</th>
+                        <th width="2%" style="text-align: center; background-color:#20273a; color: white;">No.</th>
+                        <th width="6%" style="text-align: center; background-color:#20273a; color: white;">Employee ID</th>
+                        <th width="7%" style="text-align: center; background-color:#20273a; color: white;">Employee Name</th>
+                        <th width="5%" style="text-align: center; background-color:#20273a; color: white;">Department</th>
+                        <th width="7%" style="text-align: center; background-color:#20273a; color: white;">Type of EEO</th>
+                        <th width="7%" style="text-align: center; background-color:#20273a; color: white;">Date of EEO</th>
+                        <th width="7%" style="text-align: center; background-color:#20273a; color: white;">Time of EEO</th>
+                        <th style="text-align: center; background-color:#20273a; color: white;">Reason</th>
+                        <th width="10%" style="text-align: center; background-color:#20273a; color: white;">Date and Time Applied</th>
+                        <th width="10%" style="text-align: center; background-color:#20273a; color: white;">Status</th>
+                        <th width="10%" style="text-align: center; background-color:#20273a; color: white;">Approver's Remarks</th>
+                        <th width="9%" style="text-align: center; background-color:#20273a; color: white;">Acknowledged by:</th>
+                        <th width="6%" style="text-align: center; background-color:#20273a; color: white;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -231,22 +231,22 @@ if (isset($_GET['disapproved']) && isset($_GET['id'])) {
                             }
 
                                 echo "<tr $style>";
-                                echo "<td align='center'>$x.</td>";
-                                echo "<td align='center'>$idno</td>";
-                                echo "<td align='center'>{$company['lastname']}, {$company['firstname']}</td>";
-                                echo "<td align='center'>$department</td>"; 
-                                echo "<td align='left'>{$company['type_EEO']}</td>";
-                                echo "<td align='center'>" . date('m/d/Y', strtotime($company['dateEEO'])) . "</td>";
-                                echo "<td align='center'>" . date("g:i A", strtotime($company['timeEEO'])) . "</td>";
-                                echo "<td align='left'>{$company['reason']}</td>";
-                                echo "<td align='center'>" . date('m/d/Y', strtotime($company['date_applied'])) . "<br>" . date('g:i:s A', strtotime($company['time_applied'])) . "</td>";
-                                echo "<td align='center'>$statusText</td>";
-                                echo "<td align='left'>{$company['approvers_remarks']}</td>";
-                                echo "<td align='left'>{$company['acknowledged']}</td>";
-                                echo "<td align='center'>";
-                                if ((strpos($status, 'Approved') !== false || strpos($status, 'Disapproved') !== false) && strpos($acknowledge, $approval) === false) {
-                                    echo "<a href='?manageEEOapplication&id={$company['eeoid']}&acknowledged' class='btn btn-success btn-xs' title='Acknowledge' onclick=\"return confirm('Do you wish to acknowledge this EEO application?');\"><i class='fa fa-thumbs-up'></i></a>&nbsp;";
-                                }
+                                echo "<td style='text-align: center; vertical-align: middle;'>$x.</td>";
+                                echo "<td style='text-align: center; vertical-align: middle;'>$idno</td>";
+                                echo "<td style='text-align: justify; vertical-align: middle;'>{$company['lastname']}, {$company['firstname']}</td>";
+                                echo "<td style='text-align: center; vertical-align: middle;'>$department</td>"; 
+                                echo "<td style='text-align: center; vertical-align: middle;'>{$company['type_EEO']}</td>";
+                                echo "<td style='text-align: center; vertical-align: middle;'>" . date('m/d/Y', strtotime($company['dateEEO'])) . "</td>";
+                                echo "<td style='text-align: center; vertical-align: middle;'>" . date("g:i A", strtotime($company['timeEEO'])) . "</td>";
+                                echo "<td style='text-align: justify; vertical-align: middle;'>{$company['reason']}</td>";
+                                echo "<td style='text-align: center; vertical-align: middle;'>" . date('m/d/Y', strtotime($company['date_applied'])) . "<br>" . date('g:i:s A', strtotime($company['time_applied'])) . "</td>";
+                                echo "<td style='text-align: center; vertical-align: middle;'>$statusText</td>";
+                                echo "<td style='text-align: justify; vertical-align: middle;'>{$company['approvers_remarks']}</td>";
+                                echo "<td style='text-align: justify; vertical-align: middle;'>{$company['acknowledged']}</td>";
+                                echo "<td style='text-align: center; vertical-align: middle;'>";
+                                    if ((strpos($status, 'Approved') !== false || strpos($status, 'Disapproved') !== false) && strpos($acknowledge, $approval) === false) {
+                                        echo "<a href='?manageEEOapplication&id={$company['eeoid']}&acknowledged' class='btn btn-success btn-xs' title='Acknowledge' onclick=\"return confirm('Do you wish to acknowledge this EEO application?');\"><i class='fa fa-thumbs-up'></i></a>&nbsp;";
+                                    }
                             
                                 echo "</td>";
                                 echo "</tr>";

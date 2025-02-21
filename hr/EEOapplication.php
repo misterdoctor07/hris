@@ -310,18 +310,18 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                     <table class="table table-bordered table-striped table-condensed">
                         <thead>
                             <tr>
-                                <th width="2%" style="text-align: center;">No.</th>
-                                <th width="6%" style="text-align: center;">Employee ID</th>
-                                <th width="7%" style="text-align: center;">Employee Name</th>
-                                <th width="5%" style="text-align: center;">Type of EEO</th>
-                                <th width="7%" style="text-align: center;">Date of EEO</th>
-                                <th width="5%" style="text-align: center;">Time of EEO</th>
-                                <th style="text-align: center;">Reason</th>
-                                <th width="10%" style="text-align: center;">Date and Time Applied</th>
-                                <th width="10%" style="text-align: center;">Status</th>
-                                <th width="15%"  style="text-align: center;">Approver's Remarks</th>
-                                <th width="10%"  style="text-align: center;">Acknowledged by:</th>
-                                <th width="6%" style="text-align: center;">Action</th>
+                                <th width="2%" style="text-align: center;  background-color:#20273a; color: white;">No.</th>
+                                <th width="6%" style="text-align: center;  background-color:#20273a; color: white;">Employee ID</th>
+                                <th width="7%" style="text-align: center;  background-color:#20273a; color: white;">Employee Name</th>
+                                <th width="5%" style="text-align: center;  background-color:#20273a; color: white;">Type of EEO</th>
+                                <th width="7%" style="text-align: center;  background-color:#20273a; color: white;">Date of EEO</th>
+                                <th width="5%" style="text-align: center;  background-color:#20273a; color: white;">Time of EEO</th>
+                                <th style="text-align: center;  background-color:#20273a; color: white;">Reason</th>
+                                <th width="10%" style="text-align: center;  background-color:#20273a; color: white;">Date and Time Applied</th>
+                                <th width="10%" style="text-align: center;  background-color:#20273a; color: white;">Status</th>
+                                <th width="15%"  style="text-align: center;  background-color:#20273a; color: white;">Approver's Remarks</th>
+                                <th width="10%"  style="text-align: center;  background-color:#20273a; color: white;">Acknowledged by:</th>
+                                <th width="6%" style="text-align: center;  background-color:#20273a; color: white;">Action</th>
                             </tr>
                         </thead>
                         <tbody>

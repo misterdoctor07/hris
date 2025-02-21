@@ -88,7 +88,7 @@
     color: #333;
     text-decoration: none;
 }
-
+/*Form Group for remarks modal*/
 /* Form Input and Button Styling */
 .form-group textarea {
     width: 100%;
@@ -101,7 +101,7 @@
     width: 100%;
     padding: 10px;
     border: none;
-    background-color: #007bff;
+    background-color: #3f4d6a;
     color: white;
     cursor: pointer;
     border-radius: 4px;
@@ -110,7 +110,7 @@
 
 /* Change button color on hover */
 .form-group input[type="submit"]:hover {
-    background-color: #0056b3;
+    background-color: #181e2e;
 }
 
 .badge-right {
@@ -131,94 +131,28 @@ th.sortable {
 }
 
 th.sortable.asc::after {
-    content: '↑'; /* Ascending arrow icon */
+    content: ''; 
     color: #000;
 }
 
 th.sortable.desc::after {
-    content: '↓'; /* Descending arrow icon */
+    content: '';
     color: #000;
 }
+/*Date Filter Button*/
+.filter-btn {
+    background-color: #3f4d6a;
+    color: white;
+    border: none;
+    padding: 7px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.filter-btn:hover {
+    background-color: #181e2e;
+}
 </style>
-<script>
-    function tablesToExcel() {
-        const dataType = 'application/vnd.ms-excel';
-        let tableHTML = '';
-
-        // Define filenames based on the outer tab index
-        const filenames = ['NESI1_Leave_Application_Report.xls', 'NESI2_Leave_Application_Report.xls', 'NEWIND_Leave_Application_Report.xls'];
-
-        // Get all outer tabs
-        const outerTabs = document.querySelectorAll('.nav-tabs li a');
-        let activeTabIndex = -1;
-
-        // Find the index of the active outer tab
-        outerTabs.forEach((tab, index) => {
-            if (tab.parentElement.classList.contains('active')) {
-                activeTabIndex = index; // Set the index of the active tab
-            }
-        });
-
-        // Set the filename based on the active tab index
-        const filename = (activeTabIndex >= 0 && activeTabIndex < filenames.length) ? filenames[activeTabIndex] : 'Leave_Application_Report.xls';
-
-        // Get the currently active outer tab
-        const activeOuterTab = outerTabs[activeTabIndex];
-        if (activeOuterTab) {
-            const outerTabHref = activeOuterTab.getAttribute('href'); // Get the href of the active outer tab
-            const activeOuterTabPane = document.querySelector(outerTabHref); // Get the corresponding tab pane
-
-            // Gather all inner tabs and their corresponding tables from the active outer tab pane
-            const innerTabs = activeOuterTabPane.querySelectorAll('.nav-pills li a');
-            innerTabs.forEach(innerTab => {
-                // Get the inner tab name and remove any trailing numbers
-                let innerTabName = innerTab.textContent.trim();
-                innerTabName = innerTabName.replace(/\s+\d+$/, ''); // Remove trailing space and number
-
-                const innerTabContent = document.querySelector(innerTab.getAttribute('href')); // Get the corresponding inner tab content
-
-                // Check if the inner tab content has a table
-                const table = innerTabContent.querySelector('table');
-                if (table) {
-                    // Add inner tab name as a header before the table
-                    tableHTML += `<h3>${innerTabName}</h3>`; // Add header for the table
-
-                    // Clone the table to modify it
-                    const clonedTable = table.cloneNode(true);
-                    
-                    // Add inline styles for borders
-                    clonedTable.style.borderCollapse = 'collapse'; // Collapse borders
-                    clonedTable.querySelectorAll('th, td').forEach(cell => {
-                        cell.style.border = '1px solid black'; // Add border to each cell
-                        cell.style.padding = '5px'; // Optional: Add padding for better spacing
-                    });
-
-                    tableHTML += clonedTable.outerHTML + '<br>'; // Append each table's HTML
-                }
-            });
-
-            // Create a download link
-            const downloadLink = document.createElement("a");
-            document.body.appendChild(downloadLink);
-
-            // Create a Blob with the combined table HTML
-            const blob = new Blob([tableHTML], {
-                type: dataType
-            });
-
-            // Create a URL for the Blob
-            const url = URL.createObjectURL(blob);
-            downloadLink.href = url;
-            downloadLink.download = filename; // Set the correct filename
-
-            // Trigger the download
-            downloadLink.click();
-
-            // Clean up
-            document.body.removeChild(downloadLink);
-        }
-    }
-</script>
 <?php
     // Fetch unique companies from the employee_details table
     $sqlCompanies = mysqli_query($con, "SELECT DISTINCT company FROM employee_details ORDER BY company");
@@ -246,7 +180,7 @@ th.sortable.desc::after {
                     <input type="date" id="fromDate" class="form-control" value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>" style="width: 150px;">
                     <label for="toDate">To:</label>
                     <input type="date" id="toDate" class="form-control" value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>" style="width: 150px;">
-                    <button type="button" onclick="filterByDate()" class="btn btn-primary">Filter</button>
+                    <button type="button" onclick="filterByDate()" class="filter-btn">Filter</button>
                     <button type="button" onclick="resetFilter()" class="btn btn-default">Reset</button>
                 </div>
 
@@ -387,19 +321,19 @@ th.sortable.desc::after {
                     <table class="table table-bordered table-striped table-condensed" id="attendanceTable">
                         <thead>
                             <tr>
-                                <th class="sortable" data-column="0" width="2%" style="text-align: center;">No.</th>
-                                <th class="sortable" data-column="1" width="6%" style="text-align: center;">Employee ID</th>
-                                <th class="sortable" data-column="2" width="10%" style="text-align: center;">Employee Name</th>
-                                <th class="sortable" data-column="3" width="6%" style="text-align: center;">Leave Type</th>
-                                <th class="sortable" data-column="4" width="6%" style="text-align: center;">No. of Days</th>
-                                <th class="sortable" data-column="5" width="6%" style="text-align: center;">From</th>
-                                <th class="sortable" data-column="6" width="6%" style="text-align: center;">To</th>
-                                <th class="sortable" data-column="7" style="text-align: center;">Reason</th>
-                                <th class="sortable" data-column="8" width="7%" style="text-align: center;">Date Applied</th>
-                                <th class="sortable" data-column="9" width="7%" style="text-align: center;">Status</th>
-                                <th class="sortable" data-column="10" style="text-align: center;">HR Remarks</th>
-                                <th class="sortable" data-column="11" style="text-align: center;">Approver Remarks</th>
-                                <th width="6%" style="text-align: center;">Action</th>
+                                <th class="sortable" data-column="0" width="2%" style="text-align: center;  background-color:#20273a; color: white;">No.</th>
+                                <th class="sortable" data-column="1" width="6%" style="text-align: center;  background-color:#20273a; color: white;">Employee ID</th>
+                                <th class="sortable" data-column="2" width="10%" style="text-align: center;  background-color:#20273a; color: white;">Employee Name</th>
+                                <th class="sortable" data-column="3" width="6%" style="text-align: center;  background-color:#20273a; color: white;">Leave Type</th>
+                                <th class="sortable" data-column="4" width="6%" style="text-align: center;  background-color:#20273a; color: white;">No. of Days</th>
+                                <th class="sortable" data-column="5" width="6%" style="text-align: center;  background-color:#20273a; color: white;">From</th>
+                                <th class="sortable" data-column="6" width="6%" style="text-align: center;  background-color:#20273a; color: white;">To</th>
+                                <th class="sortable" data-column="7" style="text-align: center;  background-color:#20273a; color: white;">Reason</th>
+                                <th class="sortable" data-column="8" width="7%" style="text-align: center;  background-color:#20273a; color: white;">Date Applied</th>
+                                <th class="sortable" data-column="9" width="7%" style="text-align: center;  background-color:#20273a; color: white;">Status</th>
+                                <th class="sortable" data-column="10" style="text-align: center;  background-color:#20273a; color: white;">HR Remarks</th>
+                                <th class="sortable" data-column="11" style="text-align: center;  background-color:#20273a; color: white;">Approver Remarks</th>
+                                <th width="6%" style="text-align: center;  background-color:#20273a; color: white;">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -425,55 +359,55 @@ th.sortable.desc::after {
                                 }
                                 ?>
                                 <tr class="<?= $rowClass ?>">
-                                <td style="text-align: center; vertical-align: middle;"><?= $x++; ?>.</td>
-                                    <td style="text-align: center; vertical-align: middle;"><?= $emp['idno']; ?></td>
-                                    <td style="text-align: center; vertical-align: middle;">
-                                        <span style="font-weight: bold; font-size: 1.1em;"><?=$emp['lastname'];?></span>, <?=$emp['firstname'];?>
-                                    </td>
-                                    <td style="text-align: center; vertical-align: middle;"><?= $emp['leavetype']?></td>
-                                    <td style="text-align: center; vertical-align: middle;"><?= $emp['numberofdays']?></td>
-                                    <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['dayfrom'])); ?></td>
-                                    <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['dayto'])); ?></td>
-                                    <td style="text-align: justify; vertical-align: middle;"><?= $emp['reason'] ?></td>
-                                    <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['datearray'])) ?></td>
-                                    <td style="text-align: center; vertical-align: middle;"><?= $emp['appstatus'] ?></td>
-                                    <td style="text-align: <?= ($emp['remarks'] == 'POSTED') ? 'center' : 'justify'; ?>; vertical-align: middle;">
-                                        <?=$emp['remarks'];?>
-                                    </td>
-                                    <td style="text-align: justify; vertical-align: middle;"><?=$emp['approver_remarks'];?></td>
-                                    <td style="text-align: center; vertical-align: middle;">
-                                    <?php if (strpos($emp['remarks'], 'POSTED') === false && strpos($emp['appstatus'], '*Approved') === false && strpos($emp['appstatus'], '*Disapproved') === false): ?>
-                                        <?php 
-                                        // Check if the application status is neither 'Cancelled' nor 'Pending'
-                                            if ($emp['appstatus'] != 'Cancelled' && $emp['appstatus'] != 'Pending') { 
-                                                // Check if the status contains "Disapproved - [Surname]"
-                                                if (strpos($emp['appstatus'], 'Disapproved') === false) {
-                                                    // Show the Post button only if "Disapproved" is NOT in the appstatus
+                                    <td style="text-align: center; vertical-align: middle;"><?= $x++; ?>.</td>
+                                        <td style="text-align: center; vertical-align: middle;"><?= $emp['idno']; ?></td>
+                                        <td style="text-align: center; vertical-align: middle;">
+                                            <span style="font-weight: bold; font-size: 1.1em;"><?=$emp['lastname'];?></span>, <?=$emp['firstname'];?>
+                                        </td>
+                                        <td style="text-align: center; vertical-align: middle;"><?= $emp['leavetype']?></td>
+                                        <td style="text-align: center; vertical-align: middle;"><?= $emp['numberofdays']?></td>
+                                        <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['dayfrom'])); ?></td>
+                                        <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['dayto'])); ?></td>
+                                        <td style="text-align: justify; vertical-align: middle;"><?= $emp['reason'] ?></td>
+                                        <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['datearray'])) ?></td>
+                                        <td style="text-align: center; vertical-align: middle;"><?= $emp['appstatus'] ?></td>
+                                        <td style="text-align: <?= ($emp['remarks'] == 'POSTED') ? 'center' : 'justify'; ?>; vertical-align: middle;">
+                                            <?=$emp['remarks'];?>
+                                        </td>
+                                        <td style="text-align: justify; vertical-align: middle;"><?=$emp['approver_remarks'];?></td>
+                                        <td style="text-align: center; vertical-align: middle;">
+                                        <?php if (strpos($emp['remarks'], 'POSTED') === false && strpos($emp['appstatus'], '*Approved') === false && strpos($emp['appstatus'], '*Disapproved') === false): ?>
+                                            <?php 
+                                            // Check if the application status is neither 'Cancelled' nor 'Pending'
+                                                if ($emp['appstatus'] != 'Cancelled' && $emp['appstatus'] != 'Pending') { 
+                                                    // Check if the status contains "Disapproved - [Surname]"
+                                                    if (strpos($emp['appstatus'], 'Disapproved') === false) {
+                                                        // Show the Post button only if "Disapproved" is NOT in the appstatus
+                                                        ?>
+                                                        <a href="?leaveapplication&post&id=<?=$emp['laid'];?>&remarks=<?=$emp['remarks'];?>" 
+                                                            class="btn btn-success btn-xs confirm-post" 
+                                                            title="Post">
+                                                            <i class='fa fa-upload'></i>
+                                                        </a>
+                                                        <?php
+                                                    }
                                                     ?>
-                                                    <a href="?leaveapplication&post&id=<?=$emp['laid'];?>&remarks=<?=$emp['remarks'];?>" 
-                                                        class="btn btn-success btn-xs confirm-post" 
-                                                        title="Post">
-                                                        <i class='fa fa-upload'></i>
-                                                    </a>
+                                                        <a href="?leaveapplication&done&id=<?= $emp['laid']; ?>&remarks=<?= $emp['remarks']; ?>" 
+                                                            class="btn btn-success btn-xs confirm-done" 
+                                                            title="Done">
+                                                            <i class='fa fa-check-square-o'></i>
+                                                        </a>
                                                     <?php
-                                                }
-                                                ?>
-                                                    <a href="?leaveapplication&done&id=<?= $emp['laid']; ?>&remarks=<?= $emp['remarks']; ?>" 
-                                                        class="btn btn-success btn-xs confirm-done" 
-                                                        title="Done">
-                                                        <i class='fa fa-check-square-o'></i>
-                                                    </a>
-                                                <?php
-                                            } 
-                                        ?>
-                                    <?php endif; ?>
-                                        <!-- Button for adding remarks -->
-                                        <a href="?leaveapplication&addremarks&id=<?=$emp['laid'];?>&remarks=<?=$emp['remarks'];?>" 
-                                        class="btn btn-primary btn-xs"
-                                        title="Remarks">
-                                            <i class='fa fa-comment'></i>
-                                        </a>
-                                </td>
+                                                } 
+                                            ?>
+                                        <?php endif; ?>
+                                            <!-- Button for adding remarks -->
+                                            <a href="?leaveapplication&addremarks&id=<?=$emp['laid'];?>&remarks=<?=$emp['remarks'];?>" 
+                                            class="btn btn-primary btn-xs"
+                                            title="Remarks">
+                                                <i class='fa fa-comment'></i>
+                                            </a>
+                                    </td>
                                 </tr>
                                 <?php
                             }
@@ -544,6 +478,7 @@ if (isset($_GET['post'])) {
         $idno = $leaveData['idno']; 
         $startdate = $leaveData['dayfrom'];
         $enddate = $leaveData['dayto'];
+        $startMonth = date('n', strtotime($startdate));
 
         $start = new DateTime($startdate);
         $end = new DateTime($enddate);
@@ -643,26 +578,28 @@ if (isset($_GET['post'])) {
                             $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET blp_used = blp_used + 1 WHERE idno = '$idno'");
                             break;
                         case 'EO':
-                            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET eo_used = eo_used + 1 WHERE idno = '$idno'");
+                            // Ensure $startMonth is an integer
+                            $startMonth = (int) $startMonth;
+                            $monthNames = [
+                                1 => "jan", 2 => "feb", 3 => "mar", 4 => "apr", 5 => "may", 6 => "jun",
+                                7 => "jul", 8 => "aug", 9 => "sep", 10 => "oct", 11 => "nov", 12 => "dec"
+                            ];
+                            
+                            if (isset($monthNames[$startMonth])) {
+                                $columnName = $monthNames[$startMonth] . "_eo_used";
+                                $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET $columnName = $columnName + 1 WHERE idno = '$idno'");
+                            }
                             break;
                         case 'SPL':
                             $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET spl_used = spl_used + 1 WHERE idno = '$idno'");
                             break;
                         case 'MTL':
-                            
-                        break;
                         case 'LTL':
-                                    
-                        break;
                         case 'MDL':
-                                    
-                        break;
                         case 'PTL':
-                                    
-                        break;
                         case 'BL':
-                                    
-                        break;
+                            // No update logic yet for these types
+                            break;
                         default:
                             echo "<script>alert('Leave type not recognized. No credits updated.');</script>";
                             break;
@@ -946,5 +883,67 @@ function updateCredits(leaveType) {
         nofdays.value = 0; 
     }
     checkSubmitButton();
+}
+function tablesToExcel() {
+    const dataType = 'application/vnd.ms-excel';
+    let tableHTML = '';
+    // Define filenames based on the outer tab index
+    const filenames = ['NESI1_Leave_Application_Report.xls', 'NESI2_Leave_Application_Report.xls', 'NEWIND_Leave_Application_Report.xls'];
+    // Get all outer tabs
+    const outerTabs = document.querySelectorAll('.nav-tabs li a');
+    let activeTabIndex = -1;
+    // Find the index of the active outer tab
+    outerTabs.forEach((tab, index) => {
+        if (tab.parentElement.classList.contains('active')) {
+            activeTabIndex = index; // Set the index of the active tab
+        }
+    });
+    // Set the filename based on the active tab index
+    const filename = (activeTabIndex >= 0 && activeTabIndex < filenames.length) ? filenames[activeTabIndex] : 'Leave_Application_Report.xls';
+    // Get the currently active outer tab
+    const activeOuterTab = outerTabs[activeTabIndex];
+    if (activeOuterTab) {
+        const outerTabHref = activeOuterTab.getAttribute('href'); // Get the href of the active outer tab
+        const activeOuterTabPane = document.querySelector(outerTabHref); // Get the corresponding tab pane
+        // Gather all inner tabs and their corresponding tables from the active outer tab pane
+        const innerTabs = activeOuterTabPane.querySelectorAll('.nav-pills li a');
+        innerTabs.forEach(innerTab => {
+            // Get the inner tab name and remove any trailing numbers
+            let innerTabName = innerTab.textContent.trim();
+            innerTabName = innerTabName.replace(/\s+\d+$/, ''); // Remove trailing space and number
+            const innerTabContent = document.querySelector(innerTab.getAttribute('href')); // Get the corresponding inner tab content
+            // Check if the inner tab content has a table
+            const table = innerTabContent.querySelector('table');
+            if (table) {
+                // Add inner tab name as a header before the table
+                tableHTML += `<h3>${innerTabName}</h3>`; // Add header for the table
+                // Clone the table to modify it
+                const clonedTable = table.cloneNode(true);
+                
+                // Add inline styles for borders
+                clonedTable.style.borderCollapse = 'collapse'; // Collapse borders
+                clonedTable.querySelectorAll('th, td').forEach(cell => {
+                    cell.style.border = '1px solid black'; // Add border to each cell
+                    cell.style.padding = '5px'; // Optional: Add padding for better spacing
+                });
+                tableHTML += clonedTable.outerHTML + '<br>'; // Append each table's HTML
+            }
+        });
+        // Create a download link
+        const downloadLink = document.createElement("a");
+        document.body.appendChild(downloadLink);
+        // Create a Blob with the combined table HTML
+        const blob = new Blob([tableHTML], {
+            type: dataType
+        });
+        // Create a URL for the Blob
+        const url = URL.createObjectURL(blob);
+        downloadLink.href = url;
+        downloadLink.download = filename; // Set the correct filename
+        // Trigger the download
+        downloadLink.click();
+        // Clean up
+        document.body.removeChild(downloadLink);
+    }
 }
 </script>

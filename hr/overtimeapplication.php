@@ -194,7 +194,8 @@ if (!$sqlCompanies) {
                     INNER JOIN employee_details ed ON ot.idno = ed.idno
                     WHERE ed.company = '$companyCode' 
                     AND (ot.datearray BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
-                    AND ot.app_status NOT IN ('Pending', 'Cancelled', 'Disapproved')
+                    AND ot.app_status NOT IN ('Pending', 'Cancelled')
+                    AND ot.app_status NOT LIKE '%Disapproved%'
                     AND ot.hr_remarks != 'POSTED'");
                 $count = mysqli_fetch_assoc($sqlCount)['total'];
                 
@@ -240,7 +241,8 @@ if (!$sqlCompanies) {
                     WHERE ed.company = '$companyCode' 
                     AND (ot.datearray BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
                     AND d.department = '$departmentName'
-                    AND ot.app_status NOT IN ('Pending', 'Cancelled', 'Disapproved') 
+                    AND ot.app_status NOT IN ('Pending', 'Cancelled') 
+                    AND ot.app_status NOT LIKE '%Disapproved%'
                     AND ot.hr_remarks != 'POSTED'");
                 $deptCount = mysqli_fetch_assoc($sqlDeptCount)['total'];
 
@@ -281,10 +283,15 @@ if (!$sqlCompanies) {
             AND (ot.datearray BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
             ORDER BY 
                 CASE 
-                    WHEN ot.app_status NOT IN ('Pending', 'Cancelled', 'Disapproved') AND ot.hr_remarks != 'POSTED' THEN 1 
-                    ELSE 2 
+                    WHEN ot.app_status LIKE 'Approved%' AND ot.hr_remarks NOT LIKE '%POSTED%' THEN 1
+                    WHEN ot.app_status LIKE '%Disapproved%' THEN 2
+                    WHEN ot.app_status = 'Pending' THEN 3
+                    WHEN ot.app_status LIKE 'Approved%' AND ot.hr_remarks LIKE '%POSTED%' THEN 4
+                    WHEN ot.app_status = 'Cancelled' THEN 5
+                    ELSE 6
                 END, 
-            ot.datearray DESC");
+                STR_TO_DATE(ot.datearray, '%Y-%m-%d'),
+                ot.timearray DESC");
 
         ?>
         <!-- Search Bar -->
@@ -296,17 +303,17 @@ if (!$sqlCompanies) {
         <table class="table table-bordered table-striped table-condensed">
             <thead>
                 <tr>
-                    <th class="sortable" data-column="0" width="2%" style="text-align: center;">No.</th>
-                    <th class="sortable" data-column="1" width="6%" style="text-align: center;">Employee ID</th>
-                    <th class="sortable" data-column="2" width="10%" style="text-align: center;">Employee Name</th>
-                    <th class="sortable" data-column="3" width="6%" style="text-align: center;">OT Date</th>
-                    <th class="sortable" data-column="4" width="5%" style="text-align: center;">OT Time</th>
-                    <th class="sortable" data-column="5" style="text-align: center;">Reason</th>
-                    <th class="sortable" data-column="6" width="9%" style="text-align: center;">Date/Time Applied</th>
-                    <th class="sortable" data-column="7" width="9%" style="text-align: center;">Status</th>
-                    <th class="sortable" data-column="8" width="15%"  style="text-align: center;">HR's Remarks</th>
-                    <th class="sortable" data-column="9" width="15%"  style="text-align: center;">Approver's Remarks</th>
-                    <th width="6%" style="text-align: center;">Action</th>
+                    <th class="sortable" data-column="0" width="2%" style="text-align: center;  background-color:#20273a; color: white;">No.</th>
+                    <th class="sortable" data-column="1" width="6%" style="text-align: center;  background-color:#20273a; color: white;">Employee ID</th>
+                    <th class="sortable" data-column="2" width="10%" style="text-align: center;  background-color:#20273a; color: white;">Employee Name</th>
+                    <th class="sortable" data-column="3" width="6%" style="text-align: center;  background-color:#20273a; color: white;">OT Date</th>
+                    <th class="sortable" data-column="4" width="5%" style="text-align: center;  background-color:#20273a; color: white;">OT Time</th>
+                    <th class="sortable" data-column="5" style="text-align: center;  background-color:#20273a; color: white;">Reason</th>
+                    <th class="sortable" data-column="6" width="9%" style="text-align: center;  background-color:#20273a; color: white;">Date/Time Applied</th>
+                    <th class="sortable" data-column="7" width="9%" style="text-align: center;  background-color:#20273a; color: white;">Status</th>
+                    <th class="sortable" data-column="8" width="15%"  style="text-align: center;  background-color:#20273a; color: white;">HR's Remarks</th>
+                    <th class="sortable" data-column="9" width="15%"  style="text-align: center;  background-color:#20273a; color: white;">Approver's Remarks</th>
+                    <th width="6%" style="text-align: center;  background-color:#20273a; color: white;">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -349,7 +356,7 @@ if (!$sqlCompanies) {
                         <td style="text-align: left; vertical-align: middle;"><?=$emp['approver_remarks'];?></td>
                         <td style="text-align: center; vertical-align: middle;">
                             <?php if (strpos($emp['hr_remarks'], 'POSTED') === false): ?>
-                                <?php if ($emp['app_status'] != 'Disapproved' && $emp['app_status'] != 'Cancelled' && $emp['app_status'] != 'Pending'): ?>
+                                <?php if (strpos($emp['app_status'], 'Disapproved') === false && $emp['app_status'] != 'Cancelled' && $emp['app_status'] != 'Pending'): ?>
                                     <a href="?overtimeapplication&post&id=<?=$emp['otid'];?>&remarks=<?=$emp['hr_remarks'];?>" 
                                        class="btn btn-success btn-xs confirm-post" 
                                        title="Post">

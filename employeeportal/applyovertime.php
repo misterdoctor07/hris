@@ -7,14 +7,14 @@
                 <table class="table table-bordered table-striped table-condensed">
                   <thead>
                     <tr>
-                      <th width="2%" style="text-align: center;">No.</th>
-                      <th width="10%" style="text-align: center;">Date of OT</th>
-                      <th width="10%" style="text-align: center;">Time of OT</th>
-                      <th style="text-align: center;">Reasons</th>
-                      <th width="15%" style="text-align: center;">Status</th>
-                      <th width="15%" style="text-align: center;">HR's Remarks</th>
-                      <th width="15%" style="text-align: center;">Approver's Remarks</th>
-                      <th width="5%" style="text-align: center;">Action</th>
+                      <th width="2%" style="text-align: center; background-color:#20273a; color: white;">No.</th>
+                      <th width="10%" style="text-align: center; background-color:#20273a; color: white;">Date of OT</th>
+                      <th width="10%" style="text-align: center; background-color:#20273a; color: white;">Time of OT</th>
+                      <th style="text-align: center; background-color:#20273a; color: white;">Reasons</th>
+                      <th width="15%" style="text-align: center; background-color:#20273a; color: white;">Status</th>
+                      <th width="15%" style="text-align: center; background-color:#20273a; color: white;">HR's Remarks</th>
+                      <th width="15%" style="text-align: center; background-color:#20273a; color: white;">Approver's Remarks</th>
+                      <th width="5%" style="text-align: center; background-color:#20273a; color: white;">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -37,7 +37,16 @@
                             $status = $company['app_status'];
                             $isPending = ($status === 'Pending');
 
-                            echo "<tr>";
+                            $style = ""; 
+                            
+                            if (strpos($status, 'Approved') !== false) {
+                                $style = "class='success'";
+                            } elseif (strpos($status, 'Disapproved') !== false) {
+                                $style = "class='danger'";
+                            } elseif (strpos($status, 'Pending') !== false) {
+                                $style = "class='warning'";
+                            }
+                            echo "<tr $style>";
                             echo "<td align='center'>$x.</td>";
                             echo "<td align='center'>" . date('m/d/Y', strtotime($company['otdate'])) . "</td>";
                             echo "<td align='center'>" . date("g:i A", strtotime($company['ottime'])) . "</td>";
@@ -48,7 +57,7 @@
                             ?>
                             <td align="center">
                                 <?php if (strpos($company['app_status'], 'Approved') === false && strpos($company['app_status'], 'Disapproved') === false): ?> 
-                                    <a href="?editovertime&id=<?= $company['id']; ?>" class="btn btn-success btn-xs" title="Edit Overtime" <?= !$isPending ? 'disabled' : ''; ?>><i class='fa fa-edit'></i></a>
+                                    <a href="?editovertime&id=<?= $company['id']; ?>" class="btn btn-primary btn-xs" title="Edit Overtime" <?= !$isPending ? 'disabled' : ''; ?>><i class='fa fa-edit'></i></a>
                                     <a href="?applyovertime&id=<?= $company['id']; ?>&delete" class="btn btn-danger btn-xs" title="Delete Overtime" <?= !$isPending ? 'disabled' : ''; ?> onclick="return confirm('Do you wish to delete this item?'); return false;"><i class='fa fa-trash'></i></a>
                                 <?php endif; ?>
                             </td>

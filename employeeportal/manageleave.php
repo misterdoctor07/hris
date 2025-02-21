@@ -7,24 +7,23 @@
                 <table class="table table-bordered table-striped table-condensed">
                   <thead>
                     <tr>
-                      <th width="2%">No.</th>
-                      <th width="6%" style="text-align: center;">Leave Type</th>
-                      <th width="6%" style="text-align: center;">No. of Days</th>
-                      <th width="6%" style="text-align: center;">From</th>
-                      <th width="6%" style="text-align: center;">To</th>
-                      <th style="text-align: center;">Reason</th>
-                      <th width="6%" style="text-align: center;">Date Applied</th>
-                      <th width="10%" style="text-align: center;">Status</th>
-                      <th style="text-align: center;">HR Remarks</th>
-                      <th style="text-align: center;">Approver Remarks</th>
-                      <th width="5%" style="text-align: center;">Action</th>
+                      <th width="2%" style="text-align: center; background-color:#20273a; color: white;">No.</th>
+                      <th width="6%" style="text-align: center; background-color:#20273a; color: white;">Leave Type</th>
+                      <th width="6%" style="text-align: center; background-color:#20273a; color: white;">No. of Days</th>
+                      <th width="6%" style="text-align: center; background-color:#20273a; color: white;">From</th>
+                      <th width="6%" style="text-align: center; background-color:#20273a; color: white;">To</th>
+                      <th style="text-align: center; background-color:#20273a; color: white;">Reason</th>
+                      <th width="6%" style="text-align: center; background-color:#20273a; color: white;">Date Applied</th>
+                      <th width="10%" style="text-align: center; background-color:#20273a; color: white;">Status</th>
+                      <th style="text-align: center; background-color:#20273a; color: white;">HR's Remarks</th>
+                      <th style="text-align: center; background-color:#20273a; color: white;">Approver's Remarks</th>
+                      <th width="5%" style="text-align: center; background-color:#20273a; color: white;">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                   <?php
             $x = 1;
-            $sqlEmployee = mysqli_query($con, "
-              SELECT la.id AS leave_id, ep.idno, ep.lastname, ep.firstname, la.leavetype, la.numberofdays, la.dayfrom, la.dayto, la.reason, la.datearray, la.appstatus, la.remarks, la.approver_remarks
+            $sqlEmployee = mysqli_query($con, "SELECT la.id AS leave_id, ep.idno, ep.lastname, ep.firstname, la.leavetype, la.numberofdays, la.dayfrom, la.dayto, la.reason, la.datearray, la.appstatus, la.remarks, la.approver_remarks
               FROM leave_application la
               INNER JOIN employee_profile ep ON ep.idno = la.idno   
               WHERE la.idno = '" . mysqli_real_escape_string($con, $_SESSION['idno']) . "' 
@@ -39,8 +38,17 @@
                 while ($emp = mysqli_fetch_array($sqlEmployee)) {
                   $status = $emp['appstatus'];
                   $isPending = ($status === 'Pending');
+                  $style = "";
+                    
+                    if (strpos($status, 'Approved') !== false) {
+                        $style = "class='success'";
+                    } elseif (strpos($status, 'Disapproved') !== false) {
+                        $style = "class='danger'";
+                    } elseif (strpos($status, 'Pending') !== false) {
+                        $style = "class='warning'";
+                    }
                     ?>
-                    <tr>
+                    <tr <?= $style ?>>
                         <td align='center'><?= $x++; ?>.</td>
                         <td align='center'><?= $emp['leavetype']?></td>
                         <td align='center'><?= $emp['numberofdays']?></td>
@@ -49,11 +57,13 @@
                         <td><?= $emp['reason'] ?></td>
                         <td align='center'><?= date('m/d/Y', strtotime($emp['datearray'])) ?></td>
                         <td align='center'><?= $emp['appstatus'] ?></td>
-                        <td><?= $emp['remarks'] ?></td>
+                        <td style="text-align: <?= ($emp['remarks'] == 'POSTED') ? 'center' : 'justify' ?>; vertical-align: middle;">
+                            <?= $emp['remarks'] ?>
+                        </td>
                         <td><?= $emp['approver_remarks'] ?></td>
                         <td align="center">
                             <?php if (strpos($emp['remarks'], 'POSTED') === false && strpos($emp['appstatus'], 'Cancelled') === false && strpos($emp['appstatus'], 'Disapproved') === false && strpos($emp['appstatus'], 'Approved') === false): ?> 
-                              <a href="?editleave&id=<?= $emp['leave_id']; ?>" class="btn btn-success btn-xs" title="Edit Leave"><i class='fa fa-edit'></i></a>
+                              <a href="?editleave&id=<?= $emp['leave_id']; ?>" class="btn btn-primary btn-xs" title="Edit Leave"><i class='fa fa-edit'></i></a>
                               <a href="?manageleave&id=<?= $emp['leave_id']; ?>&cancel" class="btn btn-danger btn-xs" title="Cancel Leave" onclick="return confirm('Do you wish to cancel your leave application?'); return false;"><i class='fa fa-times'></i></a>
                             <?php endif; ?>
                         </td>

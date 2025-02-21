@@ -256,21 +256,21 @@ if (!$sqlCompanies) {
                     <table class="table table-bordered table-striped table-condensed">
                     <thead>
                             <tr>
-                                <th class="sortable" data-column="0" width="2%" style="text-align: center;">No.</th>
-                                <th class="sortable" data-column="1" width="6%" style="text-align: center;">Employee ID</th>
-                                <th class="sortable" data-column="2" width="10%" style="text-align: center;">Employee Name</th>
-                                <th class="sortable" data-column="3" width="5%" style="text-align: center;">Department</th>
-                                <th class="sortable" data-column="4" width="5%" style="text-align: center;">Work Area</th>
-                                <th class="sortable" data-column="5" width="7%" style="text-align: center;">Date of Missed Time IN/OUT</th>
-                                <th class="sortable" data-column="6" width="5%" style="text-align: center;">Incident</th>
-                                <th class="sortable" data-column="7" width="5%" style="text-align: center;">Time</th>
-                                <th class="sortable" data-column="8" style="text-align: center;">Reason</th>
-                                <th class="sortable" data-column="9" width="10%" style="text-align: center;">Date and Time Applied</th>
-                                <th class="sortable" data-column="10" width="10%" style="text-align: center;">Status</th>
-                                <th class="sortable" data-column="11" style="text-align: center;">HR Remarks</th>
-                                <th class="sortable" data-column="12" style="text-align: center;">Monitoring Remarks</th>
-                                <th class="sortable" data-column="13" style="text-align: center;">Approver Remarks</th>
-                                <th width="6%" style="text-align: center;">Action</th>
+                                <th class="sortable" data-column="0" width="2%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">No.</th>
+                                <th class="sortable" data-column="1" width="6%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Employee ID</th>
+                                <th class="sortable" data-column="2" width="10%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Employee Name</th>
+                                <th class="sortable" data-column="3" width="5%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Department</th>
+                                <th class="sortable" data-column="4" width="5%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Work Area</th>
+                                <th class="sortable" data-column="5" width="7%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Date of Missed Log</th>
+                                <th class="sortable" data-column="6" width="5%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Incident</th>
+                                <th class="sortable" data-column="7" width="5%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Time</th>
+                                <th class="sortable" data-column="8" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Reason</th>
+                                <th class="sortable" data-column="9" width="10%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Date and Time Applied</th>
+                                <th class="sortable" data-column="10" width="10%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Status</th>
+                                <th class="sortable" data-column="11" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">HR Remarks</th>
+                                <th class="sortable" data-column="12" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Monitoring Remarks</th>
+                                <th class="sortable" data-column="13" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Approver Remarks</th>
+                                <th width="6%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Action</th>
                             </tr>
                         </thead>
                         <tbody>

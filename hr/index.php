@@ -127,9 +127,8 @@ date_default_timezone_set("Asia/Manila");
               // Count pending overtime applications
               $query = "SELECT COUNT(*) AS total 
                 FROM overtime_application 
-                WHERE app_status != 'Pending' 
-                AND app_status != 'Cancelled' 
-                AND app_status != 'Disapproved' 
+                WHERE app_status NOT IN ('Pending', 'Cancelled')
+                AND app_status NOT LIKE '%Disapproved%'
                 AND hr_remarks != 'POSTED'";
               $result = mysqli_query($con, $query);
               $row = mysqli_fetch_assoc($result);

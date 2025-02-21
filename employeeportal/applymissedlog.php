@@ -13,16 +13,16 @@
             <table class="table table-bordered table-striped table-condensed">
                 <thead>
                     <tr>
-                        <th width="2%">No.</th>
-                        <th width="12%" style="text-align: center;">Date of Missed Time IN/OUT</th> 
-                        <th width="5%" style="text-align: center;">Incident</th>
-                        <th width="5%" style="text-align: center;">Time</th>
-                        <th style="text-align: center;">Reason</th>
-                        <th width="15%" style="text-align: center;">Status</th>
-                        <th style="text-align: center;">HR Remarks</th>
-                        <th style="text-align: center;">Monitoring Remarks</th>
-                        <th style="text-align: center;">Approver Remarks</th>
-                        <th width="5%" style="text-align: center;">Action</th>
+                        <th width="2%" style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">No.</th>
+                        <th width="10%" style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Date of Missed Log</th> 
+                        <th width="5%" style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Incident</th>
+                        <th width="5%" style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Time</th>
+                        <th style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Reason</th>
+                        <th width="15%" style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Status</th>
+                        <th style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">HR Remarks</th>
+                        <th style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Monitoring Remarks</th>
+                        <th style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Approver Remarks</th>
+                        <th width="5%" style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -45,7 +45,16 @@
                             $status = $company['applic_status'];
                             $isPending = ($status === 'Pending');
 
-                            echo "<tr>";
+                            $style = ""; 
+                            
+                            if (strpos($status, 'Approved') !== false) {
+                                $style = "class='success'";
+                            } elseif (strpos($status, 'Disapproved') !== false) {
+                                $style = "class='danger'";
+                            } elseif (strpos($status, 'Pending') !== false) {
+                                $style = "class='warning'";
+                            }
+                            echo "<tr $style>";
                             echo "<td align='center'>$x.</td>";
                             echo "<td align='center'>" . date('m/d/Y', strtotime($company['datemissed'])) . "</td>";
                             echo "<td align='center'>$company[incident]</td>";
@@ -58,7 +67,7 @@
                             ?>
                             <td align="center">
                                 <?php if (strpos($company['applic_status'], 'Approved') === false && strpos($company['applic_status'], 'Disapproved') === false): ?> 
-                                    <a href="?editmissedlog&id=<?= $company['id']; ?>" class="btn btn-success btn-xs" title="Edit Missed Log" <?= !$isPending ? 'disabled' : ''; ?>><i class='fa fa-edit'></i></a>
+                                    <a href="?editmissedlog&id=<?= $company['id']; ?>" class="btn btn-primary btn-xs" title="Edit Missed Log" <?= !$isPending ? 'disabled' : ''; ?>><i class='fa fa-edit'></i></a>
                                     <a href="?applymissedlog&id=<?= $company['id']; ?>&delete" class="btn btn-danger btn-xs" title="Delete Missed Log" <?= !$isPending ? 'disabled' : ''; ?> onclick="return confirm('Do you wish to delete this item?'); return false;"><i class='fa fa-trash'></i></a>
                                 <?php endif; ?>
                             </td>
