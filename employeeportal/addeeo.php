@@ -1,58 +1,18 @@
-<style>
-  /* Hide the checkbox */
-  .toggle {
-    display: none;
+<script>
+  function validateForm(event) {
+    const selectedEEO = document.querySelector('input[name="eeo_type"]:checked');
+    
+    if (!selectedEEO) {
+      alert("Please select a Type of EEO before submitting.");
+      event.preventDefault(); // Prevents form submission
+      return false;
+    }
   }
 
-  /* Toggle container with proper alignment */
-  .slot {
-    display: inline-block;
-    width: 50px;
-    height: 24px;
-    background: #ddd;
-    border-radius: 30px;
-    position: relative;
-    cursor: pointer;
-    vertical-align: middle;
-    transition: background-color 0.3s;
-  }
-
-  /* Circle inside the toggle */
-  .slot::before {
-    content: '';
-    width: 20px;
-    height: 20px;
-    background: white;
-    border-radius: 50%;
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    transition: all 0.3s ease;
-  }
-
-  /* Checked state styles */
-  input.toggle:checked + .slot {
-    background: #1e90ff;
-  }
-
-  input.toggle:checked + .slot::before {
-    left: 28px;
-  }
-
-  /* Label styles */
-  .label-text {
-    font-size: 14px;
-    color: #555;
-    margin-left: 12px;
-    vertical-align: middle;
-    display: inline-block;
-  }
-</style>
-
-<script type="text/javascript">
-  function SubmitDetails() {        
-      return confirm('Do you wish to submit details?');        
-  }
+  // Attach event listener when the DOM loads
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelector("form").addEventListener("submit", validateForm);
+  });
 </script>
 
 <div class="row">
@@ -73,27 +33,32 @@
       </div>
       <div class="panel-body">    
         <div class="form-group">
-            <label class="col-sm-4 col-sm-4 control-label">Type of EEO</label>
+            <label class="col-sm-4 control-label">Type of EEO</label>
             <div class="col-sm-8">
-                <input id="toggle" class="toggle" type="checkbox" name="eeo_type" value="Medical" onchange="updateLabelText(this)">
-                <label for="toggle" class="slot"></label>
-                <span id="label-text" class="label-text">Non-medical</span>
+                <div class="radio-group">
+                    <input type="radio" id="medical" name="eeo_type" value="Medical" class="radio-input">
+                    <label for="medical" class="radio-label" style="font-size: 14px; margin-right: 15px;">Medical</label>
+
+                    <input type="radio" id="non-medical" name="eeo_type" value="Non-medical" class="radio-input">
+                    <label for="non-medical" class="radio-label" style="font-size: 14px;">Non-medical</label>
+                </div>
             </div>
-        </div>                                      
+        </div>                       
+
         <div class="form-group">
-          <label class="col-sm-4 col-sm-4 control-label">Date of EEO</label>
+          <label class="col-sm-4 control-label">Date of EEO</label>
           <div class="col-sm-8">
             <input type="date" name="dateEEO" class="form-control" required>
           </div>
         </div>
         <div class="form-group">
-          <label class="col-sm-4 control-label" for="incident">Time of EEO</label>
+          <label class="col-sm-4 control-label">Time of EEO</label>
           <div class="col-sm-8">
             <input type="time" name="timeEEO" class="form-control" required>
           </div>
         </div>
         <div class="form-group">
-          <label class="col-sm-4 col-sm-4 control-label">Reason(s)</label>
+          <label class="col-sm-4 control-label">Reason(s)</label>
           <div class="col-sm-8">
             <textarea name="reason" class="form-control" rows="5" required></textarea>
           </div>
@@ -112,7 +77,7 @@ if (isset($_POST['submit'])) {
     $dateEEO = $_POST['dateEEO'];
     $timeEEO = $_POST['timeEEO'];
     $reason = $_POST['reason'];
-    $eeo_type = isset($_POST['eeo_type']) ? $_POST['eeo_type'] : 'Non-medical'; // Default to Non-medical if unchecked
+    $eeo_type = isset($_POST['eeo_type']) ? $_POST['eeo_type'] : null; // If nothing is selected, store NULL
 
     // Automatically get current date and time for date_applied and time_applied
     $date_applied = date('Y-m-d'); // Current date
@@ -121,7 +86,7 @@ if (isset($_POST['submit'])) {
 
     // SQL query to insert data into the emergencyearlyout table
     $query = "INSERT INTO emergencyearlyout (idno, dateEEO, timeEEO, reason, type_EEO, date_applied, time_applied, eeo_status)
-              VALUES ('$idno', '$dateEEO', '$timeEEO', '$reason', '$eeo_type', '$date_applied', '$time_applied', '$status')";
+              VALUES ('$idno', '$dateEEO', '$timeEEO', '$reason', " . ($eeo_type ? "'$eeo_type'" : "NULL") . ", '$date_applied', '$time_applied', '$status')";
 
     // Execute the query
     $sqlAddEmployee = mysqli_query($con, $query);
@@ -129,7 +94,7 @@ if (isset($_POST['submit'])) {
     // Check if the query was successful
     if ($sqlAddEmployee) {
         echo "<script>";
-        echo "alert('Details successfully saved!'); window.location='?addeeo';";
+        echo "alert('Details successfully saved!'); window.location='?emergencyearlyout';";
         echo "</script>";
     } else {
         echo "<script>";
@@ -138,10 +103,3 @@ if (isset($_POST['submit'])) {
     }
 }
 ?>
-
-<script>
-  function updateLabelText(toggle) {
-    const labelText = document.getElementById("label-text");
-    labelText.textContent = toggle.checked ? "Medical" : "Non-medical";
-  }
-</script>

@@ -489,6 +489,7 @@ $dept = isset($_GET['departments']) ? $_GET['departments'] : [];
                             $startdate = $_GET['startdate'];
                             $enddate = $_GET['enddate'];
                             $logindate = $_GET['logindate'];
+                            $startMonth = date('n', strtotime($logindate));
                         
                             // Retrieve the remarks from the attendance table
                             $sqlGetRemarks = mysqli_query($con, "SELECT remarks FROM attendance WHERE id = '$id'");
@@ -521,7 +522,25 @@ $dept = isset($_GET['departments']) ? $_GET['departments'] : [];
                                                 break;
                                             case 'EO':
                                             case 'P-EO':
-                                                $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET eo_used = eo_used - 1 WHERE idno = '$idno'");
+                                                // Ensure $startMonth is an integer
+                                                $startMonth = (int) $startMonth;
+                                            
+                                                // Define month column mappings
+                                                $monthNames = [
+                                                    1 => "jan", 2 => "feb", 3 => "mar", 4 => "apr", 5 => "may", 6 => "jun",
+                                                    7 => "jul", 8 => "aug", 9 => "sep", 10 => "oct", 11 => "nov", 12 => "dec"
+                                                ];
+                                            
+                                                // Validate month and operation before executing the query
+                                                if (isset($monthNames[$startMonth])) {
+                                                    $columnName = $monthNames[$startMonth] . "_eo_used";
+                                                    $query = "UPDATE leave_credits SET $columnName = $columnName - 1 WHERE idno = '$idno'";
+                                                    
+                                                    // Execute query and check for errors
+                                                    if (!mysqli_query($con, $query)) {
+                                                        die("Error updating leave credits: " . mysqli_error($con));
+                                                    }
+                                                }
                                                 break;
                                             case 'SPL':
                                             $sqlUpdateCredits = mysqli_query($con,  "UPDATE leave_credits SET spl_used = spl_used - 1 WHERE idno = '$idno'");

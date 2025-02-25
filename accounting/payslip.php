@@ -7,10 +7,15 @@
     $period=$payroll['payrollperiod'];
     $grosspay=$payroll['totalpay'];
 
-
-
-    $sqlEmployee=mysqli_query($con,"SELECT * FROM employee_profile WHERE idno='$idno'");
+    //Fetching Employee Details
+    $sqlEmployee=mysqli_query($con,"SELECT * FROM employee_profile ep
+    INNER JOIN employee_details ed ON ep.idno=ed.idno
+    INNER JOIN department d ON d.id=ed.department
+    WHERE ep.idno='$idno'");
     $employee=mysqli_fetch_array($sqlEmployee);
+    $department=$employee['department'];
+    $fullname = $employee['firstname'] . ' ' . $employee['lastname'] . ' ' . $employee['suffix'];
+
 
     $sqlPayrollDetails=mysqli_query($con,"SELECT * FROM employee_payroll WHERE idno='$idno'");
     $payrolldetails=mysqli_fetch_array($sqlPayrollDetails);
@@ -72,355 +77,250 @@
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="">
-  <meta name="author" content="Dashboard">
-  <meta name="keyword" content="Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
-  <title>PAYSLIP</title>
-
-  <!-- Favicons -->
-  <!-- <link href="img/favicon.png" rel="icon">
-  <link href="img/apple-touch-icon.png" rel="apple-touch-icon"> -->
-  <link rel="icon" type="image/x-icon" href="img/nesi.jpg">
-
-
-  <link href="lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-
-  <link href="lib/font-awesome/css/font-awesome.css" rel="stylesheet" />
-  <link rel="stylesheet" type="text/css" href="css/zabuto_calendar.css">
-  <link rel="stylesheet" type="text/css" href="lib/gritter/css/jquery.gritter.css" />
-
-  <link href="css/style.css" rel="stylesheet">
-  <link href="css/style-responsive.css" rel="stylesheet">
-  <script src="lib/chart-master/Chart.js"></script>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payslip</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        .header-table td {
+            border: none;
+        }
+        .highlight {
+            background-color: #d9ead3;
+            font-weight: bold;
+        }
+        .total {
+            background-color: #c6efce;
+            font-weight: bold;
+        }
+    </style>
 </head>
-
 <body>
-<div class="container">
-    <div class="row">
-      <div class="col-lg-8 col-sm-9 col-lg-offset-2">
-        <br>
-        <div class="row">
-          <div class="col-md-8 col-md-offset-2" style="border:1px solid black">
-            <div class="row mt">
-                <table width="100%" style="margin:5px 5px 5px 15px;">
+    <div style="border: 2px solid black; padding: 20px;">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between;">
+            <div style="width: 49%;">
+                <table class="header-table">
                     <tr>
-                        <td style="color:black;"><b>Employee Name:</b></td>
-                        <td width="10%">&nbsp;</td>
-                        <td align="center" style="border-bottom:1px solid; color:black;"><?=$employee['firstname'];?> <?=$employee['lastname'];?> <?=$employee['suffix'];?></td>
-                        <td width="10%">&nbsp;</td>
+                        <td><strong>EMPLOYEE NAME:</strong></td>
+                        <td style="padding-left: 50px;"><?=$fullname?></td>
                     </tr>
                     <tr>
-                        <td colspan="4">&nbsp;</td>
+                        <td><strong>TEAM:</strong></td>
+                        <td style="padding-left: 50px;"><?=$department?></td>
                     </tr>
-                    <tr>
-                        <td style="color:black;"><b>Manager Name:</b></td>
-                        <td width="10%">&nbsp;</td>
-                        <td align="center" style="border-bottom:1px solid; color:black;"><?=$manager['companyceo'];?></td>
-                        <td width="10%">&nbsp;</td>
-                    </tr>
-                </table>
-                <br>
-                <table width="100%" style="margin:5px 5px 5px 15px;">
-                    <tr>
-                        <td colspan="2" width="40%">&nbsp;</td>
-                        <td width="10">&nbsp;</td>
-                        <td colspan="2" style="color:black;"><b>Other Monthly Company Benefits</b></td>
-                        <td width="10%"></td>
-                    </tr>
-                    <tr>
-                        <td width="30%" style="color:black;"><b>Basic Salary</b></td>
-                        <td width="10%" style="color:black;" align="right"><?=number_format($grosspay,2);?></td>
-                        <td width="8">&nbsp;</td>
-                        <td rowspan="5" align="left" width="30%" style="vertical-align:top; color:black;"><?=$benList;?></td>
-                        <td rowspan="5" align="right" style="vertical-align:top; color:black"><?=$benAmount;?></td>
-                    </tr>
-                    <?php
-                    if($loc=="mid"){
-                        ?>
-                    <tr>
-                        <td width="30%" style="color:black;">&nbsp;</td>
-                        <td width="10%" style="color:black;" align="right">&nbsp;</td>
-                        <td width="10">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td width="30%" style="color:black;">&nbsp;</td>
-                        <td width="10%" style="color:black;" align="right">&nbsp;</td>
-                        <td width="10">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td width="30%" style="color:black;">&nbsp;</td>
-                        <td width="10%" style="color:black;" align="right">&nbsp;</td>
-                        <td width="10">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td width="30%" align="center" style="color:black;">&nbsp;</td>
-                        <td width="10%" style="color:black;" align="right">&nbsp;</td>
-                        <td width="10">&nbsp;</td>
-                    </tr>
-                        <?php
-                    }else{
-                    ?>
-                    <tr>
-                        <td width="30%" style="color:black;"><b>SSS</b></td>
-                        <td width="10%" style="color:black;" align="right"><?=number_format($sss,2);?></td>
-                        <td width="10">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td width="30%" style="color:black;"><b>Philhealth</b></td>
-                        <td width="10%" style="color:black;" align="right"><?=number_format($phic,2);?></td>
-                        <td width="10">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td width="30%" style="color:black;"><b>Pag-ibig</b></td>
-                        <td width="10%" style="color:black;" align="right"><?=number_format($hdmf,2);?></td>
-                        <td width="10">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td width="30%" align="center" style="color:black;">&nbsp;</td>
-                        <td width="10%" style="color:black;" align="right">&nbsp;</td>
-                        <td width="10">&nbsp;</td>
-                    </tr>
-                    <?php
-                    }
-                    $totalpay=$grosspay+$sss+$phic+$hdmf;
-                    ?>
-                    <tr>
-                        <td width="30%" align="center" style="color:black;"><b>Total</b></td>
-                        <td width="10%" style="color:black;" align="right"><b><?=number_format($totalpay,2);?></b></td>
-                        <td width="10">&nbsp;</td>
-                        <td style="color:black;" align="center"><b>Total</b></td>
-                        <td style="color:black;" align="right"><b><?=number_format($totalbenefits,2);?></b></td>
-                    </tr>
-                </table>
-                <br>
-                <table width="100%" style="margin:5px 5px 5px 15px;">
-                    <tr>
-                        <td colspan="3" style="color:black;"><b>Basic Salary</b></td>
-                        <td align="right" style="color:black;"><?=number_format($payroll['totalpay'],2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <?php
-                    $additional=0;
-                    $sqlAddons=mysqli_query($con,"SELECT * FROM payroll_addons WHERE idno='$idno' AND payrollperiod='$period'");
-                    if(mysqli_num_rows($sqlAddons)>0){
-                        while($addons=mysqli_fetch_array($sqlAddons)){
-                            ?>
-                    <tr>
-                        <td colspan="3" style="color:black;"><b><?=$addons['description'];?></b></td>
-                        <td align="right" style="color:black;"><?=number_format($addons['amount'],2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                            <?php
-                            $additional +=$addons['amount'];
-                        }
-                    }
-                    ?>
-                    <tr>
-                        <td colspan="5">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="5" style="color:black;"><b>Less:</b></td>
-                    </tr>
-                    <?php
-                    $totaldeductions=0;
-                    $sqlDeductions=mysqli_query($con,"SELECT * FROM payroll_deductions WHERE idno='$idno' AND payrollperiod='$period'");
-                    if(mysqli_num_rows($sqlDeductions)>0){
-                        while($deduction=mysqli_fetch_array($sqlDeductions)){
-                            $totaldeductions +=$deduction['amount'];
-                            ?>
-                            <tr>
-                                <td colspan="3" style="color:black; text-indent:10px;"><b><?=$deduction['description'];?></b></td>
-                                <td align="right" style="color:black;"><?=number_format($deduction['amount'],2);?></td>
-                                <td width="15%">&nbsp;</td>
-                            </tr>
-                        <?php
-                        }
-                    }
-                    ?>
-                    <tr>
-                        <td colspan="5">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="5">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" style="color:black;"><b>Take Home Pay (<?=ucwords($loc);?> of the Month)</b></td>
-                        <td align="right" style="color:black;"><?=number_format($additional+$payroll['totalpay']-$totaldeductions,2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="5">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="5" style="color:black;"><b>Week Starting: <?=date('m/d/Y',strtotime($payrollperiod['periodfrom']));?> to <?=date('m/d/Y',strtotime($payrollperiod['periodto']));?></b></td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" width="35%" style="color:black;"><b>Basic Salary Breakdown</b></td>
-                        <td align="center" style="color:black;">Total No. of Hours</td>
-                        <td align="center" style="color:black;">Base Rate <?=$baserate;?>/day</td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="color:black;"><b>Regular Hours</b></td>
-                        <td align="center" style="color:black;"><?=number_format($payroll['reghours'],2);?></td>
-                        <td align="right" style="color:black;"><?=number_format($payroll['reghours']/8*$baserate,2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="color:black;"><b>Reg Hours / Overtime</b></td>
-                        <td align="center" style="color:black;"><?=number_format($payroll['reghoursot'],2);?></td>
-                        <td align="right" style="color:black;"><?=number_format($payroll['reghoursotamount'],2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="color:black;"><b>Reg Holiday (Not Worked)</b></td>
-                        <td align="center" style="color:black;"><?=number_format($payroll['regholidayhrsnotwork'],2);?></td>
-                        <td align="right" style="color:black;"><?=number_format($payroll['regholidayamountnotwork'],2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="color:black;"><b>Reg Holiday (Worked) 220%</b></td>
-                        <td align="center" style="color:black;"><?=number_format($payroll['regholidayhrswork1'],2);?></td>
-                        <td align="right" style="color:black;"><?=number_format($payroll['regholidayamountwork1'],2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="color:black;"><b>Reg Holiday (Worked) 200%</b></td>
-                        <td align="center" style="color:black;"><?=number_format($payroll['regholidayhrswork2'],2);?></td>
-                        <td align="right" style="color:black;"><?=number_format($payroll['regholidayamountwork2'],2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="color:black;"><b>OT for Reg Holiday (Worked)</b></td>
-                        <td align="center" style="color:black;"><?=number_format($payroll['regholidayothrs'],2);?></td>
-                        <td align="right" style="color:black;"><?=number_format($payroll['regholidayotamount'],2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="color:black;"><b>Sp. Non-Work. Holiday 143%</b></td>
-                        <td align="center" style="color:black;"><?=number_format($payroll['spholidayhrs1'],2);?></td>
-                        <td align="right" style="color:black;"><?=number_format($payroll['spholidayamount1'],2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="color:black;"><b>Sp. Non-Work. Holiday 130%</b></td>
-                        <td align="center" style="color:black;"><?=number_format($payroll['spholidayhrs2'],2);?></td>
-                        <td align="right" style="color:black;"><?=number_format($payroll['spholidayamount2'],2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="color:black;"><b>OT for Sp. Non-Work. Holiday</b></td>
-                        <td align="center" style="color:black;"><?=number_format($payroll['spholidayothrs'],2);?></td>
-                        <td align="right" style="color:black;"><?=number_format($payroll['spholidayotamount'],2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="color:black;"><b>Night Differential</b></td>
-                        <td align="center" style="color:black;"><?=number_format($payroll['ndhrs'],2);?></td>
-                        <td align="right" style="color:black;"><?=number_format($payroll['ndamount'],2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <?php
-                    if($payroll['paidslhrs']>0){
-                    ?>
-                    <tr>
-                        <td colspan="2" style="color:black;"><b>Paid SL</b></td>
-                        <td align="center" style="color:black;"><?=number_format($payroll['paidslhrs'],2);?></td>
-                        <td align="right" style="color:black;"><?=number_format($payroll['paidslamount'],2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <?php
-                    }
-                    ?>
-                    <?php
-                    if($payroll['paidvlhrs']>0){
-                    ?>
-                    <tr>
-                        <td colspan="2" style="color:black;"><b>Paid SL</b></td>
-                        <td align="center" style="color:black;"><?=number_format($payroll['paidvlhrs'],2);?></td>
-                        <td align="right" style="color:black;"><?=number_format($payroll['paidvlamount'],2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <?php
-                    }
-                    ?>
-                    <?php
-                    if($payroll['paidblhrs']>0){
-                    ?>
-                    <tr>
-                        <td colspan="2" style="color:black;"><b>Paid SL</b></td>
-                        <td align="center" style="color:black;"><?=number_format($payroll['paidblhrs'],2);?></td>
-                        <td align="right" style="color:black;"><?=number_format($payroll['paidblamount'],2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <?php
-                    }
-                    ?>
-                    <?php
-                    if($payroll['bdayleavehrs']>0){
-                    ?>
-                    <tr>
-                        <td colspan="2" style="color:black;"><b>Paid SL</b></td>
-                        <td align="center" style="color:black;"><?=number_format($payroll['bdayleavehrs'],2);?></td>
-                        <td align="right" style="color:black;"><?=number_format($payroll['bdayleaveamount'],2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <?php
-                    }
-                    ?>
-                    <tr>
-                        <td colspan="5">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="5">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="color:black;" align="center"><b>Total</b></td>
-                        <td align="center" style="color:black;"></td>
-                        <td align="right" style="color:black;"><?=number_format($grosspay,2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <?php
-                    if($loc=="end"){
-                    ?>
-                    <tr>
-                        <td colspan="5">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="color:black"><b>Mid <?=$month;?> Salary</b></td>
-                        <td align="center" style="color:black;"></td>
-                        <td align="right" style="color:black;"><?=number_format($midPayroll,2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="color:black;"><b>End <?=$month;?> Salary</b></td>
-                        <td align="center" style="color:black;"></td>
-                        <td align="right" style="color:black;"><?=number_format($totalpay,2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="5">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" style="color:black; font-size:16px;"><b>Total <?=$month;?> Salary & Benefits</b></td>
-                        <td align="right" style="color:black; font-size:16px;"><?=number_format($totalpay+$midPayroll,2);?></td>
-                        <td width="15%">&nbsp;</td>
-                    </tr>
-                    <?php
-                    }
-                    ?>
                 </table>
             </div>
-          </div>
+            
+            <div style="width: 49%; text-align: right;">
+                <table class="header-table">
+                    <tr>
+                        <td><strong>FIXED SEMI-MONTHLY SALARY:</strong></td>
+                        <td style="padding-left: 50px;">28,000.00</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PAY PER DAY:</strong></td>
+                        <td style="padding-left: 50px;">0.00</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pay Period:</strong></td>
+                        <td style="padding-left: 50px;"><?=date('M j, Y',strtotime($payrollperiod['periodfrom']));?> to <?=date('M j, Y',strtotime($payrollperiod['periodto']));?></td>
+                    </tr>
+                </table>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
-</body>
+        <!--  -->
+        <div style="display: flex; justify-content: space-between;">
+            <div style="width: 49%;">
+                <h4 style="text-align: center; background-color: #1d2437; color: white; padding: 5px">GROSS EARNINGS AND BENEFITS FOR THIS PAY PERIOD</h4>
+                <table class="header-table">
+                    <tr>
+                        <td>Fixed Rate Salary</td>
+                        <td>28,000.00</td>
+                    </tr>
+                    <tr>
+                        <td>Allowances</td>
+                        <td>14,000.00</td>
+                    </tr>
+                    <tr>
+                        <td>Incentives</td>
+                        <td>0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Reimbursements</td>
+                        <td>0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Company Paid Government Benefits</td>
+                        <td>2,790.00</td>
+                    </tr>
+                    <tr>
+                        <td>Other Company Paid Benefits</td>
+                        <td>1,521.54</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>TOTAL GROSS EARNINGS & BENEFITS FOR THIS PAY PERIOD</td>
+                        <td>46,311.54</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div style="width: 49%;">
+                <h4 style="text-align: center; background-color: #1d2437; color: white; padding: 5px">TAKE HOME PAY COMPUTATION</h4>
+                <table class="header-table">
+                    <tr>
+                        <td>Fixed Rate Salary</td>
+                        <td>28,000.00</td>
+                    </tr>
+                    <tr>
+                        <td>Add On Pay</td>
+                        <td>14,000.00</td>
+                    </tr>
+                    <tr>
+                        <td>Deductions</td>
+                        <td>-4,818.20</td>
+                    </tr>
+                    <tr>
+                        <td>Deductions</td>
+                        <td>-4,818.20</td>
+                    </tr>
+                    <tr>
+                        <td>Deductions</td>
+                        <td>-4,818.20</td>
+                    </tr>
+                    <tr>
+                        <td>Deductions</td>
+                        <td>-4,818.20</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>TOTAL TAKE HOME PAY FOR THIS PAY PERIOD</td>
+                        <td>37,181.80</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div>
+            <h3 style="text-align: center; background-color: #1d2437; color: white; padding: 5px">BREAKDOWN OF SALARY AND BENEFITS</h3>
+            <div style="display: flex; justify-content: space-between;">
+                <div style="width: 49%;">
+                    <table class="header-table">
+                        <tr>
+                            <td><strong>Deductions Breakdown</td>
+                        </tr>
+                        <tr>
+                            <td>SSS Loan</td>
+                            <td>0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Pag-ibig Loan</td>
+                            <td>0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Benefit Contribution</td>
+                            <td>1,080.00</td>
+                        </tr>
+                        <tr>
+                            <td>Withholding Tax</td>
+                            <td>2,404.70</td>
+                        </tr>
+                        <tr class="highlight">
+                            <td>TOTAL DEDUCTIONS</td>
+                            <td>4,818.20</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div style="width: 49%;">
+                    <table class="header-table">
+                        <tr>
+                            <td><strong>Add On Pay Breakdown</td>
+                        </tr>
+                        <tr>
+                            <td>Overtime Pay</td>
+                            <td>0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Holiday Pay</td>
+                            <td>0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Night Differential</td>
+                            <td>0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Other Incentives</td>
+                            <td>0.00</td>
+                        </tr>
+                        <tr class="highlight">
+                            <td>TOTAL ADD ON PAY</td>
+                            <td>0.00</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
 
+        <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+            <div style="width: 49%;">
+                <table class="header-table">
+                    <tr>
+                        <td><strong>Government Benefits Breakdown</td>
+                    </tr>
+                    <tr>
+                        <td>SSS Contribution</td>
+                        <td>1,440.00</td>
+                    </tr>
+                    <tr>
+                        <td>Philhealth Contribution</td>
+                        <td>1,040.00</td>
+                    </tr>
+                    <tr>
+                        <td>Pag-ibig Contribution</td>
+                        <td>310.00</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>TOTAL COMPANY PAID GOVERNMENT BENEFITS</td>
+                        <td>2,790.00</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div style="width: 49%;">
+                <table class="header-table">
+                    <tr>
+                        <td><strong>Company Paid Benefits</td>
+                    </tr>
+                    <tr>
+                        <td>Life Insurance</td>
+                        <td>0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Philcare (HMO)</td>
+                        <td>0.00</td>
+                    </tr>
+                    <tr>
+                        <td>FWD Retirement Benefit</td>
+                        <td>0.00</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>TOTAL OTHER COMPANY PAID BENEFITS</td>
+                        <td>0.00</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
 </html>

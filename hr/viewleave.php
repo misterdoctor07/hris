@@ -42,7 +42,7 @@ if(mysqli_num_rows($sqlChecklist)>0){
     $nov_eaused=$checklist['nov_eo_used']??0;
     $dec_eaout=$checklist['dec_earlyout']??0;
     $dec_eaused=$checklist['dec_eo_used']??0;
-   $spl=$checklist['spl']??0;
+    $spl=$checklist['spl']??0;
     $splused=$checklist['spl_used']??0;
 } else {
   $vacation="";

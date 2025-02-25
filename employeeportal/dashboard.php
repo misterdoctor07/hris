@@ -1,3 +1,12 @@
+<!-- <style>
+/* .sub {
+    display: none;
+}
+
+.sub-menu.open .sub {
+    display: block;
+} */
+</style> -->
 <?php
 date_default_timezone_set("Asia/Manila");
 ?>
@@ -74,7 +83,7 @@ date_default_timezone_set("Asia/Manila");
   <!-- Favicons -->
   <!-- <link href="img/favicon.png" rel="icon">
   <link href="img/apple-touch-icon.png" rel="apple-touch-icon"> -->
-  <link rel="icon" type="image/x-icon" href="img/nesi.jpg">
+  <link rel="icon" type="image/x-icon" href="img/icon.png">
 
   <!-- Bootstrap core CSS -->
   <link href="lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -106,7 +115,7 @@ date_default_timezone_set("Asia/Manila");
         <div class="fa fa-bars tooltips" data-placement="right" data-original-title="Toggle Navigation"></div>
       </div>
       <!--logo start-->
-      <a href="index.html" class="logo"><b>EMPLOYEE PORTAL</b></a>
+      <a href="?main" class="logo"><b>EMPLOYEE PORTAL</b></a>
       <!--logo end-->
       <div class="nav notify-row" id="top_menu">
         <!--  notification start -->
@@ -117,7 +126,7 @@ date_default_timezone_set("Asia/Manila");
       
       <li><a class="logout" style="border-radius: 15px 15px;" href="logout.php" onclick="return confirm('Do you wish to logout?');return false;">Logout</a></li>
     </ul>
-    <li style="float: right; margin-right: 40px; margin-top: 20px; "><a class="attendance_out" href="/hris/attendance/" style=" background-color:#7BCCB5; padding: 5px 15px; font-size: 13px; color: white; border: 1px solid #007bff; border-radius: 15px 15px; border-color: #7BCCB5;">Attendance</a></li>
+    <li style="float: right; margin-right: 40px; margin-top: 20px; "><a class="attendance_out" href="/hris/attendance/" style=" background-color:#337ab7; padding: 5px 15px; font-size: 13px; color: white; border: 1px solid #337ab7; border-radius: 15px 15px; border-color: #337ab7;">Attendance</a></li>
   </div>
     </header>
     <!--header end-->
@@ -146,12 +155,15 @@ date_default_timezone_set("Asia/Manila");
             $image = $target_dir . $userId . ".jpeg";
         }
         ?>
+              
 
         <!-- Display profile picture -->
         <p class="centered">
+          
             <img src="<?= $image; ?>" alt="Profile Picture" class="img-circle" width="80" height="80">
         </p>
           <h5 class="centered"><?=$fullname;?></h5>
+          <p class= "centered" style=" font-size:13px; color:white;"><?= $idno; ?></p>
           <li class="mt">
             <a href="dashboard.php?main">
               <i class="fa fa-user-circle"></i>
@@ -159,17 +171,52 @@ date_default_timezone_set("Asia/Manila");
               </a>
           </li>
           <li class="sub-menu">
-              <a href="javascript:;">
-                <i class="fa fa-envelope-open"></i>
-                <span>Applications</span>
-              </a>
-              <ul class="sub">
-                  <li><a href="dashboard.php?manageleave">Apply Leave</a></li>
-                  <li><a href="dashboard.php?applymissedlog">Apply Missed Log</a></li>
-                  <li><a href="dashboard.php?applyovertime">Apply Overtime</a></li>
-                  <li><a href="dashboard.php?emergencyearlyout">Apply Emergency Early Out</a></li>
-              </ul>
-          </li>
+    <a href="#" class="menu-toggle">
+        <i class="fa fa-envelope-open"></i>
+        <span>Applications</span>
+    </a>
+    <ul class="sub">
+        <li><a href="dashboard.php?manageleave" class="submenu-item">Apply Leave</a></li>
+        <li><a href="dashboard.php?applymissedlog" class="submenu-item">Apply Missed Log</a></li>
+        <li><a href="dashboard.php?applyovertime" class="submenu-item">Apply Overtime</a></li>
+        <li><a href="dashboard.php?emergencyearlyout" class="submenu-item">Apply Emergency Early Out</a></li>
+    </ul>
+</li>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const menu = document.querySelector(".sub-menu");
+    const menuToggle = menu.querySelector(".menu-toggle");
+    const submenu = menu.querySelector(".sub");
+    const menuKey = "menuState"; // Local storage key
+
+    // Restore menu state on page load
+    if (localStorage.getItem(menuKey) === "open") {
+        menu.classList.add("open");
+    }
+
+    // Toggle menu when clicking the main menu link
+    menuToggle.addEventListener("click", function (event) {
+        event.preventDefault();
+        if (menu.classList.contains("open")) {
+            menu.classList.remove("open");
+            localStorage.setItem(menuKey, "closed");
+        } else {
+            menu.classList.add("open");
+            localStorage.setItem(menuKey, "open");
+        }
+    });
+
+    // Ensure menu stays open when clicking a submenu item (before page reload)
+    document.querySelectorAll(".submenu-item").forEach(item => {
+        item.addEventListener("click", function () {
+            localStorage.setItem(menuKey, "open"); // Keep menu open
+        });
+    });
+});
+</script>
+
           <li class="sub-menu">
               <a  <?= $view; ?> href="javascript:;">
                 <i class="fa fa-archive"></i>

@@ -103,10 +103,10 @@ if(mysqli_num_rows($sqlStartShift)>0){
                     </div>
                 </div>
                 <!-- Additional Selection for EO Month -->
-                <div class="form-group" id="eo-month-group">
-                    <label class="col-sm-4 control-label">Select Month</label>
+                <div class="form-group" id="eo-month-group" style="display: none;">
+                    <label class="col-sm-4 control-label" for="eo_month">EO Month</label>
                     <div class="col-sm-8">
-                        <select name="eo_month" class="form-control" required onchange="updateCredits(this.value)">
+                        <select name="eo_month" class="form-control">
                             <option value="" selected>Select Month</option>
                             <option value="jan_EO" <?= ($eoMonth == 'jan_EO') ? 'selected' : ''; ?>>January</option>
                             <option value="feb_EO" <?= ($eoMonth == 'feb_EO') ? 'selected' : ''; ?>>February</option>
@@ -163,7 +163,7 @@ if (isset($_GET['submit']) && isset($_GET['editleave'])) {
     $leaveId = $_GET['id']; // Get the ID from the hidden input
     $idno = $_SESSION['idno'];
     $leavetype = $_GET['leavetype'];
-    $eoMonth = $_GET['eo_month'];
+    $eoMonth = ($leavetype === 'EO') ? $_GET['eo_month'] : 'NULL';
     $nofdays = $_GET['nofdays'];
     $startDate = $_GET['startDate'];
     $endDate = $_GET['endDate'];   
@@ -233,6 +233,9 @@ function checkSubmitButton() {
     const startDateValue = new Date(startDateField.value);
     const startDateMonth = startDateValue.getMonth() + 1; // Get the month (1-12)
 
+    // Allow submission for non-credit leave types
+    const noCreditLeaves = ["MTL", "MDL", "LTL", "PTL", "BL"];
+
     // Check if the leave type is BLP and if the start date's month is not the user's birth month
     if (leaveType === 'BLP' && startDateMonth !== parseInt(userBirthdayMonth)) {
         submitBtn.disabled = true; // Disable the submit button
@@ -259,20 +262,20 @@ function checkSubmitButton() {
         dec_EO: <?= isset($credits['dec_EO']) ? $credits['dec_EO'] : 0; ?>
     };
 
-    // Check EO credits per month properly
-    if (leaveType === 'EO') {
-        if (!selectedEO_Month) {
-            submitBtn.disabled = true;
-            return;
-        }
-        if (!credits[selectedEO_Month] || credits[selectedEO_Month] <= 0) {
-            submitBtn.disabled = true;
-            return;
-        }
-    } else {
+    // Skip credit check for leave types that do not require credits
+    if (!noCreditLeaves.includes(leaveType)) {
+        // Check if the selected leave type has no credits
         if (!credits[leaveType] || credits[leaveType] <= 0) {
             submitBtn.disabled = true;
             return;
+        }
+        
+        // Check EO credits per month
+        if (leaveType === 'EO') {
+            if (!selectedEO_Month || !credits[selectedEO_Month] || credits[selectedEO_Month] <= 0) {
+                submitBtn.disabled = true;
+                return;
+            }
         }
     }
     // Check if any required fields are disabled
@@ -290,23 +293,27 @@ function checkSubmitButton() {
 
 // JavaScript function to update displayed leave credits
 function updateCredits(leaveType) {
+    const eoMonthContainer = document.getElementById("eo-month-container"); // Get EO month container
     const eoMonthSelect = document.querySelector('select[name="eo_month"]');
     const leaveTypeSelect = document.querySelector('select[name="leavetype"]');
     let selectedLeaveType = leaveTypeSelect.value; // Get the selected leave type
 
-    // If no leave type is selected, do not update credits
-    if (!selectedLeaveType) {
-        document.getElementById('credit-info').textContent = ""; // Clear any existing text
-        return;
+    // Show EO month dropdown only when EO is selected
+    if (leaveType === "EO") {
+        eoMonthContainer.style.display = "block"; // Show EO month select
+    } else {
+        eoMonthContainer.style.display = "none"; // Hide EO month select
     }
 
-    // Get current month index (0 = January, 1 = February, etc.)
-    const monthIndex = new Date().getMonth(); 
+    // If no leave type is selected, clear credit info
+    if (!selectedLeaveType) {
+        document.getElementById('credit-info').textContent = "";
+        return;
+    }
 
     // Month mapping
     const monthKeys = ["jan_EO", "feb_EO", "mar_EO", "apr_EO", "may_EO", "jun_EO",
                        "jul_EO", "aug_EO", "sep_EO", "oct_EO", "nov_EO", "dec_EO"];
-
     const monthMapping = {
         jan_EO: "January", feb_EO: "February", mar_EO: "March",
         apr_EO: "April", may_EO: "May", jun_EO: "June",
@@ -314,12 +321,10 @@ function updateCredits(leaveType) {
         oct_EO: "October", nov_EO: "November", dec_EO: "December"
     };
 
-    // Set default month for EO only if no value is selected
-    if (leaveType === 'EO' && !eoMonthSelect.value) {
-        eoMonthSelect.value = monthKeys[monthIndex]; 
+    // Set default month for EO if no value is selected
+    if (leaveType === "EO" && (!eoMonthSelect.value || eoMonthSelect.value === "undefined")) { 
+        eoMonthSelect.value = monthKeys[new Date().getMonth()]; 
     }
-
-    console.log("Final Selected EO Month:", eoMonthSelect.value);
 
     let selectedEO_Month = eoMonthSelect.value;  
     let creditInfo = document.getElementById('credit-info');
@@ -328,29 +333,48 @@ function updateCredits(leaveType) {
     let endDate = document.getElementsByName('endDate')[0];
     let reasonField = document.getElementsByName('reasons')[0];
 
+    // Define leave types that should not be disabled even with 0 credits
+    const excludedLeaveTypes = ['MTL', 'PTL', 'BL', 'MDL', 'EEO', 'LTL'];
+
     const credits = {
-        VL: <?= isset($credits['VL']) ? $credits['VL'] : 0; ?>,
-        PTO: <?= isset($credits['PTO']) ? $credits['PTO'] : 0; ?>,
-        BLP: <?= isset($credits['BLP']) ? $credits['BLP'] : 0; ?>,
-        SPL: <?= isset($credits['SPL']) ? $credits['SPL'] : 0; ?>,
-        jan_EO: <?= isset($credits['jan_EO']) ? $credits['jan_EO'] : 0; ?>,
-        feb_EO: <?= isset($credits['feb_EO']) ? $credits['feb_EO'] : 0; ?>,
-        mar_EO: <?= isset($credits['mar_EO']) ? $credits['mar_EO'] : 0; ?>,
-        apr_EO: <?= isset($credits['apr_EO']) ? $credits['apr_EO'] : 0; ?>,
-        may_EO: <?= isset($credits['may_EO']) ? $credits['may_EO'] : 0; ?>,
-        jun_EO: <?= isset($credits['jun_EO']) ? $credits['jun_EO'] : 0; ?>,
-        jul_EO: <?= isset($credits['jul_EO']) ? $credits['jul_EO'] : 0; ?>,
-        aug_EO: <?= isset($credits['aug_EO']) ? $credits['aug_EO'] : 0; ?>,
-        sep_EO: <?= isset($credits['sep_EO']) ? $credits['sep_EO'] : 0; ?>,
-        oct_EO: <?= isset($credits['oct_EO']) ? $credits['oct_EO'] : 0; ?>,
-        nov_EO: <?= isset($credits['nov_EO']) ? $credits['nov_EO'] : 0; ?>,
-        dec_EO: <?= isset($credits['dec_EO']) ? $credits['dec_EO'] : 0; ?>
+        VL: <?= isset($credits['VL']) ? json_encode($credits['VL']) : 0; ?>,
+        PTO: <?= isset($credits['PTO']) ? json_encode($credits['PTO']) : 0; ?>,
+        BLP: <?= isset($credits['BLP']) ? json_encode($credits['BLP']) : 0; ?>,
+        SPL: <?= isset($credits['SPL']) ? json_encode($credits['SPL']) : 0; ?>,
+        jan_EO: <?= isset($credits['jan_EO']) ? json_encode($credits['jan_EO']) : 0; ?>,
+        feb_EO: <?= isset($credits['feb_EO']) ? json_encode($credits['feb_EO']) : 0; ?>,
+        mar_EO: <?= isset($credits['mar_EO']) ? json_encode($credits['mar_EO']) : 0; ?>,
+        apr_EO: <?= isset($credits['apr_EO']) ? json_encode($credits['apr_EO']) : 0; ?>,
+        may_EO: <?= isset($credits['may_EO']) ? json_encode($credits['may_EO']) : 0; ?>,
+        jun_EO: <?= isset($credits['jun_EO']) ? json_encode($credits['jun_EO']) : 0; ?>,
+        jul_EO: <?= isset($credits['jul_EO']) ? json_encode($credits['jul_EO']) : 0; ?>,
+        aug_EO: <?= isset($credits['aug_EO']) ? json_encode($credits['aug_EO']) : 0; ?>,
+        sep_EO: <?= isset($credits['sep_EO']) ? json_encode($credits['sep_EO']) : 0; ?>,
+        oct_EO: <?= isset($credits['oct_EO']) ? json_encode($credits['oct_EO']) : 0; ?>,
+        nov_EO: <?= isset($credits['nov_EO']) ? json_encode($credits['nov_EO']) : 0; ?>,
+        dec_EO: <?= isset($credits['dec_EO']) ? json_encode($credits['dec_EO']) : 0; ?>
     };
 
-    if (leaveType === 'EO' && selectedEO_Month) {
+    if (excludedLeaveTypes.includes(leaveType)) {
+        creditInfo.textContent = ''; 
+        creditInfo.style.color = ''; 
+        
+        nofdays.disabled = false; 
+        startDate.disabled = false;
+        endDate.disabled = false; 
+        reasonField.disabled = false; 
+
+        // Reset the attributes and styles
+        nofdays.max = ''; 
+        nofdays.value = 1; 
+        nofdays.style.backgroundColor = '';
+        startDate.style.backgroundColor = '';
+        endDate.style.backgroundColor = '';
+        reasonField.style.backgroundColor = '';
+    }else if (leaveType === 'EO' && selectedEO_Month && credits[selectedEO_Month] !== undefined) {
         if (credits[selectedEO_Month] > 0) {
             creditInfo.textContent = `Remaining EO Credits for ${monthMapping[selectedEO_Month]}: ${credits[selectedEO_Month]}`;
-            creditInfo.style.color = '';
+            creditInfo.style.color = 'green';
             nofdays.disabled = false;
             startDate.disabled = false;
             endDate.disabled = false;
@@ -367,47 +391,65 @@ function updateCredits(leaveType) {
             nofdays.max = 0;
             nofdays.value = 0;
         }
-    } else if (credits[leaveType] !== undefined && credits[leaveType] > 0) {
-        creditInfo.textContent = `Remaining Credits: ${credits[leaveType]}`;
-        creditInfo.style.color = '';
-        nofdays.disabled = false;
-        startDate.disabled = false;
-        endDate.disabled = false;
-        reasonField.disabled = false;
-        nofdays.max = credits[leaveType];
-        nofdays.value = 1;
-    } else {
-        creditInfo.textContent = 'No available credits for this leave type.';
-        creditInfo.style.color = 'red';
-        nofdays.disabled = true;
-        startDate.disabled = true;
-        endDate.disabled = true;
-        reasonField.disabled = true;
-        nofdays.max = 0;
-        nofdays.value = 0;
+    } else if (leaveType !== "EO" && credits[leaveType] !== undefined) {
+        if (credits[leaveType] > 0) {
+            creditInfo.textContent = `Remaining Credits: ${credits[leaveType]}`;
+            creditInfo.style.color = 'green';
+            nofdays.disabled = false;
+            startDate.disabled = false;
+            endDate.disabled = false;
+            reasonField.disabled = false;
+            nofdays.max = credits[leaveType];
+            nofdays.value = 1;
+        } else {
+            creditInfo.textContent = `No available credits for ${leaveType}.`;
+            creditInfo.style.color = 'red';
+            nofdays.disabled = true;
+            startDate.disabled = true;
+            endDate.disabled = true;
+            reasonField.disabled = true;
+            nofdays.max = 0;
+            nofdays.value = 0;
+        }
     }
 
     checkSubmitButton();
 }
 
+// Add event listener to the leave type dropdown
+document.querySelector('select[name="leavetype"]').addEventListener("change", function() {
+    updateCredits(this.value);
+});
+
 // Add event listener for EO month selection
 document.addEventListener("DOMContentLoaded", function() {
     const eoMonthSelect = document.querySelector('select[name="eo_month"]');
+    const leaveTypeSelect = document.querySelector('select[name="leavetype"]');
+
     if (eoMonthSelect) {
-        // Only set the default if the value is empty
         if (!eoMonthSelect.value) {
             const monthIndex = new Date().getMonth();
             const monthKeys = ["jan_EO", "feb_EO", "mar_EO", "apr_EO", "may_EO", "jun_EO",
                                "jul_EO", "aug_EO", "sep_EO", "oct_EO", "nov_EO", "dec_EO"];
             eoMonthSelect.value = monthKeys[monthIndex]; 
         }
+    }
 
-        // Update credits after setting the correct month
-        updateCredits('EO');
+    // Ensure updateCredits is called with the actual selected leave type
+    if (leaveTypeSelect) {
+        updateCredits(leaveTypeSelect.value);
+    }
 
-        // Add event listener for changes
+    if (eoMonthSelect) {
         eoMonthSelect.addEventListener("change", function() {
+            console.log("EO Month Changed to:", eoMonthSelect.value);
             updateCredits('EO');
+        });
+    }
+
+    if (leaveTypeSelect) {
+        leaveTypeSelect.addEventListener("change", function() {
+            updateCredits(leaveTypeSelect.value);
         });
     }
 });
@@ -575,12 +617,12 @@ function checkEndDate() {
         endDate.style.borderColor = '';
     }
 }
-//Function for EO month
-function toggleEOSelection(selectedValue) {
+// Function to handle EO selection
+function toggleEOSelection(selectElement) {
     let eoMonthGroup = document.getElementById('eo-month-group');
     let eoMonthSelect = document.querySelector('select[name="eo_month"]');
 
-    if (selectedValue === "EO") {
+    if (selectElement.value === "EO") {
         eoMonthGroup.style.display = 'block';
 
         // Define months with corresponding formatted values
@@ -605,25 +647,61 @@ function toggleEOSelection(selectedValue) {
         
         // Set the default value to the current month formatted as "jan_EO", "feb_EO", etc.
         eoMonthSelect.value = monthMap[formattedMonth];
+
+        // Disable the dropdown when EO is selected
+        selectElement.disabled = true;
     } else {
         eoMonthGroup.style.display = 'none';
         eoMonthSelect.value = ""; // Reset selection
     }
 }
 
-//Disable leave type field if value is EO
+// Disable leave type field if value is EO when the page loads
 document.addEventListener("DOMContentLoaded", function () {
     let leaveTypeSelect = document.getElementById("leaveTypeSelect");
+    let eoMonthGroup = document.getElementById("eo-month-group");
+    let eoMonthSelect = document.querySelector('select[name="eo_month"]');
+    let creditInfo = document.getElementById("creditInfo");
 
-    // Disable the dropdown if EO is already selected from the database
-    if (leaveTypeSelect.value === "EO") {
-        leaveTypeSelect.disabled = true;
+    function updateCredits() {
+        let leaveType = leaveTypeSelect.value; // Get selected leave type
+        let selectedEO_Month = eoMonthSelect.value; // Get selected EO month
+
+        console.log("Selected Leave Type:", leaveType);
+        console.log("Final Selected EO Month Before Reset:", selectedEO_Month);
+
+        // 🔥 Force reset EO-related values first
+        eoMonthSelect.value = ""; 
+        eoMonthGroup.style.display = "none"; // Hide EO month dropdown
+
+        if (leaveType === "EO") {
+            eoMonthGroup.style.display = "block"; // Show EO month dropdown
+
+            if (selectedEO_Month && credits.hasOwnProperty(selectedEO_Month)) {
+                let eoCredits = credits[selectedEO_Month]; 
+                console.log("EO Credits Retrieved:", eoCredits);
+                creditInfo.textContent = `Remaining EO Credits for ${monthMapping[selectedEO_Month]}: ${eoCredits}`;
+                creditInfo.style.color = eoCredits > 0 ? "green" : "red";
+            } else {
+                creditInfo.textContent = "Select a valid EO month.";
+                creditInfo.style.color = "red";
+            }
+        } else {
+            // **Ensure credits are from the correct leave type (not EO)**
+            let leaveCredits = credits.hasOwnProperty(leaveType) ? credits[leaveType] : 0;
+            console.log("Non-EO Leave Credits Retrieved:", leaveCredits);
+
+            // 🔥 Ensure EO references are wiped before updating text
+            creditInfo.innerHTML = ""; // Clears any lingering EO text
+            creditInfo.textContent = `Remaining Credits for ${leaveType}: ${leaveCredits}`;
+            creditInfo.style.color = leaveCredits > 0 ? "green" : "red";
+        }
+
+        console.log("EO Month Reset. New Value:", eoMonthSelect.value); // Debugging log
     }
+
+    updateCredits();
+    leaveTypeSelect.addEventListener("change", updateCredits);
+    eoMonthSelect.addEventListener("change", updateCredits);
 });
-
-function toggleEOSelection(selectElement) {
-    if (selectElement.value === "EO") {
-        selectElement.disabled = true; // Disable the dropdown when EO is selected
-    }
-}
 </script>

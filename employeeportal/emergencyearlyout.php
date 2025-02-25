@@ -88,17 +88,17 @@
 <?php
 if (isset($_GET['delete'])) {
     $id = $_GET['id'];
-    $sqlDelete = mysqli_query($con, "DELETE FROM missed_log_application WHERE id='$id'");
+    $sqlDelete = mysqli_query($con, "DELETE FROM emergencyearlyout WHERE id='$id'");
     
     if ($sqlDelete) {
         echo "<script>";
         echo "alert('Item successfully removed!');";
-        echo "window.location='?applymissedlog';";
+        echo "window.location='?emergencyearlyout';";
         echo "</script>";
     } else {
         echo "<script>";
         echo "alert('Unable to remove item!');";
-        echo "window.location='?applymissedlog';";
+        echo "window.location='?emergencyearlyout';";
         echo "</script>";
     }
 }

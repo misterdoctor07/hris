@@ -16,7 +16,18 @@
         $credits['SL'] = $credit['sickleave'] - $credit['slused'];
         $credits['PTO'] = $credit['pto'] - $credit['ptoused'];
         $credits['BLP'] = $credit['bdayleave'] - $credit['blp_used'];
-        $credits['EO'] = $credit['earlyout'] - $credit['eo_used'];
+        $credits['jan_EO'] = $credit['jan_earlyout'] - $credit['jan_eo_used'];
+        $credits['feb_EO'] = $credit['feb_earlyout'] - $credit['feb_eo_used'];
+        $credits['mar_EO'] = $credit['mar_earlyout'] - $credit['mar_eo_used'];
+        $credits['apr_EO'] = $credit['apr_earlyout'] - $credit['apr_eo_used'];
+        $credits['may_EO'] = $credit['may_earlyout'] - $credit['may_eo_used'];
+        $credits['jun_EO'] = $credit['jun_earlyout'] - $credit['jun_eo_used'];
+        $credits['jul_EO'] = $credit['jul_earlyout'] - $credit['jul_eo_used'];
+        $credits['aug_EO'] = $credit['aug_earlyout'] - $credit['aug_eo_used'];
+        $credits['sep_EO'] = $credit['sep_earlyout'] - $credit['sep_eo_used'];
+        $credits['oct_EO'] = $credit['oct_earlyout'] - $credit['oct_eo_used'];
+        $credits['nov_EO'] = $credit['nov_earlyout'] - $credit['nov_eo_used'];
+        $credits['dec_EO'] = $credit['dec_earlyout'] - $credit['dec_eo_used'];
         $credits['SPL'] = $credit['spl'] - $credit['spl_used'];
     }
     $sqlAttendance = mysqli_query($con, "SELECT * FROM attendance WHERE id='$id'");
@@ -220,9 +231,11 @@ if (isset($_GET['submit'])) {
   $addedby = $_GET['addedby'];
   $datenow = date('Y-m-d H:i:s');
   $logindate = $_GET['logindate'];
+  $id = $_GET['id'];
   $idno = $_GET['idno'];
   $newStatus = $_GET['status'];
   $newLeaveType = $_GET['leavetype'];
+  $startMonth = date('n', strtotime($logindate));
 
   // Set time fields to NULL if the leave type is selected
   if (!empty($newLeaveType)) {
@@ -255,16 +268,16 @@ if (isset($_GET['submit'])) {
         
         if ($newLeaveType == 'P-EO') {
             $newLeaveType = "$previousRemarks/P-EO"; // Combine P-EO with previous remarks
-            updateLeaveCredits($con, $idno, 'P-EO', '+'); // Increment eo_used by 1
+            updateLeaveCredits($con, $idno, 'P-EO', '+', $startMonth); // Increment eo_used by 1
         }
 
           // Update credits based on previous and new status
           if ($previousStatus != 'leave' && $status == 'leave') {
-              updateLeaveCredits($con, $idno, $newLeaveType, '+');
+              updateLeaveCredits($con, $idno, $newLeaveType, '+', $startMonth);
           } elseif ($previousStatus == 'leave' && $status == 'leave') {
               if (!areEquivalentLeaveTypes($previousRemarks, $newLeaveType)) {
-                  updateLeaveCredits($con, $idno, $previousRemarks, '-');
-                  updateLeaveCredits($con, $idno, $newLeaveType, '+');
+                  updateLeaveCredits($con, $idno, $previousRemarks, '-', $startMonth);
+                  updateLeaveCredits($con, $idno, $newLeaveType, '+', $startMonth);
               }
           }
 
@@ -281,7 +294,7 @@ if (isset($_GET['submit'])) {
           );
 
           if ($status == 'leave') {
-              updateLeaveCredits($con, $idno, $newLeaveType, '+');
+              updateLeaveCredits($con, $idno, $newLeaveType, '+', $startMonth);
           }
       }
 
@@ -295,7 +308,7 @@ if (isset($_GET['submit'])) {
   }
 }
 
-function updateLeaveCredits($con, $idno, $leaveType, $operation) {
+function updateLeaveCredits($con, $idno, $leaveType, $operation, $startMonth) {
   switch ($leaveType) {
       case 'VL':
           mysqli_query($con, "UPDATE leave_credits SET vlused = vlused $operation 1 WHERE idno = '$idno'");
@@ -312,8 +325,26 @@ function updateLeaveCredits($con, $idno, $leaveType, $operation) {
           break;
       case 'EO':
       case 'P-EO':
-          mysqli_query($con, "UPDATE leave_credits SET eo_used = eo_used $operation 1 WHERE idno = '$idno'");
-          break;
+          // Ensure $startMonth is an integer
+          $startMonth = (int) $startMonth;
+      
+          // Define month column mappings
+          $monthNames = [
+              1 => "jan", 2 => "feb", 3 => "mar", 4 => "apr", 5 => "may", 6 => "jun",
+              7 => "jul", 8 => "aug", 9 => "sep", 10 => "oct", 11 => "nov", 12 => "dec"
+          ];
+      
+          // Validate month and operation before executing the query
+          if (isset($monthNames[$startMonth]) && in_array($operation, ['+', '-'])) {
+              $columnName = $monthNames[$startMonth] . "_eo_used";
+              $query = "UPDATE leave_credits SET $columnName = $columnName $operation 1 WHERE idno = '$idno'";
+              
+              // Execute query and check for errors
+              if (!mysqli_query($con, $query)) {
+                  die("Error updating leave credits: " . mysqli_error($con));
+              }
+          }
+          break;        
       case 'BLP':
           mysqli_query($con, "UPDATE leave_credits SET blp_used = blp_used $operation 1 WHERE idno = '$idno'");
           break;

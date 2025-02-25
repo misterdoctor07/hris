@@ -398,6 +398,7 @@ date_default_timezone_set("Asia/Manila");
     $datenow = date('Y-m-d');
     $currentDate = date('Y-m-d');
     $currentTime = date('H:i:s');
+    $startMonth = date('n', strtotime($currentDate));
 
     // Check if employee exists
     $sqlCheckEmployee = mysqli_query($con, "SELECT * FROM employee_profile WHERE idno='$empid'");
@@ -466,7 +467,19 @@ if ($logintype === 'loginam') {
                   case 'VL': $leaveColumn = 'vlused'; break;
                   case 'SL': $leaveColumn = 'slused'; break;
                   case 'PTO': $leaveColumn = 'ptoused'; break;
-                  case 'EO': $leaveColumn = 'eo_used'; break;
+                  case 'EO':
+                    // Ensure $startMonth is an integer
+                    $startMonth = (int) $startMonth;
+                    $monthNames = [
+                        1 => "jan", 2 => "feb", 3 => "mar", 4 => "apr", 5 => "may", 6 => "jun",
+                        7 => "jul", 8 => "aug", 9 => "sep", 10 => "oct", 11 => "nov", 12 => "dec"
+                    ];
+                    
+                    if (isset($monthNames[$startMonth])) {
+                        $columnName = $monthNames[$startMonth] . "_eo_used";
+                        $leaveColumn = $columnName;
+                    }
+                    break;
                   case 'BLP': $leaveColumn = 'blp_used'; break;
                   case 'SPL': $leaveColumn = 'spl_used'; break;
               }
