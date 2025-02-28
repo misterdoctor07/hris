@@ -23,6 +23,8 @@ date_default_timezone_set("Asia/Manila");
   <link href="css/style-responsive.css" rel="stylesheet">
   <script src="lib/chart-master/Chart.js"></script>
   <title>HRIS - North East Solutions Inc.</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;700&display=swap" rel="stylesheet">
+
   <style>
     /* Additional styles for positioning the button */
     #announcementButton {
@@ -77,11 +79,44 @@ date_default_timezone_set("Asia/Manila");
 .heart:nth-child(4) { left: 40%; animation-delay: 3s; }
 .heart:nth-child(5) { left: 50%; animation-delay: 4s; }
     
+
+  /* Modal Styles */
+  .modal5 {
+           display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+    }
+        .modal-content5 {
+          background-color: #fff;
+        padding: 40px;
+        border-radius: 15px;
+        text-align: center;
+        font-size: 2.5em; /* Larger font size */
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+        .close {
+             color: #aaa;
+        float: right;
+        font-size: 36px; /* Larger close button */
+        font-weight: bold;
+        cursor: pointer;
+    }
+        .close:hover {
+            color: #000;
+        }
+
   </style>
   <!-- Favicons -->
   <!-- <link href="img/favicon.png" rel="icon">
   <link href="img/apple-touch-icon.png" rel="apple-touch-icon"> -->
-  <link rel="icon" type="image/x-icon" href="img/nesi.jpg">
+  <link rel="icon" type="image/x-icon" href="img/iconhris_2.png">
 
   <!-- Bootstrap core CSS -->
   <link href="lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -115,12 +150,11 @@ date_default_timezone_set("Asia/Manila");
       *********************************************************************************************************************************************************** -->
      <!-- <div class="snow-container"></div> -->
      <div class="container" align="center">    
-  <div class="date-container" style="font-size: 140px; text-transform: capitalize; font-family: 'Cookie', cursive; text-shadow: black; " >
+  <div class="date-container" style="font-size: 85px; text-transform: capitalize; font-family: 'Montserrat', sans-serif; font-weight:bold; " >
   <p 
     style="
-        text-shadow: 2px 2px 4px rgb(243, 243, 243);
-        -webkit-text-stroke: 1px black;
-        color:#ff4d4d;
+      
+        color:white;
     " 
     id="show-date"
 ></p>
@@ -177,40 +211,40 @@ date_default_timezone_set("Asia/Manila");
               <td>
               <h2>
     <a data-toggle="modal" href="#myModal" class="btn btn-primary attendance" data-id="loginam" data-title="LOG IN" style="background: transparent; border: none;">
-      <img src="img/heart-image3.png" height="90" alt="Heart Image"> <!-- Replace with your heart image -->
+      <img src="img/LOG_IN.png" height="90" alt="Heart Image"> <!-- Replace with your heart image -->
       <br>
-      <span style="color:rgb(0, 0, 0); font-family: 'Dancing Script', cursive; font-size: 26px; font-weight: bold;">LOGIN</span>
+      <span style="color:white; font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: bold;">LOG IN</span>
     </a>
   </h2>
                   </td>
                   <td>
                   <h2>
     <a data-toggle="modal" href="#myModal" class="btn btn-primary attendance" data-id="logoutam" data-title="LUNCH OUT" style="background: transparent; border: none;">
-      <img src="img/heart-image3.png" height="90" alt="Heart Image">
+      <img src="img/LUNCH_OUT.png" height="90" alt="Heart Image">
       <br>
-      <span style="color:rgb(0, 0, 0); font-size: 26px; font-family: 'Dancing Script', cursive; font-weight: bold;">LUNCH OUT</span>
+      <span style="color:white; font-size: 26px; font-family: 'Montserrat', sans-serif; font-weight: bold;">LUNCH OUT</span>
     </a>
   </h2>                   
                   </td>
                   <td>
                   <h2>
     <a data-toggle="modal" href="#myModal" class="btn btn-primary attendance" data-id="loginpm" data-title="LUNCH IN" style="background: transparent; border: none;">
-      <img src="img/heart-image3.png" height="90" alt="Heart Image">
+      <img src="img/LUNCH_IN.png" height="90" alt="Heart Image">
       <br>
-      <span style="color:rgb(0, 0, 0); font-family: 'Dancing Script', cursive; font-size: 26px; font-weight: bold;">LUNCH IN</span>
+      <span style="color:white; font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: bold;">LUNCH IN</span>
     </a>
   </h2>
                   </td>
                   <td>
                   <h2>
     <a data-toggle="modal" href="#myModal" class="btn btn-primary attendance" data-id="logoutpm" data-title="LOG OUT" style="background: transparent; border: none;">
-      <img src="img/heart-image3.png" height="90" alt="Heart Image">
+      <img src="img/LOG_OUT.png" height="90" alt="Heart Image">
       <br>
-      <span style="color:rgb(0, 0, 0); font-family: 'Dancing Script', cursive; font-size: 26px; font-weight: bold;">LOGOUT</span>
+      <span style="color:white; font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: bold;">LOGOUT</span>
     </a>
   </h2>
                     <div class="top-right-button" style="position: absolute;  top: 20px; right: 20px;">
-                    <a href="/hris/employeeportal/" class="btn btn-primary attendance" style="background:#ee4258; border-radius: 40px 40px; float: right; padding: 10px 20px; border: none;">
+                    <a href="/hris/employeeportal/" class="btn btn-primary attendance" style="background:#3f4d6b; border-radius: 40px 40px; float: right; padding: 10px 20px; border: none;">
                            EMPLOYEE PORTAL
                  </a>
                     </div>
@@ -238,7 +272,7 @@ date_default_timezone_set("Asia/Manila");
                         ?>
 
                         <div style="position: absolute; top: 10px; right: 10px;">
-                            <button1 id="announcementButton" class="btn btn-primary" style="background:#f9d6dc; border-radius: 40px 40px; border: none; color: black; font-weight:bolder;">
+                            <button1 id="announcementButton" class="btn btn-primary" style="background:#3f4d6b; border-radius: 40px 40px; border: none; color: white; font-weight:bolder;">
                                 Announcements 
                                 <span id="notificationBadge" class="badge" style="background:red; color:white;"><?= $unreadCount ?></span>
                             </button1>
@@ -324,9 +358,9 @@ date_default_timezone_set("Asia/Manila");
         <div aria-hidden="true" aria-labelledby="myModalLabel" role="dialog" tabindex="-1" id="myModal" class="modal fade">
           <div class="modal-dialog">
             <div class="modal-content">
-              <div class="modal-header" style="background-color: #ffcccc">
+              <div class="modal-header" style="background-color: #20283a">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title"style="color:black; font-family: 'Dancing Script', cursive; font-size:70px; font-weight:bolder;">Attendance</h4>
+                <h4 class="modal-title"style="color:white; font-family: 'Montserrat', sans-serif; font-size:70px; font-weight:bolder;">Attendance</h4>
               </div>
               <div class="modal-body" >
                   <form name="f1" method="POST">
@@ -385,6 +419,34 @@ date_default_timezone_set("Asia/Manila");
         </div>
     </div>
 </div>
+<!-- Modal Structure -->
+<div id="messageModal" class="modal5">
+        <div class="modal-content5">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <p id="modalMessage"></p>
+        </div>
+    </div>
+
+  <script>
+    // Function to display the modal with a message
+    function showModal(message) {
+        document.getElementById('modalMessage').innerText = message;
+        document.getElementById('messageModal').style.display = 'flex';
+    }
+
+    // Function to close the modal
+    function closeModal() {
+        document.getElementById('messageModal').style.display = 'none';
+    }
+
+    // Automatically close the modal after 3 seconds
+    function autoCloseModal() {
+        setTimeout(() => {
+            closeModal();
+            window.location.href = '../attendance/'; // Redirect after closing
+        }, 3000);
+    }
+</script>
 <?php
 // echo "X-Forwarded-For: " . ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? 'Not Set') . "<br>";
 // echo "Remote IP: " . $_SERVER['REMOTE_ADDR'];
@@ -398,7 +460,6 @@ date_default_timezone_set("Asia/Manila");
     $datenow = date('Y-m-d');
     $currentDate = date('Y-m-d');
     $currentTime = date('H:i:s');
-    $startMonth = date('n', strtotime($currentDate));
 
     // Check if employee exists
     $sqlCheckEmployee = mysqli_query($con, "SELECT * FROM employee_profile WHERE idno='$empid'");
@@ -414,13 +475,13 @@ date_default_timezone_set("Asia/Manila");
 
 
        
-        function logError($con, $empid, $errorMessage, $logType) {
+        function logError($con, $empid, $errorMessage, $logType, $ipAddress) {
           $ipAddress = getClientIP(); // Get the client IP address
           $stmt = $con->prepare("INSERT INTO error_logs (empid, error_message, log_type, ip_address) VALUES (?, ?, ?, ?)");
           $stmt->bind_param("ssss", $empid, $errorMessage, $logType, $ipAddress);
           $stmt->execute();
           $stmt->close();
-      }
+        }
       
      function getClientIP() {
     if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
@@ -464,25 +525,29 @@ if ($logintype === 'loginam') {
               // Restore leave credits
               $leaveColumn = '';
               switch ($leaveType) {
-                  case 'VL': $leaveColumn = 'vlused'; break;
-                  case 'SL': $leaveColumn = 'slused'; break;
-                  case 'PTO': $leaveColumn = 'ptoused'; break;
-                  case 'EO':
+                case 'VL': $leaveColumn = 'vlused'; break;
+                case 'SL': $leaveColumn = 'slused'; break;
+                case 'PTO': $leaveColumn = 'ptoused'; break;
+                case 'EO': 
+                    $startMonth = date('n'); // Get current month as integer
                     // Ensure $startMonth is an integer
                     $startMonth = (int) $startMonth;
                     $monthNames = [
                         1 => "jan", 2 => "feb", 3 => "mar", 4 => "apr", 5 => "may", 6 => "jun",
                         7 => "jul", 8 => "aug", 9 => "sep", 10 => "oct", 11 => "nov", 12 => "dec"
                     ];
-                    
-                    if (isset($monthNames[$startMonth])) {
-                        $columnName = $monthNames[$startMonth] . "_eo_used";
-                        $leaveColumn = $columnName;
-                    }
+            
+                    $leaveColumn = isset($monthNames[$startMonth]) 
+                        ? $monthNames[$startMonth] . "_eo_used" 
+                        : 'default_eo_used'; // Set a default fallback value
+            
                     break;
-                  case 'BLP': $leaveColumn = 'blp_used'; break;
-                  case 'SPL': $leaveColumn = 'spl_used'; break;
-              }
+                case 'BLP': $leaveColumn = 'blp_used'; break;
+                case 'SPL': $leaveColumn = 'spl_used'; break;
+                default:
+                    $leaveColumn = 'unknown_leave_type'; // Handle unexpected cases
+                    break;
+            }            
   
               if ($leaveColumn) {
                   mysqli_query($con, "UPDATE leave_credits SET $leaveColumn = $leaveColumn - 1 WHERE idno = '$empid'");
@@ -499,31 +564,26 @@ if ($logintype === 'loginam') {
           $sqlCheckStatus = mysqli_query($con, "SELECT status FROM employee_details WHERE idno='$empid'");
         $employeeDetails = mysqli_fetch_array($sqlCheckStatus);
         if ($employeeDetails['status'] === 'RESIGNED') {
-          $errorMessage = "Unauthorize Access! Resigned ID.";
-          // Optionally log the error
-          logError($con, $empid, $errorMessage, $logintype);
-  
-          echo "<script>
-              document.getElementById('remarksError').innerHTML = '$errorMessage';
-              setTimeout(function() {
-                  window.location='../attendance/';
-              }, 3000);
-          </script>";
-          exit;
-      }
+    $errorMessage = "Unauthorize Access! Resigned ID.";
+    logError($con, $empid, $errorMessage, $logintype);
+
+    echo "<script>
+        showModal('$errorMessage');
+        autoCloseModal();
+    </script>";
+    exit;
+}
          
           // Check for double entry in `loginam`
           if ($attendanceRecord && !empty($attendanceRecord['loginam']) && $attendanceRecord['loginam'] !== '0') {
             $errorMessage = 'You have already registered in this session!';
-            logError($con, $empid, $errorMessage, 'loginam');
+            logError($con, $empid, $errorMessage, 'loginam', $ipAddress);
         
-            echo "<script>
-                document.getElementById('remarksError').innerHTML = '$errorMessage';
-                setTimeout(function() {
-                    window.location='../attendance/';
-                }, 3000);
-            </script>";
-            exit;
+             echo "<script>
+        showModal('$errorMessage');
+        autoCloseModal();
+    </script>";
+    exit;
         }
       
           // Determine status based on shift
@@ -549,22 +609,17 @@ if ($logintype === 'loginam') {
           }
       
           // Execute the statement
-          if ($stmt->execute()) {
-            $message = 'Welcome';
-               logError($con, $empid, $message, $logintype);
-    
-        echo "<script>
-            window.location = '../attendance/?success&empname=" . urlencode($name) . "&type=" . urlencode($message) . "';
-        </script>";
-        exit;
-          } else {
-              echo "<script>
-                  alert('Error: " . $stmt->error . "');
-                  window.location='../attendance/';
-              </script>";
-          }
-          exit;
-      }
+           if ($stmt->execute()) {
+    $message = 'Welcome, ' . $profile['firstname'] . ' ' . $profile['lastname'] . '!';
+    logError($con, $empid, $message, $logintype, $ipAddress);
+
+    echo "<script>
+        showModal('$message');
+        autoCloseModal();
+    </script>";
+    exit;
+}
+}
      elseif ($logintype === 'logoutam') {
   $isNightShift = false;
   
@@ -593,12 +648,11 @@ if ($logintype === 'loginam') {
           logError($con, $empid, $errorMessage, $logintype);
   
           echo "<script>
-              document.getElementById('remarksError').innerHTML = '$errorMessage';
-              setTimeout(function() {
-                  window.location='../attendance/';
-              }, 3000);
-          </script>";
-          exit;
+        showModal('$errorMessage');
+        autoCloseModal();
+    </script>";
+    exit;
+
       }
 
   if ($attendanceRecord) {
@@ -608,30 +662,23 @@ if ($logintype === 'loginam') {
             logError($con, $empid, $errorMessage, 'logoutam');
 
             echo "<script>
-                document.getElementById('remarksError').innerHTML = '$errorMessage';
-                setTimeout(function() {
-                    window.location='../attendance/';
-                }, 3000);
-            </script>";
-            exit;
+        showModal('$errorMessage');
+        autoCloseModal();
+    </script>";
+    exit;
             }
 
       // Update the logoutam time for the determined log date
       $sqlUpdate = mysqli_query($con, "UPDATE attendance SET logoutam='$timenow' WHERE idno='$empid' AND logindate='$logDateToCheck'");
       if ($sqlUpdate) {
-        $message = 'Happy lunch!';
+        $message = 'Happy Lunch, ' . $profile['firstname'] . ' ' . $profile['lastname'] . '!';
         logError($con, $empid, $message, $logintype);
     
-        echo "<script>
-            window.location = '../attendance/?success&empname=" . urlencode($name) . "&type=" . urlencode($message) . "';
-        </script>";
-        exit;
-    } else {
-        echo "<script>
-            alert('Error: Unable to update attendance!');
-            window.location = '../attendance/';
-        </script>";
-        exit;
+         echo "<script>
+        showModal('$message');
+        autoCloseModal();
+    </script>";
+    exit;
     }
     
   } else {
@@ -639,13 +686,11 @@ if ($logintype === 'loginam') {
     logError($con, $empid, $errorMessage, $logintype);
 
     echo "<script>
-        document.getElementById('remarksError').innerHTML = '$errorMessage';
-        setTimeout(function() {
-            window.location='../attendance/';
-        }, 3000);
+        showModal('$errorMessage');
+        autoCloseModal();
     </script>";
-}
-  exit;
+    exit;
+	}
 }
 elseif ($logintype === 'loginpm') {
   $isNightShift = false;
@@ -675,12 +720,10 @@ elseif ($logintype === 'loginpm') {
           logError($con, $empid, $errorMessage, $logintype);
   
           echo "<script>
-              document.getElementById('remarksError').innerHTML = '$errorMessage';
-              setTimeout(function() {
-                  window.location='../attendance/';
-              }, 3000);
-          </script>";
-          exit;
+        showModal('$errorMessage');
+        autoCloseModal();
+    </script>";
+    exit;
       }
 
       if ($attendanceRecord) {
@@ -690,12 +733,10 @@ elseif ($logintype === 'loginpm') {
             logError($con, $empid, $errorMessage, 'loginpm');
   
             echo "<script>
-                document.getElementById('remarksError').innerHTML = '$errorMessage';
-                setTimeout(function() {
-                    window.location='../attendance/';
-                }, 3000);
-            </script>";
-            exit;
+        showModal('$errorMessage');
+        autoCloseModal();
+    </script>";
+    exit;
         }
   
       }
@@ -706,44 +747,35 @@ elseif ($logintype === 'loginpm') {
         logError($con, $empid, $errorMessage, 'loginpm');
 
             echo "<script>
-                document.getElementById('remarksError').innerHTML = '$errorMessage';
-                setTimeout(function() {
-                    window.location='../attendance/';
-                }, 3000);
-            </script>";
-            exit;
+        showModal('$errorMessage');
+        autoCloseModal();
+    </script>";
+    exit;
         }
 
       // Update the logoutam time for the determined log date
       $sqlUpdate = mysqli_query($con, "UPDATE attendance SET loginpm='$timenow' WHERE idno='$empid' AND logindate='$logDateToCheck'");
       if ($sqlUpdate) {
-        $message = 'Welcome Back';
+         $message = 'Welcome Back, ' . $profile['firstname'] . ' ' . $profile['lastname'] . '!';
         logError($con, $empid, $message, $logintype);
     
-        echo "<script>
-            window.location = '../attendance/?success&empname=" . urlencode($name) . "&type=" . urlencode($message) . "';
-        </script>";
-        exit;
-    } else {
-        echo "<script>
-            alert('Error: Unable to update attendance!');
-            window.location = '../attendance/';
-        </script>";
-        exit;
+          echo "<script>
+        showModal('$message');
+        autoCloseModal();
+    </script>";
+    exit;
     }
     
   } else {
     $errorMessage = 'No attendance record found for the selected date!';
     logError($con, $empid, $errorMessage, $logintype);
 
-    echo "<script>
-        document.getElementById('remarksError').innerHTML = '$errorMessage';
-        setTimeout(function() {
-            window.location='../attendance/';
-        }, 3000);
+   echo "<script>
+        showModal('$errorMessage');
+        autoCloseModal();
     </script>";
-}
-  exit;
+    exit;
+    }
 }elseif ($logintype === 'logoutpm') {
   $isNightShift = false;
   
@@ -771,13 +803,11 @@ elseif ($logintype === 'loginpm') {
           // Optionally log the error
           logError($con, $empid, $errorMessage, $logintype);
   
-          echo "<script>
-              document.getElementById('remarksError').innerHTML = '$errorMessage';
-              setTimeout(function() {
-                  window.location='../attendance/';
-              }, 3000);
-          </script>";
-          exit;
+        echo "<script>
+        showModal('$errorMessage');
+        autoCloseModal();
+    </script>";
+    exit;
       }
 
       if ($attendanceRecord) {
@@ -790,13 +820,11 @@ elseif ($logintype === 'loginpm') {
             $errorMessage = 'You need to lunch in first before you can log out!';
             logError($con, $empid, $errorMessage, 'logoutpm');
     
-            echo "<script>
-                document.getElementById('remarksError').innerHTML = '$errorMessage';
-                setTimeout(function() {
-                    window.location='../attendance/';
-                }, 3000);
-            </script>";
-            exit;
+           echo "<script>
+        showModal('$errorMessage');
+        autoCloseModal();
+    </script>";
+    exit;
         }
       }
 
@@ -807,30 +835,23 @@ elseif ($logintype === 'loginpm') {
         logError($con, $empid, $errorMessage, 'logoutpm');
     
         echo "<script>
-            document.getElementById('remarksError').innerHTML = '$errorMessage';
-            setTimeout(function() {
-                window.location='../attendance/';
-            }, 3000);
-        </script>";
-        exit;
+        showModal('$errorMessage');
+        autoCloseModal();
+    </script>";
+    exit;
     }
 
       // Update the logoutam time for the determined log date
       $sqlUpdate = mysqli_query($con, "UPDATE attendance SET logoutpm='$timenow' WHERE idno='$empid' AND logindate='$logDateToCheck'");
       if ($sqlUpdate) {
-        $message = 'Goodbye';
+        $message = 'Good Bye, ' . $profile['firstname'] . ' ' . $profile['lastname'] . '!';
         logError($con, $empid, $message, $logintype);
     
-        echo "<script>
-            window.location = '../attendance/?success&empname=" . urlencode($name) . "&type=" . urlencode($message) . "';
-        </script>";
-        exit;
-    } else {
-        echo "<script>
-            alert('Error: Unable to update attendance!');
-            window.location = '../attendance/';
-        </script>";
-        exit;
+       echo "<script>
+        showModal('$message');
+        autoCloseModal();
+    </script>";
+    exit;
     }
     
   } else {
@@ -838,29 +859,27 @@ elseif ($logintype === 'loginpm') {
     logError($con, $empid, $errorMessage, $logintype);
 
     echo "<script>
-        document.getElementById('remarksError').innerHTML = '$errorMessage';
-        setTimeout(function() {
-            window.location='../attendance/';
-        }, 3000);
+        showModal('$errorMessage');
+        autoCloseModal();
     </script>";
+    exit;
 }
-  exit;
 }
 }else {
-  // Log the invalid ID error
-  $errorMessage = "Invalid ID No.!";
-  $stmt = $con->prepare("INSERT INTO error_logs (empid, error_message, log_type) VALUES (?, ?, ?)");
-  $stmt->bind_param("sss", $empid, $errorMessage, $logintype);
-  $stmt->execute();
-  $stmt->close();
-  ?>
-  <script>
-      document.getElementById("remarksError").innerHTML = "<?= $errorMessage; ?>";
-      setTimeout(function () {
-          window.location = "../attendance/";
-      }, 2000);
-  </script>
-  <?php
+ // Log the invalid ID error
+$errorMessage = "Invalid ID No.!";
+$stmt = $con->prepare("INSERT INTO error_logs (empid, error_message, log_type) VALUES (?, ?, ?)");
+$stmt->bind_param("sss", $empid, $errorMessage, $logintype);
+$stmt->execute();
+$stmt->close();
+?>
+<script>
+    // Display the error message in the modal
+    showModal('<?= $errorMessage; ?>');
+    // Automatically close the modal and redirect after 2 seconds
+    autoCloseModal();
+</script>
+<?php
 }
 }
 
@@ -1016,7 +1035,7 @@ elseif ($logintype === 'loginpm') {
   }
 </style>
   <script>
-    $.backstretch("img/val3.jpg", {
+    $.backstretch("img/attendance.png", {
       speed: 500
     });
   </script>

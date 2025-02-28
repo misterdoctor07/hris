@@ -220,15 +220,6 @@ function checkSubmitButton() {
         dec_EO: <?= isset($credits['dec_EO']) ? $credits['dec_EO'] : 0; ?>
     };
 
-    // // Skip credit check for leave types that do not require credits
-    // if (!noCreditLeaves.includes(leaveType)) {
-    //     // Check if the selected leave type has no credits
-    //     if (!credits[leaveType] || credits[leaveType] <= 0) {
-    //         submitBtn.disabled = true;
-    //         return;
-    //     }
-    // }
-
     // // Check EO credits per month properly
     // if (leaveType === 'EO') {
     //     if (!selectedEO_Month) {
@@ -239,7 +230,9 @@ function checkSubmitButton() {
     //         submitBtn.disabled = true;
     //         return;
     //     }
-    // } else {
+    // } else if (leaveType === noCreditLeaves){
+    //     submitBtn.disabled = false;
+    // }else {
     //     if (!credits[leaveType] || credits[leaveType] <= 0) {
     //         submitBtn.disabled = true;
     //         return;
@@ -415,39 +408,78 @@ function checkCredits() {
     let userBirthdayMonth = "<?= $birthMonth; ?>"; // Extracted from PHP
     let selectedStartDate = new Date(startDate.value);
     let startshift = "<?=$startshift;?>";
-    
+    let datenow = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+
     // Check if the selected leave type requires a 3-day protocol
     if (withdayprotocol.includes(selectedLeaveType) || withdayprotocol.includes(selectedEOMonth)) {
-        // Check if startDate has a value
-        if (!startDate.value) {
-            dateWarning.style.display = 'inline';
-            startDate.style.borderColor = 'red';
-            return false;
-        }
+        if((startshift == "23:00:00" || startshift == "00:00:00") && datenow == "Friday" ) {
+            // Check if startDate has a value
+            if (!startDate.value) {
+                dateWarning.style.display = 'inline';
+                startDate.style.borderColor = 'red';
+                return false;
+            }
 
-        // Set current date and add 3 days to it
-        let currentDate = new Date();
+            // Set current date and add 3 working days to it
+            let currentDate = new Date();
             let minStartDate = new Date(currentDate); // Clone the current date
-            let lastPossibleDate = new Date(selectedStartDate); // Assuming this is already a Date object
-            let secondsAdded = 0;
+            minStartDate.setHours(0, 0, 0, 0); // Reset time to midnight
 
-            while (secondsAdded < 172800) { // 172800 seconds = 2 days
-             minStartDate.setSeconds(minStartDate.getSeconds() + 1);
+            let daysAdded = 0;
 
-            // Ensure it's not Sunday (0) or Monday (1)
+            while (daysAdded < 2) { // Add 3 working days
+                minStartDate.setDate(minStartDate.getDate() + 1); // Move to next day
+
+                // Skip Sundays (0) and Mondays (1)
                 if (minStartDate.getDay() !== 0 && minStartDate.getDay() !== 1) {
-                    secondsAdded++;
+                    daysAdded++;
                 }
             }
-        // Validate that the start date is at least 3 working days from today
-        if (new Date(startDate.value) < minStartDate) {
-            dateWarning.style.display = 'inline';
-            startDate.style.borderColor = 'red';
-            return false;
-        } else {
-            // Hide the error message if the start date is valid
-            dateWarning.style.display = 'none';
-            startDate.style.borderColor = '';
+
+            // Validate that the start date is at least 3 working days from today
+            if (new Date(startDate.value) < minStartDate) {
+                dateWarning.style.display = 'inline';
+                startDate.style.borderColor = 'red';
+                return false;
+            } else {
+                // Hide the error message if the start date is valid
+                dateWarning.style.display = 'none';
+                startDate.style.borderColor = '';
+            }
+        }else{
+            // Check if startDate has a value
+            if (!startDate.value) {
+                dateWarning.style.display = 'inline';
+                startDate.style.borderColor = 'red';
+                return false;
+            }
+
+            // Set current date and add 3 working days to it
+            let currentDate = new Date();
+            let minStartDate = new Date(currentDate); // Clone the current date
+            minStartDate.setHours(0, 0, 0, 0); // Reset time to midnight
+
+            let daysAdded = 0;
+
+            while (daysAdded < 3) { // Add 3 working days
+                minStartDate.setDate(minStartDate.getDate() + 1); // Move to next day
+
+                // Skip Sundays (0) and Mondays (1)
+                if (minStartDate.getDay() !== 0 && minStartDate.getDay() !== 1) {
+                    daysAdded++;
+                }
+            }
+
+            // Validate that the start date is at least 3 working days from today
+            if (new Date(startDate.value) < minStartDate) {
+                dateWarning.style.display = 'inline';
+                startDate.style.borderColor = 'red';
+                return false;
+            } else {
+                // Hide the error message if the start date is valid
+                dateWarning.style.display = 'none';
+                startDate.style.borderColor = '';
+            }
         }
     }
 

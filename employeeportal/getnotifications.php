@@ -12,7 +12,8 @@ $userQuery = mysqli_query($con, "SELECT ep.lastname, jt.jobtitle, ed.designation
                                  INNER JOIN jobtitle jt ON jt.id = ed.designation 
                                  WHERE ed.idno = '$userId'");
 $userDetails = mysqli_fetch_assoc($userQuery);
-$approval = "{$userDetails['lastname']} ({$userDetails['jobtitle']})";
+$approval = trim("{$userDetails['lastname']} ({$userDetails['jobtitle']})");
+$jobTitle = $userDetails['jobtitle'];
 
 //Identifying jobtitle
 $sqlDetails = "SELECT ed.designation, ed.* 
@@ -86,7 +87,8 @@ $status = ($jobtitle == '78' || $jobtitle == '116')
 //acknowledge in where clause
 $acknowledge = ($jobtitle == '78' || $jobtitle == '116') 
     ? "1=1" 
-    : "COALESCE(eeo.acknowledged, '') NOT LIKE '%$approval%'";
+    : "(COALESCE(eeo.acknowledged, '') NOT LIKE '%$approval%' 
+        AND COALESCE(eeo.acknowledged, '') NOT LIKE '%$jobTitle%')";
 
 // Count pending leave applications for the same company
 $pendingLeaveCount = 0;

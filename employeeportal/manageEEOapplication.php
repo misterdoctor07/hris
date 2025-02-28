@@ -229,7 +229,6 @@ if (isset($_GET['disapproved']) && isset($_GET['id'])) {
                                 $row = mysqli_fetch_assoc($sqlDepartment);
                                 $department = $row['department'];
                             }
-
                                 echo "<tr $style>";
                                 echo "<td style='text-align: center; vertical-align: middle;'>$x.</td>";
                                 echo "<td style='text-align: center; vertical-align: middle;'>$idno</td>";
@@ -244,7 +243,7 @@ if (isset($_GET['disapproved']) && isset($_GET['id'])) {
                                 echo "<td style='text-align: justify; vertical-align: middle;'>{$company['approvers_remarks']}</td>";
                                 echo "<td style='text-align: justify; vertical-align: middle;'>{$company['acknowledged']}</td>";
                                 echo "<td style='text-align: center; vertical-align: middle;'>";
-                                    if ((strpos($status, 'Approved') !== false || strpos($status, 'Disapproved') !== false) && strpos($acknowledge, $approval) === false) {
+                                    if ((strpos($status, 'Approved') !== false || strpos($status, 'Disapproved') !== false) && strpos($acknowledge, $approval) === false && strpos($acknowledge, $jobtitle) === false) {
                                         echo "<a href='?manageEEOapplication&id={$company['eeoid']}&acknowledged' class='btn btn-success btn-xs' title='Acknowledge' onclick=\"return confirm('Do you wish to acknowledge this EEO application?');\"><i class='fa fa-thumbs-up'></i></a>&nbsp;";
                                     }
                             

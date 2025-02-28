@@ -107,6 +107,20 @@
         }
     }
 
+    //Fetch Basic Salary Details
+    $sqlBasicSalary=mysqli_query($con, "SELECT * FROM payroll_details WHERE idno='$idno' AND payrollperiod='$period'");
+    if(mysqli_num_rows($sqlBasicSalary)>0){
+        $regHrs = mysqli_fetch_assoc($sqlBasicSalary)['reghours'];
+        $regHrsOT = mysqli_fetch_assoc($sqlBasicSalary)['reghoursot'];
+        $regHolWork = mysqli_fetch_assoc($sqlBasicSalary)[''];
+        $regHolNotWork = mysqli_fetch_assoc($sqlBasicSalary)[''];
+        $regHolOT = mysqli_fetch_assoc($sqlBasicSalary)[''];
+        $specialNonWorkHol = mysqli_fetch_assoc($sqlBasicSalary)[''];
+        $specialNonWorkHolOT = mysqli_fetch_assoc($sqlBasicSalary)[''];
+        $paidVacation = mysqli_fetch_assoc($sqlBasicSalary)[''];
+        $paidSick = mysqli_fetch_assoc($sqlBasicSalary)[''];
+        $nightDiff = mysqli_fetch_assoc($sqlBasicSalary)[''];
+    }
 
 ?>
 <!DOCTYPE html>
@@ -254,7 +268,9 @@
                 <div style="width: 49%;">
                     <table class="header-table">
                         <tr>
-                            <td><strong>Deductions Breakdown</td>
+                            <td><strong>Basic Salary Breakdown</td>
+                            <td><strong>Total No. of Hours</td>
+                            <td><strong>Base Rate <?=$baseFixed?>/day</td>
                         </tr>
                         <tr>
                             <td><?=$deductionList?></td>
