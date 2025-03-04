@@ -156,7 +156,7 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                                 ml.date_applied DESC,
                                 ml.time_applied DESC";
 
-                    // Debugging: Print the final query
+                    //Debugging: Print the final query
                     // echo "Final Query: " . $query;
 
 

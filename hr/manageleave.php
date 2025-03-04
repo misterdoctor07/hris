@@ -187,7 +187,7 @@ if (!$sqlCompanies) {
                                   
                                                 if ($currentDay == 1) {
                                                     // Reset eo_used every month, on the 1st day of each month
-                                                    $sqlResetEOUsed = mysqli_query($con, "UPDATE leave_credits SET eo_used = 0, ptoused = 0 WHERE idno = '$company[idno]'");
+                                                    $sqlResetEOUsed = mysqli_query($con, "UPDATE leave_credits SET ptoused = 0 WHERE idno = '$company[idno]'");
                                                     
                                                     if (!$sqlResetEOUsed) {
                                                         // Handle the error, e.g., log it or display a message

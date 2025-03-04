@@ -79,6 +79,7 @@
     $addonList="";
     $addonAmount="";
     $totaladdons=0;
+    $totaladdAmount="";
     $sqlAddons=mysqli_query($con, "SELECT * FROM payroll_addons WHERE idno='$idno' AND payrollperiod='$period'");
     if(mysqli_num_rows($sqlAddons)>0){
         while($addons=mysqli_fetch_array($sqlAddons)){
@@ -95,6 +96,7 @@
     $deductionList="";
     $deductionAmount="";
     $totaldeductions=0;
+    $totaldeductAmount="";
     $sqlDeductions=mysqli_query($con, "SELECT * FROM payroll_deductions WHERE idno='$idno' AND payrollperiod='$period'");
     if(mysqli_num_rows($sqlDeductions)>0){
         while($deductions=mysqli_fetch_array($sqlDeductions)){

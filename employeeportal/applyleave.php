@@ -417,7 +417,11 @@ function checkCredits() {
             if (!startDate.value) {
                 dateWarning.style.display = 'inline';
                 startDate.style.borderColor = 'red';
+                endDate.disabled = true; 
                 return false;
+            }
+            else{
+                endDate.disabled = false; 
             }
 
             // Set current date and add 3 working days to it
@@ -440,18 +444,23 @@ function checkCredits() {
             if (new Date(startDate.value) < minStartDate) {
                 dateWarning.style.display = 'inline';
                 startDate.style.borderColor = 'red';
+                endDate.disabled = true; 
                 return false;
             } else {
                 // Hide the error message if the start date is valid
                 dateWarning.style.display = 'none';
                 startDate.style.borderColor = '';
+                endDate.disabled = false; 
             }
         }else{
             // Check if startDate has a value
             if (!startDate.value) {
                 dateWarning.style.display = 'inline';
                 startDate.style.borderColor = 'red';
+                endDate.disabled = true; 
                 return false;
+            } else {
+                endDate.disabled = false; 
             }
 
             // Set current date and add 3 working days to it
@@ -474,11 +483,13 @@ function checkCredits() {
             if (new Date(startDate.value) < minStartDate) {
                 dateWarning.style.display = 'inline';
                 startDate.style.borderColor = 'red';
+                endDate.disabled = true; 
                 return false;
             } else {
                 // Hide the error message if the start date is valid
                 dateWarning.style.display = 'none';
                 startDate.style.borderColor = '';
+                endDate.disabled = false; 
             }
         }
     }

@@ -66,7 +66,7 @@ if ($designation == 8|| $designation == 59 || $designation == 65 || $designation
               WHERE ed.department = '$userDept'
               ORDER BY 
                 i.dateissued ASC";
-} elseif ($designation == 50 || $designation == 89) { //OS || OM
+} elseif ($designation == 50 || $designation == 89 || ($designation == 8 && $userCompany =="NEWIND")) { //OS || OM
     // View all departments in the same company
     $query = "SELECT 
                 ep.*, 

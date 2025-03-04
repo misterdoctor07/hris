@@ -72,7 +72,7 @@ if(mysqli_num_rows($sqlStartShift)>0){
 
 <form class="form-horizontal" method="GET" onsubmit="return validateForm(this);">
 
-    <input type="hidden" name="editleave">            
+    <input type="hidden" name="editleave" value="true">            
     <input type="hidden" name="addedby" value="<?=$fullname;?>">  
     <input type="hidden" name="id" value="<?=$leaveId;?>">          
 
@@ -86,7 +86,7 @@ if(mysqli_num_rows($sqlStartShift)>0){
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Leave Type</label>
                     <div class="col-sm-8">
-                        <select id="leaveTypeSelect" name="leavetype" class="form-control" required onchange="toggleEOSelection(this)">
+                        <select id="leaveTypeSelect" name="leavetype" class="form-control" required onchange="toggleEOSelection(this); updateCredits(this.value)">
                             <option value="" selected>Select Leave Type</option>
                             <option value="VL" <?= ($leavetype == 'VL') ? 'selected' : ''; ?>>Vacation Leave (VL)</option>
                             <option value="PTO" <?= ($leavetype == 'PTO') ? 'selected' : ''; ?>>Unpaid Leave (PTO)</option>
@@ -224,6 +224,81 @@ if (strtotime($endDate) < strtotime($startDate)) {
 ?>
 
 <script>
+document.addEventListener("DOMContentLoaded", function () {
+    let leaveType = document.querySelector("[name='leave_type']");
+    let eoMonth = document.querySelector("[name='eo_month']");
+
+    if (!leaveType || !eoMonth) {
+        console.error("Missing required elements: leave_type or eo_month not found.");
+        return;
+    }
+
+    function toggleEOMonth() {
+        if (leaveType.value === "EO") {
+            eoMonth.style.display = "block";
+            eoMonth.setAttribute("required", "required");
+        } else {
+            eoMonth.style.display = "none";
+            eoMonth.removeAttribute("required");
+            eoMonth.value = ""; // Reset value when hidden
+        }
+    }
+
+    // Ensure correct visibility on page load
+    toggleEOMonth();
+
+    // Attach event listener to leave type selection
+    leaveType.addEventListener("change", toggleEOMonth);
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Add all event listeners here
+    let leaveTypeSelect = document.querySelector('select[name="leavetype"]');
+    let eoMonthSelect = document.querySelector('select[name="eo_month"]');
+    let startDateInput = document.getElementsByName('startDate')[0];
+    let endDateInput = document.getElementsByName('endDate')[0];
+    let nofdaysInput = document.getElementById('nofdays');
+
+    if (leaveTypeSelect) {
+        leaveTypeSelect.addEventListener('change', function() {
+            updateCredits(this.value);
+        });
+    }
+
+    if (eoMonthSelect) {
+        eoMonthSelect.addEventListener('change', function() {
+            updateCredits(this.value);
+        });
+    }
+
+    if (startDateInput) {
+        startDateInput.addEventListener('change', checkCredits);
+    }
+
+    if (endDateInput) {
+        endDateInput.addEventListener('change', checkEndDate);
+    }
+
+    if (nofdaysInput) {
+        nofdaysInput.addEventListener('change', updateEndDate);
+    }
+
+    // Initial call to set up form state
+    if (leaveTypeSelect && leaveTypeSelect.value) {
+        updateCredits(leaveTypeSelect.value);
+    }
+
+    if (eoMonthSelect && eoMonthSelect.value) {
+        updateCredits(eoMonthSelect.value);
+    }
+});
+function validateForm() {
+    let isCreditsValid = checkCredits();
+    let isEndDateValid = checkEndDate();
+    // Add other validation checks as needed
+    return isCreditsValid && isEndDateValid;
+}
+
 function checkSubmitButton() {
     const submitBtn = document.getElementById('submitBtn');
     const leaveType = document.querySelector('select[name="leavetype"]').value;
@@ -236,14 +311,14 @@ function checkSubmitButton() {
     const startDateValue = new Date(startDateField.value);
     const startDateMonth = startDateValue.getMonth() + 1; // Get the month (1-12)
 
+    // Allow submission for non-credit leave types
+    const noCreditLeaves = ["MTL", "MDL", "LTL", "PTL", "BL"];
+    
     // Check if the leave type is BLP and if the start date's month is not the user's birth month
     if (leaveType === 'BLP' && startDateMonth !== parseInt(userBirthdayMonth)) {
-        submitBtn.disabled = true; // Disable the submit button
-        return; // Exit the function
+        submitBtn.disabled = true;
+        return;
     }
-
-    // Allow submission for non-credit leave types
-    const excludedLeaveTypes = ["MTL", "MDL", "LTL", "PTL", "BL"];
 
     // Define month-based EO credits
     const credits = {
@@ -265,24 +340,25 @@ function checkSubmitButton() {
         dec_EO: <?= isset($credits['dec_EO']) ? $credits['dec_EO'] : 0; ?>
     };
 
-    // Check EO credits per month properly
-    if (leaveType === 'EO') {
-        if (!selectedEO_Month) {
-            submitBtn.disabled = true;
-            return;
-        }
-        if (!credits[selectedEO_Month] || credits[selectedEO_Month] <= 0) {
-            submitBtn.disabled = true;
-            return;
-        }
-    } else if (leaveType === excludedLeaveType){
-        submitBtn.disabled = false;
-    }else {
-        if (!credits[leaveType] || credits[leaveType] <= 0) {
-            submitBtn.disabled = true;
-            return;
-        }
-    }
+    // // Check EO credits per month properly
+    // if (leaveType === 'EO') {
+    //     if (!selectedEO_Month) {
+    //         submitBtn.disabled = true;
+    //         return;
+    //     }
+    //     if (!credits[selectedEO_Month] || credits[selectedEO_Month] <= 0) {
+    //         submitBtn.disabled = true;
+    //         return;
+    //     }
+    // } else if (leaveType === noCreditLeaves){
+    //     submitBtn.disabled = false;
+    // }else {
+    //     if (!credits[leaveType] || credits[leaveType] <= 0) {
+    //         submitBtn.disabled = true;
+    //         return;
+    //     }
+    // }
+
     // Check if any required fields are disabled
     const nofdays = document.getElementById('nofdays');
     const startDate = document.getElementsByName('startDate')[0];
