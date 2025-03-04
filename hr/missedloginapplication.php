@@ -79,13 +79,26 @@ th.sortable {
 }
 
 th.sortable.asc::after {
-    content: '↑'; /* Ascending arrow icon */
+    content: ''; /* Ascending arrow icon */
     color: #000;
 }
 
 th.sortable.desc::after {
-    content: '↓'; /* Descending arrow icon */
+    content: ''; /* Descending arrow icon */
     color: #000;
+}
+/*Date Filter Button*/
+.filter-btn {
+    background-color: #3f4d6a;
+    color: white;
+    border: none;
+    padding: 7px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.filter-btn:hover {
+    background-color: #181e2e;
 }
 </style>
 
@@ -116,7 +129,7 @@ if (!$sqlCompanies) {
                     <input type="date" id="fromDate" class="form-control" value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>" style="width: 150px;">
                     <label for="toDate">To:</label>
                     <input type="date" id="toDate" class="form-control" value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>" style="width: 150px;">
-                    <button type="button" onclick="filterByDate()" class="btn btn-primary">Filter</button>
+                    <button type="button" onclick="filterByDate()" class="filter-btn">Filter</button>
                     <button type="button" onclick="resetFilter()" class="btn btn-default">Reset</button>
                 </div>
 
@@ -657,7 +670,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const tbody = table.querySelector("tbody");
             const columnIndex = parseInt(header.getAttribute("data-column"));
             const isAscending = header.classList.contains("asc");
-            
+
             // Clear existing sorting classes
             headers.forEach(h => h.classList.remove("asc", "desc"));
 
@@ -670,10 +683,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 const aText = a.cells[columnIndex].innerText.trim();
                 const bText = b.cells[columnIndex].innerText.trim();
 
-                // Handle numeric vs. string comparison
                 return isAscending
-                    ? compareValues(bText, aText)
-                    : compareValues(aText, bText);
+                    ? compareDates(bText, aText)
+                    : compareDates(aText, bText);
             });
 
             // Append sorted rows back to the table body
@@ -681,11 +693,45 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    function compareValues(a, b) {
-        if (!isNaN(a) && !isNaN(b)) {
-            return parseFloat(a) - parseFloat(b); // Numeric comparison
-        }
-        return a.localeCompare(b); // String comparison
+    function compareDates(a, b) {
+        const monthMap = {
+            "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
+            "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+        };
+
+        // Regex patterns to detect date and date-time formats
+        const dateRegex = /^([A-Za-z]+)\s(\d{1,2}),\s(\d{4})$/;  // Format: Jan 02, 2025
+        const dateTimeRegex = /^([A-Za-z]+)\s(\d{1,2}),\s(\d{4})\s(\d{1,2}):(\d{2})\s(AM|PM)$/;  // Format: Jan 02, 2025 6:42 AM
+
+        const parseDateTime = (dateStr) => {
+            let match = dateStr.match(dateTimeRegex);
+            if (match) {
+                const [, month, day, year, hours, minutes, meridian] = match;
+                let hour24 = convertTo24Hour(parseInt(hours), meridian);
+                return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), hour24, parseInt(minutes));
+            }
+
+            match = dateStr.match(dateRegex);
+            if (match) {
+                const [, month, day, year] = match;
+                return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), 0, 0);
+            }
+
+            return null; // If the format doesn't match
+        };
+
+        const convertTo24Hour = (hours, meridian) => {
+            if (meridian === "PM" && hours !== 12) return hours + 12; // Convert PM hours
+            if (meridian === "AM" && hours === 12) return 0; // Midnight case
+            return hours; // Otherwise, return as is
+        };
+
+        const dateA = parseDateTime(a);
+        const dateB = parseDateTime(b);
+
+        if (!dateA || !dateB) return 0; // Handle invalid dates
+
+        return dateA - dateB; // Compare full Date objects
     }
 });
 </script>

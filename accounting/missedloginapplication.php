@@ -72,6 +72,34 @@
     padding: 4px 8px;
     font-size: 12px;
 }
+/* Sorting Columns */
+th.sortable {
+    cursor: pointer;
+    position: relative;
+}
+
+th.sortable.asc::after {
+    content: ''; /* Ascending arrow icon */
+    color: #000;
+}
+
+th.sortable.desc::after {
+    content: ''; /* Descending arrow icon */
+    color: #000;
+}
+/*Date Filter Button*/
+.filter-btn {
+    background-color: #3f4d6a;
+    color: white;
+    border: none;
+    padding: 7px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.filter-btn:hover {
+    background-color: #181e2e;
+}
 </style>
 
 <?php
@@ -86,28 +114,30 @@ if (!$sqlCompanies) {
 <div class="col-lg-12">
     <div class="content-panel">
         <div class="panel-heading">
-            <h4>
-                <a href="?main"><i class="fa fa-arrow-left"></i> HOME</a> | 
-                <i class="fa fa-file-text"></i> MISSED LOGS APPLICATION
-                <div style="float:right; margin-bottom: 20px;">
-                    <form>
-                        <button type="button" onclick="tablesToExcel('Missed_Logs_Application_Report')" class="btn btn-success">EXPORT TO EXCEL</button>
-                    </form>
+            <div class="flex-container" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <!-- Left Section -->
+                <div class="flex-item-left" style="display: flex; align-items: center; gap: 10px;">
+                    <h4>
+                        <a href="?main"><i class="fa fa-arrow-left"></i> HOME</a> | 
+                        <i class="fa fa-file-text"></i> MISSED LOGS APPLICATION
+                    </h4>
                 </div>
-            </h4>
-            <!-- Date Filter -->
-            <div class="row" style="margin-bottom: 20px;">
-                <div class="col-md-3">
+
+                <!-- Date Filter Section -->
+                <div class="date-filter" style="display: flex; align-items: center; gap: 10px;">
                     <label for="fromDate">From:</label>
-                    <input type="date" id="fromDate" class="form-control" value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>">
-                </div>
-                <div class="col-md-3">
+                    <input type="date" id="fromDate" class="form-control" value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>" style="width: 150px;">
                     <label for="toDate">To:</label>
-                    <input type="date" id="toDate" class="form-control" value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>">
+                    <input type="date" id="toDate" class="form-control" value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>" style="width: 150px;">
+                    <button type="button" onclick="filterByDate()" class="filter-btn">Filter</button>
+                    <button type="button" onclick="resetFilter()" class="btn btn-default">Reset</button>
                 </div>
-                <div class="col-md-2">
-                    <button type="button" onclick="filterByDate()" class="btn btn-primary" style="margin-top: 25px;">Filter</button>
-                    <button type="button" onclick="resetFilter()" class="btn btn-default" style="margin-top: 25px;">Reset</button>
+
+                <!-- Export to Excel Button -->
+                <div class="export-btn" style="display: flex; align-items: center; margin-left: auto">
+                    <form>
+                        <button type="button" onclick="tablesToExcel('Missed_Log_Applications_Report')" class="btn btn-success">EXPORT TO EXCEL</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -126,18 +156,18 @@ if (!$sqlCompanies) {
                         INNER JOIN employee_details ed ON ml.idno = ed.idno
                         WHERE ed.company = '$companyCode'
                         AND (ml.datemissed BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
-                        AND applic_status != 'Pending' 
-                        AND applic_status != 'Cancelled' 
-                        AND applic_status NOT LIKE '*Approved%'
-                        AND applic_status NOT LIKE '*Disapproved%'");  
+                        AND ml.applic_status != 'Pending' 
+                        AND ml.applic_status != 'Cancelled' 
+                        AND ml.applic_status NOT LIKE '*Approved%'
+                        AND ml.applic_status NOT LIKE '*Disapproved%'");  
                     $count = mysqli_fetch_assoc($sqlCount)['total'];
                     
                     // Display company name with badge
                     echo "<li class='$active' style='position: relative;'>
                             <a data-toggle='tab' href='#tab-$companyCode'>$companyCode";
-                    // if ($count > 0) {
-                    //     echo "<span class='badge badge-right'>$count</span>";
-                    // }
+                    if ($count > 0) {
+                        echo "<span class='badge badge-right'>$count</span>";
+                    }
                     echo "</a></li>";
                     $active = ''; // Remove active class from subsequent tabs
                 }
@@ -156,7 +186,9 @@ if (!$sqlCompanies) {
                     // Fetch unique departments for the company
                     $sqlDepartments = mysqli_query($con, "SELECT DISTINCT d.department FROM employee_details ed
                         INNER JOIN department d ON d.id = ed.department
-                        WHERE ed.company = '$companyCode' ORDER BY d.department");
+                        AND ed.status != 'RESIGNED'
+                        WHERE ed.company = '$companyCode' 
+                        ORDER BY d.department");
 
                     echo "<ul class='nav nav-pills' style='margin-top: 10px;'>";
                     $deptActive = 'active';
@@ -167,16 +199,17 @@ if (!$sqlCompanies) {
                         // Fetch count of pending missed log applications for the department
                         $fromDate = isset($_GET['fromDate']) ? $_GET['fromDate'] : null;
                         $toDate = isset($_GET['toDate']) ? $_GET['toDate'] : null;
-                        $sqlDeptCount = mysqli_query($con, "SELECT COUNT(*) AS total FROM missed_log_application ml
-                            INNER JOIN employee_details ed ON ml.idno = ed.idno
-                            INNER JOIN department d ON d.id = ed.department
-                            WHERE ed.company = '$companyCode' 
-                            AND d.department = '$departmentName'
-                            AND (ml.datemissed BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
-                            AND applic_status != 'Pending' 
-                            AND applic_status != 'Cancelled' 
-                            AND applic_status NOT LIKE '*Approved%'
-                            AND applic_status NOT LIKE '*Disapproved%'");
+                        $sqlDeptCount = mysqli_query($con, "SELECT COUNT(*) AS total 
+                        FROM missed_log_application ml
+                        INNER JOIN employee_details ed ON ml.idno = ed.idno
+                        INNER JOIN department d ON d.id = ed.department
+                        WHERE ed.company = '$companyCode' 
+                        AND d.department = '$departmentName'
+                        AND ml.datemissed IS NOT NULL
+                        AND ('$fromDate' = '' OR '$toDate' = '' OR DATE(ml.datemissed) BETWEEN '$fromDate' AND '$toDate')
+                        AND ml.applic_status NOT LIKE '*Approved%' 
+                        AND ml.applic_status NOT LIKE '*Disapproved%' 
+                        AND ml.applic_status NOT IN ('Pending', 'Cancelled')");
                         $deptCount = mysqli_fetch_assoc($sqlDeptCount)['total'];
 
                         // Assign unique ID using company and department names
@@ -184,9 +217,9 @@ if (!$sqlCompanies) {
 
                         // Add department tab with badge in top-right corner
                         echo "<li class='$deptActive' style='position: relative;'><a data-toggle='pill' href='#dept-$companyCode-$deptId'>$departmentName";
-                        // if ($deptCount > 0) {
-                        //     echo "<span class='badge badge-right'>$deptCount</span>";
-                        // }
+                        if ($deptCount > 0) {
+                            echo "<span class='badge badge-right'>" . intval($deptCount) . "</span>";
+                        }
                         echo "</a></li>";
                         $deptActive = ''; // Remove active class from subsequent department tabs
                     }
@@ -207,19 +240,24 @@ if (!$sqlCompanies) {
                         $fromDate = isset($_GET['fromDate']) ? $_GET['fromDate'] : null;
                         $toDate = isset($_GET['toDate']) ? $_GET['toDate'] : null;
                         $sqlEmployee = mysqli_query($con, "SELECT ml.*, ml.id as mlid, ep.*, ed.*, d.department 
-                            FROM missed_log_application ml
-                            INNER JOIN employee_profile ep ON ep.idno = ml.idno 
-                            INNER JOIN employee_details ed ON ed.idno = ep.idno
-                            INNER JOIN department d ON d.id = ed.department 
-                            WHERE ed.company = '$companyCode' 
-                            AND d.department = '$departmentName'
-                            AND (ml.datemissed BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
-                            ORDER BY 
-                                CASE 
-                                    WHEN ml.applic_status = 'Disapproved' AND ml.remarks != 'POSTED' THEN 1 
-                                    ELSE 2 
-                                END,
+                        FROM missed_log_application ml
+                        INNER JOIN employee_profile ep ON ep.idno = ml.idno 
+                        INNER JOIN employee_details ed ON ed.idno = ep.idno
+                        INNER JOIN department d ON d.id = ed.department 
+                        WHERE ed.company = '$companyCode' 
+                        AND d.department = '$departmentName'
+                        AND (ml.datemissed BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
+                        ORDER BY 
+                            CASE 
+                                WHEN ml.applic_status LIKE 'Approved%' THEN 1
+                                WHEN ml.applic_status LIKE 'Disapproved%' THEN 2
+                                WHEN ml.applic_status = 'Pending' THEN 3
+                                WHEN ml.remarks = 'POSTED' THEN 4
+                                ELSE 5
+                            END,
+                            ml.date_applied,
                             ml.time_applied DESC");
+                    
 
             ?>
                 <!-- Search Bar -->
@@ -229,58 +267,74 @@ if (!$sqlCompanies) {
                     </div>
                 </div>
                     <table class="table table-bordered table-striped table-condensed">
-                        <thead>
+                    <thead>
                             <tr>
-                                <th width="2%" style="text-align: center;">No.</th>
-                                <th width="6%" style="text-align: center;">Employee ID</th>
-                                <th width="7%" style="text-align: center;">Employee Name</th>
-                                <th width="5%" style="text-align: center;">Department</th>
-                                <th width="5%" style="text-align: center;">Work Area</th>
-                                <th width="7%" style="text-align: center;">Date of Missed Time IN/OUT</th>
-                                <th width="5%" style="text-align: center;">Incident</th>
-                                <th width="5%" style="text-align: center;">Time</th>
-                                <th style="text-align: center;">Reason</th>
-                                <th width="10%" style="text-align: center;">Date and Time Applied</th>
-                                <th width="10%" style="text-align: center;">Status</th>
-                                <th style="text-align: center;">HR Remarks</th>
-                                <th style="text-align: center;">Monitoring Remarks</th>
-                                <th style="text-align: center;">Approver Remarks</th>
+                                <th class="sortable" data-column="0" width="2%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">No.</th>
+                                <th class="sortable" data-column="1" width="6%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Employee ID</th>
+                                <th class="sortable" data-column="2" width="10%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Employee Name</th>
+                                <th class="sortable" data-column="3" width="5%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Department</th>
+                                <th class="sortable" data-column="4" width="5%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Work Area</th>
+                                <th class="sortable" data-column="5" width="7%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Date of Missed Log</th>
+                                <th class="sortable" data-column="6" width="5%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Incident</th>
+                                <th class="sortable" data-column="7" width="5%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Time</th>
+                                <th class="sortable" data-column="8" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Reason</th>
+                                <th class="sortable" data-column="9" width="10%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Date and Time Applied</th>
+                                <th class="sortable" data-column="10" width="10%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Status</th>
+                                <th class="sortable" data-column="11" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">HR Remarks</th>
+                                <th class="sortable" data-column="12" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Monitoring Remarks</th>
+                                <th class="sortable" data-column="13" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Approver Remarks</th>
                             </tr>
                         </thead>
                         <tbody>
-                        <?php
-                        $x = 1;
+                            <?php
+                                $x = 1;
 
-                        if (!$sqlEmployee) {
-                            echo "Error: " . mysqli_error($con);
-                            exit;
-                        }
+                                if (!$sqlEmployee) {
+                                    echo "Error: " . mysqli_error($con);
+                                    exit;
+                                }
 
-                        if (mysqli_num_rows($sqlEmployee) > 0) {
-                            while ($emp = mysqli_fetch_array($sqlEmployee)) {
-                                ?>
-                                <tr>
-                                    <td align='center'><?= $x++; ?>.</td>
-                                    <td align='center'><?= $emp['idno']; ?></td>
-                                    <td align='center'><?= $emp['lastname'] . ', ' . $emp['firstname']; ?></td>
-                                    <td align='center'><?= $emp['department']?></td>
-                                    <td align='center'><?= $emp['location']?></td>
-                                    <td align='center'><?= date('m/d/Y', strtotime($emp['datemissed'])); ?></td>
-                                    <td align='center'><?= $emp['incident'] ?></td>
-                                    <td align='center'><?= date("g:i A", strtotime($emp['mttime'])); ?></td>
-                                    <td align='left'><?= $emp['reason'] ?></td>
-                                    <td align='center'><?= date('m/d/Y', strtotime($emp['date_applied'])) . " " . date('g:i:s A', strtotime($emp['time_applied'])); ?></td>
-                                    <td align='center'><?= $emp['applic_status'] ?></td>
-                                    <td align='left'><?= $emp['remarks'] ?></td>
-                                    <td align='left'><?= $emp['monitoring_remarks'] ?></td>
-                                    <td align='left'><?= $emp['approver_remarks'] ?></td>
-                                </tr>
-                                <?php
-                            }
-                        } else {
-                            echo "<tr><td colspan='14' align='center'>No records found!</td></tr>";
-                        }
-                        ?>
+                                if (mysqli_num_rows($sqlEmployee) > 0) {
+                                    while ($emp = mysqli_fetch_array($sqlEmployee)) {
+                                        $status = $emp['applic_status'];
+
+                                        // Determine the row class based on the applic_status
+                                        if (strpos($status, '*Disapproved') !== false || strpos($status, 'Disapproved') !== false) {
+                                            $rowClass = "danger"; // Red
+                                        } elseif (strpos($status, '*Approved') !== false) {
+                                            $rowClass = "success"; // Green
+                                        } elseif ($status == "Pending") {
+                                            $rowClass = "warning"; // Yellow
+                                        } else {
+                                            $rowClass = ""; // No class for other cases
+                                        }
+                                        ?>
+                                        <tr class="<?= $rowClass ?>">
+                                            <td style="text-align: center; vertical-align: middle;"><?= $x++; ?>.</td>
+                                            <td style="text-align: center; vertical-align: middle;"><?= $emp['idno']; ?></td>
+                                            <td style="text-align: center; vertical-align: middle;">
+                                                <span style="font-weight: bold; font-size: 1.1em;"><?=$emp['lastname'];?></span>, <?=$emp['firstname'];?>
+                                            </td>
+                                            <td style="text-align: center; vertical-align: middle;"><?= $emp['department']?></td>
+                                            <td style="text-align: center; vertical-align: middle;"><?= $emp['location']?></td>
+                                            <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['datemissed'])); ?></td>
+                                            <td style="text-align: center; vertical-align: middle;"><?= $emp['incident'] ?></td>
+                                            <td style="text-align: center; vertical-align: middle;"><?= date("g:i A", strtotime($emp['mttime'])); ?></td>
+                                            <td style="text-align: justify; vertical-align: middle;"><?= $emp['reason'] ?></td>
+                                            <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['date_applied'])) . "<br>" . date('g:i A', strtotime($emp['time_applied'])); ?></td>
+                                            <td style="text-align: center; vertical-align: middle;"><?= $emp['applic_status'] ?></td>
+                                            <td style="text-align: justify; vertical-align: middle;"><?= $emp['remarks'] ?></td>
+                                            <td style="text-align: <?= ($emp['monitoring_remarks'] == 'verified') ? 'center' : 'justify'; ?>; vertical-align: middle;">
+                                                <?=$emp['monitoring_remarks'];?>
+                                            </td>
+                                            <td style="text-align: justify; vertical-align: middle;"><?= $emp['approver_remarks'] ?></td>
+                                        </tr>
+                                        <?php
+                                    }
+                                } else {
+                                    echo "<tr><td colspan='14' align='center'>No records found!</td></tr>";
+                                }
+                            ?>
                         </tbody>
                     </table>
                     <?php
@@ -590,4 +644,44 @@ function filterByDate() {
 function resetFilter() {
     window.location.href = '?missedloginapplication';
 }
+//Sorting Columns
+document.addEventListener("DOMContentLoaded", function () {
+    const headers = document.querySelectorAll(".sortable");
+    headers.forEach(header => {
+        header.addEventListener("click", function () {
+            const table = header.closest("table");
+            const tbody = table.querySelector("tbody");
+            const columnIndex = parseInt(header.getAttribute("data-column"));
+            const isAscending = header.classList.contains("asc");
+            
+            // Clear existing sorting classes
+            headers.forEach(h => h.classList.remove("asc", "desc"));
+
+            // Toggle sorting order
+            header.classList.toggle("asc", !isAscending);
+            header.classList.toggle("desc", isAscending);
+
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+            rows.sort((a, b) => {
+                const aText = a.cells[columnIndex].innerText.trim();
+                const bText = b.cells[columnIndex].innerText.trim();
+
+                // Handle numeric vs. string comparison
+                return isAscending
+                    ? compareValues(bText, aText)
+                    : compareValues(aText, bText);
+            });
+
+            // Append sorted rows back to the table body
+            rows.forEach(row => tbody.appendChild(row));
+        });
+    });
+
+    function compareValues(a, b) {
+        if (!isNaN(a) && !isNaN(b)) {
+            return parseFloat(a) - parseFloat(b); // Numeric comparison
+        }
+        return a.localeCompare(b); // String comparison
+    }
+});
 </script>
