@@ -129,7 +129,7 @@ date_default_timezone_set("Asia/Manila");
                 FROM overtime_application 
                 WHERE app_status NOT IN ('Pending', 'Cancelled')
                 AND app_status NOT LIKE '%Disapproved%'
-                AND hr_remarks != 'POSTED'";
+                AND app_status NOT LIKE '%*%'";
               $result = mysqli_query($con, $query);
               $row = mysqli_fetch_assoc($result);
               $overtime_count = $row['total'];

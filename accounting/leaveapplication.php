@@ -176,10 +176,19 @@ th.sortable.desc::after {
 
                 <!-- Date Filter Section -->
                 <div class="date-filter" style="display: flex; align-items: center; gap: 10px;">
-                    <label for="fromDate">From:</label>
-                    <input type="date" id="fromDate" class="form-control" value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>" style="width: 150px;">
-                    <label for="toDate">To:</label>
-                    <input type="date" id="toDate" class="form-control" value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>" style="width: 150px;">
+                    <h5 style="font-weight: bold; margin-left: 30px;">Filter Start Date Column</h5>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label for="fromDate" style="margin-bottom: 0;">From:</label>
+                        <input type="date" id="fromDate" class="form-control" 
+                            value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>" 
+                            style="width: 150px; height: 35px;">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label for="toDate" style="margin-bottom: 0;">To:</label>
+                        <input type="date" id="toDate" class="form-control" 
+                            value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>" 
+                            style="width: 150px; height: 35px;">
+                    </div>
                     <button type="button" onclick="filterByDate()" class="filter-btn">Filter</button>
                     <button type="button" onclick="resetFilter()" class="btn btn-default">Reset</button>
                 </div>
@@ -216,9 +225,9 @@ th.sortable.desc::after {
                     
                     echo "<li class='$active' style='position: relative;'>
                             <a data-toggle='tab' href='#tab-$companyCode'>$companyCode";
-                    if ($count > 0) {
-                        echo "<span class='badge badge-right'>$count</span>";
-                    }
+                    // if ($count > 0) {
+                    //     echo "<span class='badge badge-right'>$count</span>";
+                    // }
                     echo "</a></li>";
                     $active = ''; // Remove active class from subsequent tabs
                 }
@@ -269,9 +278,9 @@ th.sortable.desc::after {
 
                         // Add department tab with badge in top-right corner
                         echo "<li class='$deptActive' style='position: relative;'><a data-toggle='pill' href='#dept-$companyCode-$deptId'>$departmentName";
-                        if ($deptCount > 0) {
-                            echo "<span class='badge badge-right'>$deptCount</span>";
-                        }
+                        // if ($deptCount > 0) {
+                        //     echo "<span class='badge badge-right'>$deptCount</span>";
+                        // }
                         echo "</a></li>";
                         $deptActive = ''; // Remove active class from subsequent department tabs
                     }
@@ -299,16 +308,7 @@ th.sortable.desc::after {
                         WHERE ed.company = '$companyCode' 
                         AND d.department = '$departmentName' 
                         AND (la.dayfrom BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '')
-                        ORDER BY 
-                            CASE 
-                                WHEN la.appstatus LIKE 'Approved%' AND la.remarks NOT LIKE 'POSTED%' THEN 1
-                                WHEN la.appstatus LIKE 'Disapproved%' THEN 2
-                                WHEN la.appstatus = 'Pending' THEN 3
-                                WHEN la.appstatus LIKE 'Approved%' AND la.remarks LIKE 'POSTED%' THEN 4
-                                WHEN la.appstatus = 'Cancelled' THEN 5
-                                ELSE 6
-                            END,
-                            la.datearray DESC");
+                        ORDER BY la.datearray DESC");
 
             ?>
                 <!-- Search Bar -->
@@ -326,8 +326,8 @@ th.sortable.desc::after {
                                 <th class="sortable" data-column="2" width="10%" style="text-align: center;  background-color:#20273a; color: white;">Employee Name</th>
                                 <th class="sortable" data-column="3" width="6%" style="text-align: center;  background-color:#20273a; color: white;">Leave Type</th>
                                 <th class="sortable" data-column="4" width="6%" style="text-align: center;  background-color:#20273a; color: white;">No. of Days</th>
-                                <th class="sortable" data-column="5" width="6%" style="text-align: center;  background-color:#20273a; color: white;">From</th>
-                                <th class="sortable" data-column="6" width="6%" style="text-align: center;  background-color:#20273a; color: white;">To</th>
+                                <th class="sortable" data-column="5" width="6%" style="text-align: center;  background-color:#20273a; color: white;">Start Date</th>
+                                <th class="sortable" data-column="6" width="6%" style="text-align: center;  background-color:#20273a; color: white;">End Date</th>
                                 <th class="sortable" data-column="7" style="text-align: center;  background-color:#20273a; color: white;">Reason</th>
                                 <th class="sortable" data-column="8" width="7%" style="text-align: center;  background-color:#20273a; color: white;">Date Applied</th>
                                 <th class="sortable" data-column="9" width="7%" style="text-align: center;  background-color:#20273a; color: white;">Status</th>
@@ -750,7 +750,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const tbody = table.querySelector("tbody");
             const columnIndex = parseInt(header.getAttribute("data-column"));
             const isAscending = header.classList.contains("asc");
-            
+
             // Clear existing sorting classes
             headers.forEach(h => h.classList.remove("asc", "desc"));
 
@@ -763,10 +763,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 const aText = a.cells[columnIndex].innerText.trim();
                 const bText = b.cells[columnIndex].innerText.trim();
 
-                // Handle numeric vs. string comparison
                 return isAscending
-                    ? compareValues(bText, aText)
-                    : compareValues(aText, bText);
+                    ? compareDates(bText, aText)
+                    : compareDates(aText, bText);
             });
 
             // Append sorted rows back to the table body
@@ -774,11 +773,45 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    function compareValues(a, b) {
-        if (!isNaN(a) && !isNaN(b)) {
-            return parseFloat(a) - parseFloat(b); // Numeric comparison
-        }
-        return a.localeCompare(b); // String comparison
+    function compareDates(a, b) {
+        const monthMap = {
+            "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
+            "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+        };
+
+        // Regex patterns to detect date and date-time formats
+        const dateRegex = /^([A-Za-z]+)\s(\d{1,2}),\s(\d{4})$/;  // Format: Jan 02, 2025
+        const dateTimeRegex = /^([A-Za-z]+)\s(\d{1,2}),\s(\d{4})\s(\d{1,2}):(\d{2})\s(AM|PM)$/;  // Format: Jan 02, 2025 6:42 AM
+
+        const parseDateTime = (dateStr) => {
+            let match = dateStr.match(dateTimeRegex);
+            if (match) {
+                const [, month, day, year, hours, minutes, meridian] = match;
+                let hour24 = convertTo24Hour(parseInt(hours), meridian);
+                return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), hour24, parseInt(minutes));
+            }
+
+            match = dateStr.match(dateRegex);
+            if (match) {
+                const [, month, day, year] = match;
+                return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), 0, 0);
+            }
+
+            return null; // If the format doesn't match
+        };
+
+        const convertTo24Hour = (hours, meridian) => {
+            if (meridian === "PM" && hours !== 12) return hours + 12; // Convert PM hours
+            if (meridian === "AM" && hours === 12) return 0; // Midnight case
+            return hours; // Otherwise, return as is
+        };
+
+        const dateA = parseDateTime(a);
+        const dateB = parseDateTime(b);
+
+        if (!dateA || !dateB) return 0; // Handle invalid dates
+
+        return dateA - dateB; // Compare full Date objects
     }
 });
 

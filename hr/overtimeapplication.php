@@ -130,12 +130,12 @@ th.sortable {
 }
 
 th.sortable.asc::after {
-    content: '↑'; /* Ascending arrow icon */
+    content: ''; /* Ascending arrow icon */
     color: #000;
 }
 
 th.sortable.desc::after {
-    content: '↓'; /* Descending arrow icon */
+    content: ''; /* Descending arrow icon */
     color: #000;
 }
 </style>
@@ -146,6 +146,20 @@ $sqlCompanies = mysqli_query($con, "SELECT DISTINCT company FROM employee_detail
 
 if (!$sqlCompanies) {
     echo "Query error: " . mysqli_error($con);
+}
+
+if (isset($_GET['done'])) {
+    $id = $_GET['id'];
+    $sqlDone = "UPDATE overtime_application 
+        SET app_status = CONCAT('*', app_status) 
+        WHERE id = '$id' AND app_status NOT LIKE '*%'";
+
+    if (mysqli_query($con, $sqlDone)) {
+        echo "<script>alert('Application marked as Done.');</script>";
+        echo "<script>window.location.href='?overtimeapplication';</script>";
+    } else {
+        echo "<script>alert('Error updating remarks: " . mysqli_error($con) . "');</script>";
+    }
 }
 ?>
 
@@ -163,11 +177,20 @@ if (!$sqlCompanies) {
 
                 <!-- Date Filter Section -->
                 <div class="date-filter" style="display: flex; align-items: center; gap: 10px;">
-                    <label for="fromDate">From:</label>
-                    <input type="date" id="fromDate" class="form-control" value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>" style="width: 150px;">
-                    <label for="toDate">To:</label>
-                    <input type="date" id="toDate" class="form-control" value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>" style="width: 150px;">
-                    <button type="button" onclick="filterByDate()" class="btn btn-primary">Filter</button>
+                    <h5 style="font-weight: bold; margin-left: 30px;">Filter OT Date Column</h5>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label for="fromDate" style="margin-bottom: 0;">From:</label>
+                        <input type="date" id="fromDate" class="form-control" 
+                            value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>" 
+                            style="width: 150px; height: 35px;">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label for="toDate" style="margin-bottom: 0;">To:</label>
+                        <input type="date" id="toDate" class="form-control" 
+                            value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>" 
+                            style="width: 150px; height: 35px;">
+                    </div>
+                    <button type="button" onclick="filterByDate()" class="filter-btn">Filter</button>
                     <button type="button" onclick="resetFilter()" class="btn btn-default">Reset</button>
                 </div>
 
@@ -196,7 +219,7 @@ if (!$sqlCompanies) {
                     AND (ot.datearray BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
                     AND ot.app_status NOT IN ('Pending', 'Cancelled')
                     AND ot.app_status NOT LIKE '%Disapproved%'
-                    AND ot.hr_remarks != 'POSTED'");
+                    AND ot.app_status NOT LIKE '*%'");
                 $count = mysqli_fetch_assoc($sqlCount)['total'];
                 
                 echo "<li class='$active' style='position: relative;'>
@@ -243,7 +266,7 @@ if (!$sqlCompanies) {
                     AND d.department = '$departmentName'
                     AND ot.app_status NOT IN ('Pending', 'Cancelled') 
                     AND ot.app_status NOT LIKE '%Disapproved%'
-                    AND ot.hr_remarks != 'POSTED'");
+                    AND ot.app_status NOT LIKE '*%'");
                 $deptCount = mysqli_fetch_assoc($sqlDeptCount)['total'];
 
                 // Assign unique ID using company and department names
@@ -283,10 +306,10 @@ if (!$sqlCompanies) {
             AND (ot.datearray BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
             ORDER BY 
                 CASE 
-                    WHEN ot.app_status LIKE 'Approved%' AND ot.hr_remarks NOT LIKE '%POSTED%' THEN 1
+                    WHEN ot.app_status LIKE 'Approved%' AND ot.app_status NOT LIKE '%*%' THEN 1
                     WHEN ot.app_status LIKE '%Disapproved%' THEN 2
                     WHEN ot.app_status = 'Pending' THEN 3
-                    WHEN ot.app_status LIKE 'Approved%' AND ot.hr_remarks LIKE '%POSTED%' THEN 4
+                    WHEN ot.app_status LIKE 'Approved%' AND ot.app_status LIKE '%*%' THEN 4
                     WHEN ot.app_status = 'Cancelled' THEN 5
                     ELSE 6
                 END, 
@@ -355,14 +378,12 @@ if (!$sqlCompanies) {
                         <td style="text-align: left; vertical-align: middle;"><?=$emp['hr_remarks'];?></td>
                         <td style="text-align: left; vertical-align: middle;"><?=$emp['approver_remarks'];?></td>
                         <td style="text-align: center; vertical-align: middle;">
-                            <?php if (strpos($emp['hr_remarks'], 'POSTED') === false): ?>
-                                <?php if (strpos($emp['app_status'], 'Disapproved') === false && $emp['app_status'] != 'Cancelled' && $emp['app_status'] != 'Pending'): ?>
-                                    <a href="?overtimeapplication&post&id=<?=$emp['otid'];?>&remarks=<?=$emp['hr_remarks'];?>" 
-                                       class="btn btn-success btn-xs confirm-post" 
-                                       title="Post">
-                                        <i class='fa fa-upload'></i>
-                                    </a>
-                                <?php endif; ?>
+                            <?php if (strpos($emp['app_status'], '*') === false && $emp['app_status'] != 'Pending'): ?>
+                                <a href="?overtimeapplication&done&id=<?= $emp['otid']; ?>" 
+                                    class="btn btn-success btn-xs confirm-done" 
+                                    title="Done">
+                                    <i class='fa fa-check-square-o'></i>
+                                </a>
                             <?php endif; ?>
                             <a href="?overtimeapplication&addremarks&id=<?=$emp['otid'];?>&hr_remarks=<?=$emp['hr_remarks'];?>" 
                                class="btn btn-primary btn-xs"
@@ -733,5 +754,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
         return dateA - dateB; // Compare full Date objects
     }
+});
+// Select all buttons with the "confirm-action" class
+const confirmButtons = document.querySelectorAll('.confirm-done');
+
+// Loop through each button and add a click event listener
+confirmButtons.forEach(button => {
+    button.addEventListener('click', function(event) {
+        // Display the confirmation dialog
+        const confirmAction = confirm("Are you sure this overtime application is DONE?");
+        
+        // If the user clicks "Cancel", prevent the link's default action
+        if (!confirmAction) {
+            event.preventDefault();
+        }
+    });
 });
 </script>

@@ -331,7 +331,7 @@ th.sortable.desc::after {
     if(isset($_GET['undo'])){
       $id=$_GET['id'];
       $datenow=date('Y-m-d H:i:s');
-      $sqlDelete=mysqli_query($con,"UPDATE infraction SET `status`='pending',updatedby='$fullname',updateddatetime='$datenow' WHERE id='$id'");
+      $sqlDelete=mysqli_query($con,"UPDATE infraction SET `status`='pending', 'viewstatus'='new', updatedby='$fullname',updateddatetime='$datenow' WHERE id='$id'");
       if($sqlDelete){
         echo "<script>alert('Infraction successfully restored!');window.location='?manageinfraction';</script>";
       }else{
@@ -341,7 +341,7 @@ th.sortable.desc::after {
     if(isset($_GET['serve'])){
       $id=$_GET['id'];              
       $datenow=date('Y-m-d H:i:s');
-      $sqlDelete=mysqli_query($con,"UPDATE infraction SET `status`='Served',updatedby='$fullname',updateddatetime='$datenow' WHERE id='$id'");
+      $sqlDelete=mysqli_query($con,"UPDATE infraction SET `status`='Served', 'viewstatus'='new', updatedby='$fullname',updateddatetime='$datenow' WHERE id='$id'");
       if($sqlDelete){
         echo "<script>alert('Infraction successfully served!');window.location='?manageinfraction';</script>";
       }else{

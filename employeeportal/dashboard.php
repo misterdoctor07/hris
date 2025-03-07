@@ -1,12 +1,3 @@
-<!-- <style>
-/* .sub {
-    display: none;
-}
-
-.sub-menu.open .sub {
-    display: block;
-} */
-</style> -->
 <?php
 date_default_timezone_set("Asia/Manila");
 ?>
@@ -171,20 +162,40 @@ date_default_timezone_set("Asia/Manila");
               </a>
           </li>
           <li class="sub-menu">
-    <a href="#" class="menu-toggle">
-        <i class="fa fa-envelope-open"></i>
-        <span>Applications</span>
-    </a>
-    <ul class="sub">
-        <li><a href="dashboard.php?manageleave" class="submenu-item">Apply Leave</a></li>
-        <li><a href="dashboard.php?applymissedlog" class="submenu-item">Apply Missed Log</a></li>
-        <li><a href="dashboard.php?applyovertime" class="submenu-item">Apply Overtime</a></li>
-        <li><a href="dashboard.php?emergencyearlyout" class="submenu-item">Apply Emergency Early Out</a></li>
-    </ul>
-</li>
+              <a href="#" class="menu-toggle" style="position: relative;">
+                  <i class="fa fa-envelope-open"></i>
+                  <span>Applications</span>
+                  <span id="app-menu-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 8px; right: 25px;"></span>
+              </a>
+              <ul class="sub">
+                  <li>
+                    <a href="dashboard.php?manageleave" class="submenu-item" onclick="markNotifseen('leave')" style="position: relative; display: inline-block;">
+                        Apply Leave
+                        <span id="leave-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="dashboard.php?applymissedlog" class="submenu-item" onclick="markNotifseen('missedlog')" style="position: relative; display: inline-block;">
+                        Apply Missed Log
+                        <span id="missedlog-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="dashboard.php?applyovertime" class="submenu-item" onclick="markNotifseen('overtime')" style="position: relative; display: inline-block;">
+                        Apply Overtime
+                        <span id="overtime-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="dashboard.php?emergencyearlyout" class="submenu-item" onclick="markNotifseen('eeo')" style="position: relative; display: inline-block;">
+                        Apply EEO
+                        <span id="eeo-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
+                    </a>
+                  </li>
+              </ul>
+          </li>
 
-
-<script>
+<!-- <script>
 document.addEventListener("DOMContentLoaded", function () {
     const menu = document.querySelector(".sub-menu");
     const menuToggle = menu.querySelector(".menu-toggle");
@@ -215,7 +226,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 });
-</script>
+</script> -->
 
           <li class="sub-menu">
               <a  <?= $view; ?> href="javascript:;">
@@ -263,21 +274,11 @@ document.addEventListener("DOMContentLoaded", function () {
               </a>
           </li>
           <li>
-            <div class="infnotification-wrapper" style="position: relative;">
-              <a href="dashboard.php?infractions" class="infnotification-link" id="infractionnotifLink" style="position: relative;">
-                <i class="fa fa-folder-open"></i>
+              <a href="dashboard.php?infractions" onclick="markNotifViewed()" style="position: relative;">
+                <i class="fa fa-folder-open"></i>    
                 <span>Infractions</span>
-                <span id="infnotificationDot" style="
-                  width: 10px;
-                  height: 10px;
-                  background: red;
-                  border-radius: 50%;
-                  position: absolute;
-                  top: 5px;
-                  right: 50px;
-                  display: none;"></span>
+                <span id="emp-infraction-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 155px;"></span>
               </a>
-            </div>
           </li>
           <li>
               <?php if ($designation == 8||$designation == 50||$designation == 89 || $designation == 59|| $designation == 65|| $designation == 94||$designation == 102 || $designation == 3 || $designation == 88|| $designation == 114||$designation == 92): ?>
@@ -367,7 +368,6 @@ document.addEventListener("DOMContentLoaded", function () {
             if(isset($_GET['manageinfraction'])){include('manageinfraction.php');}
             if(isset($_GET['getnotifications'])){include('getnotifications.php');}  
             if(isset($_GET['infractionnotif'])){include('infractionnotif.php');}  
-            if(isset($_GET['employeeinfractionnotif'])){include('employeeinfractionnotif.php');}
             if(isset($_GET['errorcatching'])){include('errorcatching.php');}
             if(isset($_GET['export_excel'])){include('export_excel.php');}
             if(isset($_GET['emergencyearlyout'])){include('emergencyearlyout.php');}
@@ -376,8 +376,12 @@ document.addEventListener("DOMContentLoaded", function () {
             if(isset($_GET['manageEEOapplication'])){include('manageEEOapplication.php');}
             if(isset($_GET['EEOapplication'])){include('EEOapplication.php');}
             if(isset($_GET['emp_dev'])){include('emp_dev.php');}
-
-
+            if(isset($_GET['manageemployee'])){include('manageemployee.php');}
+            if(isset($_GET['applyleaveforemp'])){include('applyleaveforemp.php');}
+            if(isset($_GET['applicationStatusNotif'])){include('applicationStatusNotif.php');}
+            if(isset($_GET['updateViewStatus'])){include('updateViewStatus.php');}
+            if(isset($_GET['employeeinfractionnotif'])){include('employeeinfractionnotif.php');}
+            if(isset($_GET['markInfractionSeen'])){include('markInfractionSeen.php');}
           ?>
           <!-- /col-lg-3 -->
         </div>
@@ -567,81 +571,234 @@ $(document).ready(function() {
         }
     });
 });
-//Notifications for infractions for supervisors
-function fetchInfractions() {
-  fetch('infractionnotif.php') // Replace with the correct PHP file path
-    .then(response => response.json())
-    .then(data => {
-      const notificationDot = document.getElementById('notificationDot');
-      if (data.infractions && data.infractions.length > 0) {
-        // Show the notification dot if there are infractions
-        notificationDot.style.display = 'inline-block';
-      } else {
-        // Hide the notification dot if no infractions
-        notificationDot.style.display = 'none';
-      }
-    })
-    .catch(error => console.error('Error fetching infractions:', error));
-}
+// //Notifications for infractions for supervisors
+// function fetchInfractions() {
+//   fetch('infractionnotif.php') // Replace with the correct PHP file path
+//     .then(response => response.json())
+//     .then(data => {
+//       const notificationDot = document.getElementById('notificationDot');
+//       if (data.infractions && data.infractions.length > 0) {
+//         // Show the notification dot if there are infractions
+//         notificationDot.style.display = 'inline-block';
+//       } else {
+//         // Hide the notification dot if no infractions
+//         notificationDot.style.display = 'none';
+//       }
+//     })
+//     .catch(error => console.error('Error fetching infractions:', error));
+// }
 
-// Function to mark infractions as viewed
-function markInfractionsAsViewed() {
-  fetch('infractionnotif.php', { // Replace with your PHP file path
-    method: 'POST'
-  })
-    .then(response => response.json())
-    .then(data => {
-      console.log(data.message); // Handle success response
-      fetchInfractions(); // Refresh notification status
-    })
-    .catch(error => console.error('Error marking infractions as viewed:', error));
-}
+// // Function to mark infractions as viewed
+// function markInfractionsAsViewed() {
+//   fetch('infractionnotif.php', { // Replace with your PHP file path
+//     method: 'POST'
+//   })
+//     .then(response => response.json())
+//     .then(data => {
+//       console.log(data.message); // Handle success response
+//       fetchInfractions(); // Refresh notification status
+//     })
+//     .catch(error => console.error('Error marking infractions as viewed:', error));
+// }
 
-// Event listener to mark infractions as viewed when clicking the notification link
-document.getElementById('infractionLink').addEventListener('click', () => {
-  markInfractionsAsViewed();
-});
+// // Event listener to mark infractions as viewed when clicking the notification link
+// // document.getElementById('infractionLink').addEventListener('click', () => {
+// //   markInfractionsAsViewed();
+// // });
 
-// Fetch infractions periodically (e.g., every 5 seconds)
-setInterval(fetchInfractions, 5000);
+// // Fetch infractions periodically (e.g., every 5 seconds)
+// setInterval(fetchInfractions, 5000);
 
-// Initial fetch
-fetchInfractions();
+// // Initial fetch
+// fetchInfractions();
 
-//Notifications for infractions for all employees
-function fetchInfractions() {
+// //Notifications for infractions for all employees
+// // function fetchInfractions() {
+// //   fetch('employeeinfractionnotif.php')
+// //     .then(response => response.json())
+// //     .then(data => {
+// //       const infnotificationDot = document.getElementById('infnotificationDot');
+// //       if (infnotificationDot) {
+// //         if (data.infractions && data.infractions.length > 0) {
+// //           infnotificationDot.style.display = 'inline-block';
+// //         } else {
+// //           infnotificationDot.style.display = 'none';
+// //         }
+// //       }
+// //     })
+// //     .catch(error => console.error('Error fetching infractions:', error));
+// // }
+
+// // Mark infractions as viewed
+// function markInfractionsAsViewed() {
+//   fetch('employeeinfractionnotif.php', { method: 'POST' })
+//     .then(response => response.json())
+//     .then(data => {
+//       console.log(data.message);
+//       fetchInfractions();
+//     })
+//     .catch(error => console.error('Error marking infractions as viewed:', error));
+// }
+
+// // Event listener for clicking the notification link
+// document.getElementById('infractionnotifLink').addEventListener('click', markInfractionsAsViewed);
+
+// // Poll infractions periodically
+// setInterval(fetchInfractions, 5000);
+// fetchInfractions();
+
+//Function for Employee Infraction Notif
+function EmpInfractionNotif() {
   fetch('employeeinfractionnotif.php')
     .then(response => response.json())
     .then(data => {
-      const infnotificationDot = document.getElementById('infnotificationDot');
-      if (infnotificationDot) {
-        if (data.infractions && data.infractions.length > 0) {
-          infnotificationDot.style.display = 'inline-block';
-        } else {
-          infnotificationDot.style.display = 'none';
-        }
+      console.log('Fetched notification:', data); // Log fetched data
+
+      const empInfractionNotif = document.getElementById('emp-infraction-notif');
+      if (!empInfractionNotif) {
+        console.error("Element with ID 'emp-infraction-notif' not found.");
+        return;
+      }
+      // Show notification indicators without displaying counts
+      if (data.emp_infraction_notif > 0) {
+        empInfractionNotif.style.display = 'inline-block';
+        empInfractionNotif.textContent = ''; // Hide count
+      } else {
+        empInfractionNotif.style.display = 'none';
       }
     })
-    .catch(error => console.error('Error fetching infractions:', error));
+    .catch(error => console.error('Error fetching notification:', error));
 }
 
-// Mark infractions as viewed
-function markInfractionsAsViewed() {
-  fetch('employeeinfractionnotif.php', { method: 'POST' })
+window.onload = function() {
+    console.log("Window fully loaded, calling EmpInfractionNotif()");
+    EmpInfractionNotif();
+};
+
+// Function to mark notification as viewed when clicking menu item
+function markNotifViewed() {
+  fetch('markInfractionSeen.php', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Hide the corresponding notification dot
+      document.getElementById('emp-infraction-notif').style.display = 'none';
+      
+      // Refresh notifications to check if any new ones remain
+      setTimeout(AppNotif, 1000);
+    } else {
+      console.error('Failed to update view status:', data.message);
+    }
+  })
+  .catch(error => console.error('Error updating view status:', error));
+}
+
+// Auto-refresh notifications every 5 seconds
+setInterval(EmpInfractionNotif, 5000);
+EmpInfractionNotif(); // Run immediately on page load
+
+//Function for Applications Notif
+function AppNotif() {
+  fetch('applicationStatusNotif.php')
     .then(response => response.json())
     .then(data => {
-      console.log(data.message);
-      fetchInfractions();
+      console.log('Fetched notification data:', data); // Log fetched data
+
+      const leaveNotif = document.getElementById('leave-notif');
+      const missedLogNotif = document.getElementById('missedlog-notif');
+      const overtimeNotif = document.getElementById('overtime-notif');
+      const eeoNotif = document.getElementById('eeo-notif');
+      const appMenuNotif = document.getElementById('app-menu-notif');
+
+      if (!leaveNotif || !missedLogNotif || !overtimeNotif || !eeoNotif || !appMenuNotif) {
+        console.error("One or more notification elements are missing.");
+        return;
+      }
+
+      let hasNotification = false;
+
+      // Show notification indicators without displaying counts
+      if (data.leave_notif > 0) {
+        leaveNotif.style.display = 'inline-block';
+        leaveNotif.textContent = ''; // Hide count
+        hasNotification = true;
+      } else {
+        leaveNotif.style.display = 'none';
+      }
+
+      if (data.missedlog_notif > 0) {
+        missedLogNotif.style.display = 'inline-block';
+        missedLogNotif.textContent = ''; // Hide count
+        hasNotification = true;
+      } else {
+        missedLogNotif.style.display = 'none';
+      }
+
+      if (data.overtime_notif > 0) {
+        overtimeNotif.style.display = 'inline-block';
+        overtimeNotif.textContent = ''; // Hide count
+        hasNotification = true;
+      } else {
+        overtimeNotif.style.display = 'none';
+      }
+
+      if (data.eeo_notif > 0) {
+        eeoNotif.style.display = 'inline-block';
+        eeoNotif.textContent = ''; // Hide count
+        hasNotification = true;
+      } else {
+        eeoNotif.style.display = 'none';
+      }
+
+      // Show or hide the main menu notification
+      if (hasNotification) {
+        appMenuNotif.style.display = 'inline-block';
+        appMenuNotif.textContent = ''; // Keep an indicator like "!"
+      } else {
+        appMenuNotif.style.display = 'none';
+      }
     })
-    .catch(error => console.error('Error marking infractions as viewed:', error));
+    .catch(error => console.error('Error fetching notification:', error));
 }
 
-// Event listener for clicking the notification link
-document.getElementById('infractionnotifLink').addEventListener('click', markInfractionsAsViewed);
 
-// Poll infractions periodically
-setInterval(fetchInfractions, 5000);
-fetchInfractions();
+window.onload = function() {
+    console.log("Window fully loaded, calling AppNotif()");
+    AppNotif();
+};
+
+// Function to mark notification as seen when clicking submenu item
+function markNotifseen(type) {
+  fetch('updateViewStatus.php', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: `type=${type}`,
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Hide the corresponding notification dot
+      document.getElementById(type + '-notif').style.display = 'none';
+      
+      // Refresh notifications to check if any unseen ones remain
+      setTimeout(AppNotif, 1000);
+    } else {
+      console.error('Failed to update view status:', data.message);
+    }
+  })
+  .catch(error => console.error('Error updating view status:', error));
+}
+
+// Auto-refresh notifications every 5 seconds
+setInterval(AppNotif, 5000);
+AppNotif(); // Run immediately on page load
 </script>
 
 </body>

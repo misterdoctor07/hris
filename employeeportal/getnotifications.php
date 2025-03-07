@@ -77,7 +77,7 @@ $type = ($jobtitle == '78' || $jobtitle == '116')
     ? "eeo.type_EEO = 'Medical'" 
     : '1=1';
 //OT Type in where clause
-$ottype = ($jobtitle == '93') 
+$ottype = ($jobtitle == '93' || $jobTitle == '114') 
     ? "ot.ot_type = 'IT-related'" 
     : '1=1';
 //Status in where clause
@@ -133,8 +133,8 @@ if (!$sqlOT) {
 }
 $pendingOTCount = mysqli_fetch_assoc($sqlOT)['total'] ?? 0;
 
-// Additional condition for job title 93
-if ($jobtitle == '93') {
+// Additional condition for job title IT Officer and Admin Executive
+if ($jobtitle == '93' || $jobTitle == '114') {
     $additionalQuery = "SELECT COUNT(*) AS total 
         FROM overtime_application ot
         INNER JOIN employee_profile ep ON ep.idno = ot.idno 

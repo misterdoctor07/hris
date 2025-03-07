@@ -4,7 +4,7 @@
     display: none;
   }
 
-  /* Toggle container with proper alignment */
+  /* Toggle container */
   .slot {
     display: inline-block;
     width: 50px;
@@ -47,6 +47,55 @@
     vertical-align: middle;
     display: inline-block;
   }
+
+  /* Tooltip styles */
+  .tooltip {
+    position: absolute;
+    bottom: 35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    white-space: nowrap;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 10;
+  }
+
+  /* Arrow for tooltip */
+  .tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.85) transparent transparent transparent;
+  }
+
+  /* Show tooltip on hover */
+  .tooltip-container:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  /* Show tooltip when clicked */
+  .tooltip.active {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  /* Ensuring no cropping issue */
+  .tooltip-container {
+    position: relative;
+    display: inline-block;
+    overflow: visible;
+  }
 </style>
 <script type="text/javascript">
     function SubmitDetails(){        
@@ -71,9 +120,12 @@
                 <div class="form-group">
                     <label class="col-sm-4 col-sm-4 control-label">Type of OT</label>
                     <div class="col-sm-8">
-                        <input id="toggle" class="toggle" type="checkbox" name="ot_type" value="IT-related" onchange="updateLabelText(this)">
-                        <label for="toggle" class="slot"></label>
-                        <span id="label-text" class="label-text">Not IT-related</span>
+                        <div class="tooltip-container">
+                            <input id="toggle" class="toggle" type="checkbox" name="ot_type" value="IT-related" onchange="toggleTooltip(); updateLabelText(this);">
+                            <label for="toggle" class="slot"></label>
+                            <span id="label-text" class="label-text">Not IT-related</span>
+                            <span id="tooltip" class="tooltip">Click only if your main job title is not IT and doing authorized IT tasks.</span>
+                        </div>
                     </div>
                 </div>                                              
                 <div class="form-group">
@@ -106,7 +158,8 @@
         $datenow=date('Y-m-d');
         $timenow=date('H:i:s');        
         $otdate=$_POST['otdate'];
-        $reasons=$_POST['reasons'];
+        $reasons = isset($_POST['reasons']) ? urldecode($_POST['reasons']) : ''; // Decode the input
+        $reasons = mysqli_real_escape_string($con, $reasons); // Sanitize for SQL
         $ottime=$_POST['ottime'];        
         $ot_type = isset($_POST['ot_type']) ? $_POST['ot_type'] : 'Not IT-related';
             $table="overtime_application(idno,ot_type,otdate,ottime,reasons, app_status, datearray,timearray)";
@@ -128,5 +181,10 @@
   function updateLabelText(toggle) {
     const labelText = document.getElementById("label-text");
     labelText.textContent = toggle.checked ? "IT-related" : "Not IT-related";
+  }
+
+  function toggleTooltip() {
+    let tooltip = document.getElementById("tooltip");
+    tooltip.classList.toggle("active");
   }
 </script>

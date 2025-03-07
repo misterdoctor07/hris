@@ -158,11 +158,11 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                     $whereClause = !empty($conditions) ? implode(' OR ', $conditions) : '1=1';
                         
                     //Type in where clause
-                    $type = ($designation == '93') 
+                    $type = ($designation == '93' || $designation == '114') 
                     ? "ot.ot_type = 'IT-related'" 
                     : '1=1';
 
-                    if($designation == '93'){
+                    if($designation == '93' || $designation == '114'){
                         $query = "SELECT ot.*, ot.id as otid, ep.*, ed.* 
                         FROM overtime_application ot 
                         INNER JOIN employee_profile ep ON ep.idno = ot.idno 

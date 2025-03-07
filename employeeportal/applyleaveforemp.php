@@ -1,30 +1,12 @@
-<?php
-$userId = $_SESSION['idno'];
-if (isset($_GET['id']) && !empty($_GET['id'])) {
-    $leaveId = $_GET['id'];
-    $sqlLeaveDetails = mysqli_query($con, "SELECT * FROM leave_application WHERE id='$leaveId'");
-    if ($sqlLeaveDetails && mysqli_num_rows($sqlLeaveDetails) > 0) {
-        $leaveDetails = mysqli_fetch_array($sqlLeaveDetails);
-        $leavetype = $leaveDetails['leavetype'];
-        $eoMonth = $leaveDetails['eo_month'];
-        $numberofdays = $leaveDetails['numberofdays'];
-        $dayfrom = $leaveDetails['dayfrom'];
-        $dayto = $leaveDetails['dayto'];
-        $reason = $leaveDetails['reason'];
-        $leaveId = $leaveDetails['id'];
-    } else {
-        echo "<script>alert('Leave application not found!');</script>";
-        echo "<script>window.location='?manageleave';</script>";
-        return;
-    }
-} else {
-    echo "<script>alert('Leave ID not provided!');</script>";
-    echo "<script>window.location='?manageleave';</script>";
-    return;
-}
-
-$sqlCredits = mysqli_query($con, "SELECT * FROM leave_credits WHERE idno='$userId'");
-$credits = [];
+<script type="text/javascript">
+      function SubmitDetails(){
+          return confirm('Do you wish to submit details?');
+      }
+</script>
+<?php 
+$idno = $_GET['idno'];
+$sqlCredits = mysqli_query($con, "SELECT * FROM leave_credits WHERE idno='$idno'");
+$credits = []; 
 if (mysqli_num_rows($sqlCredits) > 0) {
     $credit = mysqli_fetch_array($sqlCredits);
     $credits['VL'] = $credit['vacationleave'] - $credit['vlused'];
@@ -46,7 +28,7 @@ if (mysqli_num_rows($sqlCredits) > 0) {
     $credits['SPL'] = $credit['spl'] - $credit['spl_used'];
 }
 // Fetch user birthdate
-$sqlBirthDate = mysqli_query($con, "SELECT birthdate FROM employee_profile WHERE idno='$userId'");
+$sqlBirthDate = mysqli_query($con, "SELECT birthdate FROM employee_profile WHERE idno='$idno'");
 if (mysqli_num_rows($sqlBirthDate) > 0) {
     $birthDate = mysqli_fetch_assoc($sqlBirthDate)['birthdate'];
     $birthMonth = date('m', strtotime($birthDate)); // Extract month of birth
@@ -55,7 +37,7 @@ if (mysqli_num_rows($sqlBirthDate) > 0) {
 }
 
 //Fetch user start shift
-$sqlStartShift = mysqli_query($con, "SELECT startshift FROM employee_details WHERE idno='$userId'");
+$sqlStartShift = mysqli_query($con, "SELECT startshift FROM employee_details WHERE idno='$idno'");
 if(mysqli_num_rows($sqlStartShift)>0){
     $startshift=mysqli_fetch_assoc($sqlStartShift)['startshift'];
 }
@@ -64,80 +46,74 @@ if(mysqli_num_rows($sqlStartShift)>0){
 <div class="row">
     <div class="col-lg-12">
         <h4 style="text-indent: 10px;">
-            <a href="?manageleave"><i class="fa fa-arrow-left"></i> BACK</a> | 
+            <a href="?manageemployee"><i class="fa fa-arrow-left"></i> BACK</a> | 
             <i class="fa fa-file-text"></i> LEAVE APPLICATION
         </h4>      
     </div>
 </div>
 
-<form class="form-horizontal" method="GET" onsubmit="return validateForm(this);">
-
-    <input type="hidden" name="editleave">            
-    <input type="hidden" name="addedby" value="<?=$fullname;?>">  
-    <input type="hidden" name="id" value="<?=$leaveId;?>">          
-
+<form class="form-horizontal" method="POST" onsubmit="return SubmitDetails();">
+    <input type="hidden" name="idno" value="<?php echo $idno; ?>">          
     <div class="col-lg-4">
         <div class="content-panel">
             <div class="panel-heading">                
-                <input type="submit" id="submitBtn" name="submit" class="btn btn-primary" value="Submit Details" style="float:right;">
-                <h4><i class="fa fa-file-text"></i> EDIT LEAVE</h4>            
+            <input type="submit" id="submitBtn" name="submit" class="btn btn-primary" value="Submit Details" style="float:right;">
+                <h4><i class="fa fa-file-text"></i> APPLY FOR LEAVE</h4>            
             </div>
             <div class="panel-body"> 
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Leave Type</label>
                     <div class="col-sm-8">
-                        <select id="leaveTypeSelect" name="leavetype" class="form-control" required onchange="toggleEOSelection(this)">
-                            <option value="" selected>Select Leave Type</option>
-                            <option value="VL" <?= ($leavetype == 'VL') ? 'selected' : ''; ?>>Vacation Leave (VL)</option>
-                            <option value="PTO" <?= ($leavetype == 'PTO') ? 'selected' : ''; ?>>Unpaid Leave (PTO)</option>
-                            <option value="SPL" <?= ($leavetype == 'SPL') ? 'selected' : ''; ?>>Solo Parent Leave (SPL)</option>
-                            <option value="BLP" <?= ($leavetype == 'BLP') ? 'selected' : ''; ?>>Birthday Leave (BLP)</option>
-                            <option value="EO" <?= ($leavetype == 'EO') ? 'selected' : ''; ?>>Early Out (EO)</option>
-                            <option value="MTL" <?= ($leavetype == 'MTL') ? 'selected' : ''; ?>>Maternity Leave (MTL)</option>
-                            <option value="PTL" <?= ($leavetype == 'PTL') ? 'selected' : ''; ?>>Paternity Leave (PTL)</option>
-                            <option value="LTL" <?= ($leavetype == 'LTL') ? 'selected' : ''; ?>>Long Term Leave (LTL)</option>
-                            <option value="MDL" <?= ($leavetype == 'MDL') ? 'selected' : ''; ?>>Medical Leave (MDL)</option>
-                            <option value="BL" <?= ($leavetype == 'BL') ? 'selected' : ''; ?>>Bereavement Leave (BL)</option>
+                        <select name="leavetype" class="form-control" required onchange="updateCredits(this.value); checkSubmitButton(); toggleEOSelection(this.value);">
+                            <option value="" disabled selected>Select Leave Type</option>
+                            <option value="VL">Vacation Leave (VL)</option>
+                            <option value="PTO">Unpaid Leave (PTO)</option>
+                            <option value="SPL">Solo Parent Leave (SPL)</option>
+                            <option value="BLP">Birthday Leave (BLP)</option>
+                            <option value="EO">Early Out (EO)</option>
+                            <option value="MTL">Maternity Leave (MTL)</option>
+                            <option value="PTL">Paternity Leave (PTL)</option>
+                            <option value="LTL">Long Term Leave (LTL)</option>
+                            <option value="MDL">Medical Leave (MDL)</option>
+                            <option value="BL">Bereavement Leave (BL)</option>
                         </select>
                         <small id="credit-info" class="form-text text-muted"></small>
                     </div>
                 </div>
+
                 <!-- Additional Selection for EO Month -->
-                <div class="form-group" id="eo-month-group">
+                <div class="form-group" id="eo-month-group" style="display: none;">
                     <label class="col-sm-4 control-label">Select Month</label>
                     <div class="col-sm-8">
-                    <?php
-                        $fetchedEO_Month = isset($fetchedLeaveData['eo_month']) ? $fetchedLeaveData['eo_month'] : ''; 
-                    ?>
-                        <select name="eo_month"  data-fetched-month="<?= $fetchedEO_Month ?>" class="form-control" required onchange="updateCredits(this.value)">
-                            <option value="" selected>Select Month</option>
-                            <option value="jan_EO" <?= ($eoMonth == 'jan_EO') ? 'selected' : ''; ?>>January</option>
-                            <option value="feb_EO" <?= ($eoMonth == 'feb_EO') ? 'selected' : ''; ?>>February</option>
-                            <option value="mar_EO" <?= ($eoMonth == 'mar_EO') ? 'selected' : ''; ?>>March</option>
-                            <option value="apr_EO" <?= ($eoMonth == 'apr_EO') ? 'selected' : ''; ?>>April</option>
-                            <option value="may_EO" <?= ($eoMonth == 'may_EO') ? 'selected' : ''; ?>>May</option>
-                            <option value="jun_EO" <?= ($eoMonth == 'jun_EO') ? 'selected' : ''; ?>>June</option>
-                            <option value="jul_EO" <?= ($eoMonth == 'jul_EO') ? 'selected' : ''; ?>>July</option>
-                            <option value="aug_EO" <?= ($eoMonth == 'aug_EO') ? 'selected' : ''; ?>>August</option>
-                            <option value="sep_EO" <?= ($eoMonth == 'sep_EO') ? 'selected' : ''; ?>>September</option>
-                            <option value="oct_EO" <?= ($eoMonth == 'oct_EO') ? 'selected' : ''; ?>>October</option>
-                            <option value="nov_EO" <?= ($eoMonth == 'nov_EO') ? 'selected' : ''; ?>>November</option>
-                            <option value="dec_EO" <?= ($eoMonth == 'dec_EO') ? 'selected' : ''; ?>>December</option>
+                        <select name="eo_month" class="form-control">
+                            <option value="" disabled>Select Month</option>
+                            <option value="jan_EO">January</option>
+                            <option value="feb_EO">February</option>
+                            <option value="mar_EO">March</option>
+                            <option value="apr_EO">April</option>
+                            <option value="may_EO">May</option>
+                            <option value="jun_EO">June</option>
+                            <option value="jul_EO">July</option>
+                            <option value="aug_EO">August</option>
+                            <option value="sep_EO">September</option>
+                            <option value="oct_EO">October</option>
+                            <option value="nov_EO">November</option>
+                            <option value="dec_EO">December</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label class="col-sm-4 control-label">No. of Days</label>
-                    <div class="col-sm-4">
-                        <input type="number" name="nofdays" id="nofdays" class="form-control" value="<?=$numberofdays;?>" required onchange="checkCredits();">
-                    </div>
+                  <label class="col-sm-4 control-label">No. of Days</label>
+                  <div class="col-sm-4">
+                      <input type="number" name="nofdays" id="nofdays" class="form-control" value="0" min="1" required onchange="checkCredits(); checkSubmitButton();">
+                  </div>
                 </div>
 
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Start Date</label>
                     <div class="col-sm-8">
-                        <input type="date" name="startDate" class="form-control" value="<?=$dayfrom;?>" required onchange="checkCredits();">
+                        <input type="date" name="startDate" class="form-control" required onchange="checkCredits(); checkSubmitButton();">
                         <span id="date-warning" style="color: red; display: none;">*You must file for leave at least 3 days in advance.</span>
                     </div>
                 </div>
@@ -145,15 +121,16 @@ if(mysqli_num_rows($sqlStartShift)>0){
                 <div class="form-group">
                     <label class="col-sm-4 control-label">End Date</label>
                     <div class="col-sm-8">
-                        <input type="date" name="endDate" class="form-control" value="<?=$dayto;?>" required onchange="checkCredits();">
+                        <input type="date" name="endDate" class="form-control" required onchange="checkCredits(); checkSubmitButton();">
                         <span id="end-date-warning" style="color: red; display: none;"></span>
                     </div>
                 </div>
 
+
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Reason(s)</label>
                     <div class="col-sm-8">
-                        <textarea name="reasons" class="form-control" required><?=$reason;?></textarea>
+                        <textarea name="reasons" class="form-control" rows="5" required onchange="checkSubmitButton();"></textarea>
                     </div>
                 </div>
             </div>
@@ -162,63 +139,40 @@ if(mysqli_num_rows($sqlStartShift)>0){
 </form>
 
 <?php
-if (isset($_GET['submit']) && isset($_GET['editleave'])) {
-    $leaveId = $_GET['id']; // Get the ID from the hidden input
-    $idno = $_SESSION['idno'];
-    $leavetype = $_GET['leavetype'] ?? '';
-    $eoMonth = ($leavetype === 'EO') ? $_GET['eo_month'] : 'NULL';
-    $nofdays = $_GET['nofdays'];
-    $startDate = $_GET['startDate'];
-    $endDate = $_GET['endDate'] ?? '';   
-    $reasons = $_GET['reasons'];    
+if (isset($_POST['submit'])) {
+    $idno = $_POST['idno'];
+    $leavetype = $_POST['leavetype'];
+    $eoMonth = ($leavetype === 'EO') ? $_POST['eo_month'] : 'NULL';
+    $nofdays = $_POST['nofdays'];
+    $startDate = $_POST['startDate'];
+    $endDate = $_POST['endDate']; 
+    $reasons = isset($_POST['reasons']) ? urldecode($_POST['reasons']) : ''; // Decode the input
+    $reasons = mysqli_real_escape_string($con, $reasons); // Sanitize for SQL    
     $datenow = date('Y-m-d H:i:s'); 
 
-    // First check if the leave already exists
+    // Check if there's already an existing record for the selected leave type within the same date range
     $sqlCheck = mysqli_query($con, "SELECT * FROM leave_application 
-                                   WHERE idno='$idno' 
-                                   AND leavetype='$leavetype' 
-                                   AND dayfrom='$startDate' 
-                                   AND dayto='$endDate'
-                                   AND id != '$leaveId'  /* Exclude current record */
-                                   AND appstatus NOT IN ('Cancelled', 'Disapproved')");
+                                     WHERE idno='$idno' 
+                                     AND leavetype='$leavetype' 
+                                     AND dayfrom='$startDate' 
+                                     AND dayto='$endDate'
+                                     AND appstatus NOT IN ('Cancelled', 'Disapproved')");
 
     if (mysqli_num_rows($sqlCheck) > 0) {
         echo "<script>alert('Leave application already exists for the selected dates and leave type!');</script>";
     } else {
-        // Add before the update query
-// if (empty($leaveId) || empty($leavetype) || empty($nofdays) || empty($startDate) || empty($endDate) || empty($reasons)) {
-//     echo "<script>alert('All fields are required!');</script>";
-//     return;
-// }
+        // Insert the leave application
+        $sqlInsertLeave = mysqli_query($con, "INSERT INTO leave_application 
+                                              (idno, leavetype, eo_month, numberofdays, dayfrom, dayto, reason, datearray, appstatus) 
+                                              VALUES 
+                                              ('$idno', '$leavetype', '$eoMonth', '$nofdays', '$startDate', '$endDate', '$reasons', '$datenow', 'Pending')");
 
-if (!is_numeric($nofdays) || $nofdays <= 0) {
-    echo "<script>alert('Invalid number of days!');</script>";
-    return;
-}
-
-if (strtotime($endDate) < strtotime($startDate)) {
-    echo "<script>alert('End date cannot be earlier than start date!');</script>";
-    return;
-}
-        // Correct UPDATE query syntax
-        $sqlUpdateLeave = mysqli_query($con, "UPDATE leave_application 
-                                            SET idno = '$idno',
-                                                leavetype = '$leavetype',
-                                                eo_month = '$eoMonth',
-                                                numberofdays = '$nofdays',
-                                                dayfrom = '$startDate',
-                                                dayto = '$endDate',
-                                                reason = '$reasons',
-                                                datearray = '$datenow',
-                                                appstatus = 'Pending'
-                                            WHERE id = '$leaveId'");
-
-        if ($sqlUpdateLeave) {
-            echo "<script>alert('Leave application updated successfully!');
-                  window.location.href='?manageleave';</script>";
-        } else {
-            echo "<script>alert('Error updating leave application: " . mysqli_error($con) . "');</script>";
-        }
+        // Check if the leave application was successfully inserted
+        if ($sqlInsertLeave) {
+                echo "<script>alert('Leave application submitted successfully!');</script>";
+        }else {
+                echo "<script>alert('Failed to insert leave application. Please try again.');</script>";
+         }
     }
 }
 ?>
@@ -236,14 +190,14 @@ function checkSubmitButton() {
     const startDateValue = new Date(startDateField.value);
     const startDateMonth = startDateValue.getMonth() + 1; // Get the month (1-12)
 
+    // Allow submission for non-credit leave types
+    const noCreditLeaves = ["MTL", "MDL", "LTL", "PTL", "BL"];
+    
     // Check if the leave type is BLP and if the start date's month is not the user's birth month
     if (leaveType === 'BLP' && startDateMonth !== parseInt(userBirthdayMonth)) {
-        submitBtn.disabled = true; // Disable the submit button
-        return; // Exit the function
+        submitBtn.disabled = true;
+        return;
     }
-
-    // Allow submission for non-credit leave types
-    const excludedLeaveTypes = ["MTL", "MDL", "LTL", "PTL", "BL"];
 
     // Define month-based EO credits
     const credits = {
@@ -275,7 +229,7 @@ function checkSubmitButton() {
     //         submitBtn.disabled = true;
     //         return;
     //     }
-    // } else if (leaveType === excludedLeaveType){
+    // } else if (leaveType === noCreditLeaves){
     //     submitBtn.disabled = false;
     // }else {
     //     if (!credits[leaveType] || credits[leaveType] <= 0) {
@@ -283,6 +237,7 @@ function checkSubmitButton() {
     //         return;
     //     }
     // }
+
     // Check if any required fields are disabled
     const nofdays = document.getElementById('nofdays');
     const startDate = document.getElementsByName('startDate')[0];
@@ -417,11 +372,9 @@ function updateCredits(leaveType) {
     checkSubmitButton();
 }
 
-// Event listener for EO month selection
+// Add event listener for EO month selection
 document.addEventListener("DOMContentLoaded", function() {
     const eoMonthSelect = document.querySelector('select[name="eo_month"]');
-    const leaveTypeSelect = document.querySelector('select[name="leavetype"]');
-
     if (eoMonthSelect) {
         // Get current month index
         const monthIndex = new Date().getMonth();
@@ -430,7 +383,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Set the default value explicitly, overriding any old value
         eoMonthSelect.value = monthKeys[monthIndex]; 
-    
+
         // Update credits after setting the correct month
         updateCredits('EO');
 
@@ -438,21 +391,7 @@ document.addEventListener("DOMContentLoaded", function() {
         eoMonthSelect.addEventListener("change", function() {
             updateCredits('EO');
         });
-
-        // eoMonthSelect.style.display = "none"; // Hide EO month dropdown initially
-        eoMonthSelect.addEventListener("change", function() {
-            updateCredits('EO');
-        });
     }
-
-    if (leaveTypeSelect) {
-        leaveTypeSelect.addEventListener("change", function() {
-            updateCredits(this.value);
-        });
-    }
-
-    // Call updateCredits initially for the fetched leave type
-    updateCredits(leaveTypeSelect.value);
 });
 
 function checkCredits() {
@@ -468,99 +407,43 @@ function checkCredits() {
     let userBirthdayMonth = "<?= $birthMonth; ?>"; // Extracted from PHP
     let selectedStartDate = new Date(startDate.value);
     let startshift = "<?=$startshift;?>";
-    let datenow = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-    let submitBtn = document.getElementById('submitBtn');
     
-    // Check if the selected leave type requires a 3-day protocol
-    if (withdayprotocol.includes(selectedLeaveType) || withdayprotocol.includes(selectedEOMonth)) {
-        if((startshift == "23:00:00" || startshift == "00:00:00") && datenow == "Friday" ) {
-            // Check if startDate has a value
-            if (!startDate.value) {
-                dateWarning.style.display = 'inline';
-                startDate.style.borderColor = 'red';
-                endDate.disabled = true; 
-                submitBtn.disabled = true;
-                return false;
-            } else {
-                endDate.disabled = false; 
-                submitBtn.disabled = false;
-            }
+    // // Check if the selected leave type requires a 3-day protocol
+    // if (withdayprotocol.includes(selectedLeaveType) || withdayprotocol.includes(selectedEOMonth)) {
+    //     // Check if startDate has a value
+    //     if (!startDate.value) {
+    //         dateWarning.style.display = 'inline';
+    //         startDate.style.borderColor = 'red';
+    //         return false;
+    //     }
 
-            // Set current date and add 3 working days to it
-            let currentDate = new Date();
-            let minStartDate = new Date(currentDate); // Clone the current date
-            minStartDate.setHours(0, 0, 0, 0); // Reset time to midnight
+    //     // Set current date and add 3 working days to it
+    //     let currentDate = new Date();
+    //     let minStartDate = new Date(currentDate); // Clone the current date
+    //     minStartDate.setHours(0, 0, 0, 0); // Reset time to midnight
 
-            let daysAdded = 0;
+    //     let daysAdded = 0;
 
-            while (daysAdded < 2) { // Add 3 working days
-                minStartDate.setDate(minStartDate.getDate() + 1); // Move to next day
+    //     while (daysAdded < 3) { // Add 3 working days
+    //         minStartDate.setDate(minStartDate.getDate() + 1); // Move to next day
 
-                // Skip Sundays (0) and Mondays (1)
-                if (minStartDate.getDay() !== 0 && minStartDate.getDay() !== 1) {
-                    daysAdded++;
-                }
-            }
+    //         // Skip Sundays (0) and Mondays (1)
+    //         if (minStartDate.getDay() !== 0 && minStartDate.getDay() !== 1) {
+    //             daysAdded++;
+    //         }
+    //     }
 
-            // Validate that the start date is at least 3 working days from today
-            if (new Date(startDate.value) < minStartDate) {
-                dateWarning.style.display = 'inline';
-                startDate.style.borderColor = 'red';
-                endDate.disabled = true; 
-                submitBtn.disabled = true;
-                return false;
-            } else {
-                // Hide the error message if the start date is valid
-                dateWarning.style.display = 'none';
-                startDate.style.borderColor = '';
-                endDate.disabled = false; 
-                submitBtn.disabled = false;
-            }
-        }else{
-            // Check if startDate has a value
-            if (!startDate.value) {
-                dateWarning.style.display = 'inline';
-                startDate.style.borderColor = 'red';
-                endDate.disabled = true; 
-                submitBtn.disabled = true;
-                return false;
-            } else {
-                endDate.disabled = false; 
-                submitBtn.disabled = false;
-            }
-
-            // Set current date and add 3 working days to it
-            let currentDate = new Date();
-            let minStartDate = new Date(currentDate); // Clone the current date
-            minStartDate.setHours(0, 0, 0, 0); // Reset time to midnight
-
-            let daysAdded = 0;
-
-            while (daysAdded < 3) { // Add 3 working days
-                minStartDate.setDate(minStartDate.getDate() + 1); // Move to next day
-
-                // Skip Sundays (0) and Mondays (1)
-                if (minStartDate.getDay() !== 0 && minStartDate.getDay() !== 1) {
-                    daysAdded++;
-                }
-            }
-
-            // Validate that the start date is at least 3 working days from today
-            if (new Date(startDate.value) < minStartDate) {
-                dateWarning.style.display = 'inline';
-                startDate.style.borderColor = 'red';
-                endDate.disabled = true; 
-                submitBtn.disabled = true;
-                return false;
-            } else {
-                // Hide the error message if the start date is valid
-                dateWarning.style.display = 'none';
-                startDate.style.borderColor = '';
-                endDate.disabled = false; 
-                submitBtn.disabled = false;
-            }
-        }
-    }
+    //     // Validate that the start date is at least 3 working days from today
+    //     if (new Date(startDate.value) < minStartDate) {
+    //         dateWarning.style.display = 'inline';
+    //         startDate.style.borderColor = 'red';
+    //         return false;
+    //     } else {
+    //         // Hide the error message if the start date is valid
+    //         dateWarning.style.display = 'none';
+    //         startDate.style.borderColor = '';
+    //     }
+    // }
 
     // For all leave types: check if the number of days is 1
     if (nofdays.value == 1) {
@@ -601,6 +484,7 @@ function checkCredits() {
 
     return true; 
 }
+
 
 function updateEndDate() {
     let startDate = document.getElementsByName('startDate')[0];
@@ -676,12 +560,11 @@ function checkEndDate() {
     }
 }
 //Function for EO month
-// Function to handle EO selection
-function toggleEOSelection(selectElement) {
+function toggleEOSelection(selectedValue) {
     let eoMonthGroup = document.getElementById('eo-month-group');
     let eoMonthSelect = document.querySelector('select[name="eo_month"]');
 
-    if (selectElement.value === "EO") {
+    if (selectedValue === "EO") {
         eoMonthGroup.style.display = 'block';
 
         // Define months with corresponding formatted values
@@ -706,44 +589,10 @@ function toggleEOSelection(selectElement) {
         
         // Set the default value to the current month formatted as "jan_EO", "feb_EO", etc.
         eoMonthSelect.value = monthMap[formattedMonth];
-
-        // Disable the dropdown when EO is selected
-        // selectElement.disabled = true;
     } else {
         eoMonthGroup.style.display = 'none';
         eoMonthSelect.value = ""; // Reset selection
     }
 }
-
-// Disable leave type field if value is EO when the page loads
-document.addEventListener("DOMContentLoaded", function () {
-    let leaveTypeSelect = document.getElementById("leaveTypeSelect");
-    let eoMonthGroup = document.getElementById('eo-month-group');
-    let eoMonthSelect = document.querySelector('select[name="eo_month"]');
-
-    // Fetch the stored EO month value
-    let eoMonthValue = eoMonthSelect.value.trim(); // Trim to ensure no whitespace issues
-
-    if (leaveTypeSelect.value === "EO") {
-        // leaveTypeSelect.disabled = true; // Disable the dropdown
-
-        // Ensure EO month dropdown is shown even if fetched value is NULL
-        eoMonthGroup.style.display = 'block';
-
-        // If eoMonth is empty/null, set the current month as default
-        if (!eoMonthValue) {
-            const monthMap = {
-                "01": "jan_EO", "02": "feb_EO", "03": "mar_EO", "04": "apr_EO",
-                "05": "may_EO", "06": "jun_EO", "07": "jul_EO", "08": "aug_EO",
-                "09": "sep_EO", "10": "oct_EO", "11": "nov_EO", "12": "dec_EO"
-            };
-
-            let currentMonth = new Date().getMonth() + 1; // getMonth() is 0-based
-            let formattedMonth = currentMonth < 10 ? "0" + currentMonth : currentMonth;
-            eoMonthSelect.value = monthMap[formattedMonth]; // Set default value
-        }
-    } else {
-        eoMonthGroup.style.display = 'none';
-    }
-});
 </script>
+

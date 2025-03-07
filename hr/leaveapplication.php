@@ -176,10 +176,19 @@ th.sortable.desc::after {
 
                 <!-- Date Filter Section -->
                 <div class="date-filter" style="display: flex; align-items: center; gap: 10px;">
-                    <label for="fromDate">From:</label>
-                    <input type="date" id="fromDate" class="form-control" value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>" style="width: 150px;">
-                    <label for="toDate">To:</label>
-                    <input type="date" id="toDate" class="form-control" value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>" style="width: 150px;">
+                    <h5 style="font-weight: bold; margin-left: 30px;">Filter Start Date Column</h5>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label for="fromDate" style="margin-bottom: 0;">From:</label>
+                        <input type="date" id="fromDate" class="form-control" 
+                            value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>" 
+                            style="width: 150px; height: 35px;">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label for="toDate" style="margin-bottom: 0;">To:</label>
+                        <input type="date" id="toDate" class="form-control" 
+                            value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>" 
+                            style="width: 150px; height: 35px;">
+                    </div>
                     <button type="button" onclick="filterByDate()" class="filter-btn">Filter</button>
                     <button type="button" onclick="resetFilter()" class="btn btn-default">Reset</button>
                 </div>
@@ -326,8 +335,8 @@ th.sortable.desc::after {
                                 <th class="sortable" data-column="2" width="10%" style="text-align: center;  background-color:#20273a; color: white;">Employee Name</th>
                                 <th class="sortable" data-column="3" width="6%" style="text-align: center;  background-color:#20273a; color: white;">Leave Type</th>
                                 <th class="sortable" data-column="4" width="6%" style="text-align: center;  background-color:#20273a; color: white;">No. of Days</th>
-                                <th class="sortable" data-column="5" width="6%" style="text-align: center;  background-color:#20273a; color: white;">From</th>
-                                <th class="sortable" data-column="6" width="6%" style="text-align: center;  background-color:#20273a; color: white;">To</th>
+                                <th class="sortable" data-column="5" width="6%" style="text-align: center;  background-color:#20273a; color: white;">Start Date</th>
+                                <th class="sortable" data-column="6" width="6%" style="text-align: center;  background-color:#20273a; color: white;">End Date</th>
                                 <th class="sortable" data-column="7" style="text-align: center;  background-color:#20273a; color: white;">Reason</th>
                                 <th class="sortable" data-column="8" width="7%" style="text-align: center;  background-color:#20273a; color: white;">Date Applied</th>
                                 <th class="sortable" data-column="9" width="7%" style="text-align: center;  background-color:#20273a; color: white;">Status</th>

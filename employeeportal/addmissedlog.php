@@ -22,7 +22,7 @@
       </div>
       <div class="panel-body">                                            
         <div class="form-group">
-          <label class="col-sm-4 col-sm-4 control-label">Date of Missed Time IN/OUT</label>
+          <label class="col-sm-4 col-sm-4 control-label">Date of Missed Log</label>
           <div class="col-sm-8">
             <input type="date" name="datemissed" class="form-control" required>
           </div>

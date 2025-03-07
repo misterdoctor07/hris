@@ -26,68 +26,32 @@ $userCompany = $userDetails['company'];
 
 $whereClause = "";
 
-if ($designation == 8 || $designation == 59 || $designation == 65 || $designation == 94) {
+if ($designation == 8 || $designation == 59 || $designation == 65 || $designation == 94) { //Assessor || Team Leader || Team Manager || OIC
     $whereClause = "ed.department = '$userDept'";
-} elseif ($designation == 50 || $designation == 89) {
+} elseif ($designation == 50 || $designation == 89) { //Operations Supervisor || Operations Manager
     $whereClause = "ed.company = '$userCompany'";
-} else if ($designation == 102 || $designation == 3 || $designation == 88 || $designation == 114 || $designation == 92) {
+} else if ($designation == 102 || $designation == 3 || $designation == 88 || $designation == 114 || $designation == 92) { // Accounting Assistant || Accounting Specialist || Accounting Associate || Admin Executive || Senior Admin Auditor
     $whereClause = "1=1";
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $updateQuery = "UPDATE infraction i
-                    INNER JOIN employee_details ed ON ed.idno = i.idno
-                    SET i.viewstatus = 'viewed'
-                    WHERE $whereClause";
+$infractionNotif = 0;
 
-    mysqli_query($con, $updateQuery);
-
-    $selectQuery = "SELECT i.id 
-                    FROM infraction i
-                    INNER JOIN employee_details ed ON ed.idno = i.idno
-                    WHERE $whereClause";
-
-    $result = mysqli_query($con, $selectQuery);
-
-    $infractionIds = [];
-    while ($row = mysqli_fetch_assoc($result)) {
-        $infractionIds[] = $row['id'];
-    }
-
-    if (!empty($infractionIds)) {
-        foreach ($infractionIds as $infractionId) {
-            $insertQuery = "INSERT INTO infraction_view_status (infraction_id, user_id, view_status) 
-                            VALUES ('$infractionId', '$userId', 'viewed') 
-                            ON DUPLICATE KEY UPDATE view_status = 'viewed'";
-            mysqli_query($con, $insertQuery);
-        }
-    }
-
-    echo json_encode(["message" => "Infractions marked as viewed"]);
-    exit;
-}
-
-$queryRemaining = "SELECT i.id  
+$infractionQuery = "SELECT COUNT(*) AS total 
     FROM infraction i
-    INNER JOIN employee_details ed ON ed.idno = i.idno
-    LEFT JOIN infraction_view_status ivs 
-        ON ivs.infraction_id = i.id AND ivs.user_id = '$userId'
-    WHERE $whereClause
-    AND (
-        (i.viewstatus = 'new' OR i.viewstatus = 'updated')
-        OR (ivs.view_status IS NULL OR ivs.view_status != 'viewed')
-    )";
-
-$result = mysqli_query($con, $queryRemaining);
-
-$remainingInfractions = [];
-while ($row = mysqli_fetch_assoc($result)) {
-    $remainingInfractions[] = $row['id'];
-}
+    INNER JOIN infraction_view_status ivs ON ivs.infraction_id = i.id
+    WHERE $whereClause 
+    AND status = 'Served'
+    AND user_id != '$userId'";
+$stmt = $con->prepare($infractionQuery);
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$result = $stmt->get_result();
+$row = $result->fetch_assoc();
+$infractionNotif = $row ? $row['total'] : 0;
 
 header('Content-Type: application/json');
 echo json_encode([
-    "infractions" => $remainingInfractions
+    "infractions" => $infractionNotif
 ]);
 
 ?>
