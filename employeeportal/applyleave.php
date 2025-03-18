@@ -150,6 +150,7 @@ if (isset($_GET['submit'])) {
     $reasons = isset($_GET['reasons']) ? urldecode($_GET['reasons']) : ''; // Decode the input
     $reasons = mysqli_real_escape_string($con, $reasons); // Sanitize for SQL    
     $datenow = date('Y-m-d H:i:s'); 
+    $timearray = date('H:i:s'); 
 
     // Check if there's already an existing record for the selected leave type within the same date range
     $sqlCheck = mysqli_query($con, "SELECT * FROM leave_application 
@@ -164,9 +165,9 @@ if (isset($_GET['submit'])) {
     } else {
         // Insert the leave application
         $sqlInsertLeave = mysqli_query($con, "INSERT INTO leave_application 
-                                              (idno, leavetype, eo_month, numberofdays, dayfrom, dayto, reason, datearray, appstatus) 
+                                              (idno, leavetype, eo_month, numberofdays, dayfrom, dayto, reason, datearray, timearray, appstatus) 
                                               VALUES 
-                                              ('$idno', '$leavetype', '$eoMonth', '$nofdays', '$startDate', '$endDate', '$reasons', '$datenow', 'Pending')");
+                                              ('$idno', '$leavetype', '$eoMonth', '$nofdays', '$startDate', '$endDate', '$reasons', '$datenow', '$timearray', 'Pending')");
 
         // Check if the leave application was successfully inserted
         if ($sqlInsertLeave) {

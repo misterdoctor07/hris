@@ -475,13 +475,13 @@ date_default_timezone_set("Asia/Manila");
 
 
        
-        function logError($con, $empid, $errorMessage, $logType, $ipAddress) {
+        function logError($con, $empid, $errorMessage, $logType) {
           $ipAddress = getClientIP(); // Get the client IP address
           $stmt = $con->prepare("INSERT INTO error_logs (empid, error_message, log_type, ip_address) VALUES (?, ?, ?, ?)");
           $stmt->bind_param("ssss", $empid, $errorMessage, $logType, $ipAddress);
           $stmt->execute();
           $stmt->close();
-        }
+      }
       
      function getClientIP() {
     if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
@@ -525,10 +525,10 @@ if ($logintype === 'loginam') {
               // Restore leave credits
               $leaveColumn = '';
               switch ($leaveType) {
-                case 'VL': $leaveColumn = 'vlused'; break;
-                case 'SL': $leaveColumn = 'slused'; break;
-                case 'PTO': $leaveColumn = 'ptoused'; break;
-                case 'EO': 
+                  case 'VL': $leaveColumn = 'vlused'; break;
+                  case 'SL': $leaveColumn = 'slused'; break;
+                  case 'PTO': $leaveColumn = 'ptoused'; break;
+                  case 'EO': 
                     $startMonth = date('n'); // Get current month as integer
                     // Ensure $startMonth is an integer
                     $startMonth = (int) $startMonth;
@@ -542,12 +542,9 @@ if ($logintype === 'loginam') {
                         : 'default_eo_used'; // Set a default fallback value
             
                     break;
-                case 'BLP': $leaveColumn = 'blp_used'; break;
-                case 'SPL': $leaveColumn = 'spl_used'; break;
-                default:
-                    $leaveColumn = 'unknown_leave_type'; // Handle unexpected cases
-                    break;
-            }            
+                  case 'BLP': $leaveColumn = 'blp_used'; break;
+                  case 'SPL': $leaveColumn = 'spl_used'; break;
+              }
   
               if ($leaveColumn) {
                   mysqli_query($con, "UPDATE leave_credits SET $leaveColumn = $leaveColumn - 1 WHERE idno = '$empid'");
@@ -577,7 +574,7 @@ if ($logintype === 'loginam') {
           // Check for double entry in `loginam`
           if ($attendanceRecord && !empty($attendanceRecord['loginam']) && $attendanceRecord['loginam'] !== '0') {
             $errorMessage = 'You have already registered in this session!';
-            logError($con, $empid, $errorMessage, 'loginam', $ipAddress);
+            logError($con, $empid, $errorMessage, 'loginam');
         
              echo "<script>
         showModal('$errorMessage');
@@ -588,9 +585,9 @@ if ($logintype === 'loginam') {
       
           // Determine status based on shift
      
-          if ($employeeStartShift >= "03:00:00" && $employeeStartShift <= "15:00:00") {
+          if ($employeeStartShift >= "05:00:00" && $employeeStartShift <= "15:00:00") {
               $status = "work";
-          } elseif ($isNightShift) {
+          } elseif ($employeeStartShift >= "00:00:00" && $employeeStartShift <= "04:00:00") {
               $status = "nd/work";
           }
       
@@ -611,7 +608,7 @@ if ($logintype === 'loginam') {
           // Execute the statement
            if ($stmt->execute()) {
     $message = 'Welcome, ' . $profile['firstname'] . ' ' . $profile['lastname'] . '!';
-    logError($con, $empid, $message, $logintype, $ipAddress);
+    logError($con, $empid, $message, $logintype);
 
     echo "<script>
         showModal('$message');

@@ -1,158 +1,3 @@
-
-<style>
-/* Modal Overlay to Blur Background */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 999;
-}
-
-/* Modal Container */
-.modal-container {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
-    width: 400px;
-    max-width: 90%;
-    z-index: 1000;
-}
-
-/* Panel Heading Styling */
-.panel-heading- {
-    text-align: left;
-    margin-bottom: 20px;
-}
-
-/* Close Button */
-.panel-heading- a {
-    color: #333;
-    text-decoration: none;
-}
-
-/* Form Input and Button Styling */
-.form-group textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-.form-group input[type="submit"] {
-    width: 100%;
-    padding: 10px;
-    border: none;
-    background-color: #007bff;
-    color: white;
-    cursor: pointer;
-    border-radius: 4px;
-    font-size: 16px;
-}
-
-/* Change button color on hover */
-.form-group input[type="submit"]:hover {
-    background-color: #0056b3;
-}
-
-.modal-dialog {
-    width: auto; /* adjust the width to fit your content */
-    max-width: 500px; /* set a maximum width */
-}
-
-.modal-content {
-    width: 100%;
-    padding:0;
-    overflow-y: auto; /* add a scrollbar if the content is too long */
-}
-
-.modal-body form {
-    width: 300%; /* adjust the width to fit your content */
-    margin: 0 auto; /* center the form horizontally */
-}
-
-/* Panel Heading Styling */
-.panel-heading- {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-/* Close Button */
-.panel-heading- a {
-    color: #333;
-    text-decoration: none;
-}
-/*Form Group for remarks modal*/
-/* Form Input and Button Styling */
-.form-group textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-.form-group input[type="submit"] {
-    width: 100%;
-    padding: 10px;
-    border: none;
-    background-color: #3f4d6a;
-    color: white;
-    cursor: pointer;
-    border-radius: 4px;
-    font-size: 16px;
-}
-
-/* Change button color on hover */
-.form-group input[type="submit"]:hover {
-    background-color: #181e2e;
-}
-
-.badge-right {
-    position: absolute;
-    top: 0;
-    right: 0;
-    transform: translate(50%, -50%);
-    color: white;
-    background-color: red;
-    border-radius: 50%;
-    padding: 4px 8px;
-    font-size: 12px;
-}
-/* Sorting Columns */
-th.sortable {
-    cursor: pointer;
-    position: relative;
-}
-
-th.sortable.asc::after {
-    content: ''; 
-    color: #000;
-}
-
-th.sortable.desc::after {
-    content: '';
-    color: #000;
-}
-/*Date Filter Button*/
-.filter-btn {
-    background-color: #3f4d6a;
-    color: white;
-    border: none;
-    padding: 7px 20px;
-    border-radius: 5px;
-    transition: background-color 0.3s;
-}
-
-.filter-btn:hover {
-    background-color: #181e2e;
-}
-</style>
 <?php
     // Fetch unique companies from the employee_details table
     $sqlCompanies = mysqli_query($con, "SELECT DISTINCT company FROM employee_details ORDER BY company");
@@ -196,7 +41,7 @@ th.sortable.desc::after {
                 <!-- Export to Excel Button -->
                 <div class="export-btn" style="display: flex; align-items: center; margin-left: auto">
                     <form>
-                        <button type="button" onclick="tablesToExcel('Infraction_Report')" class="btn btn-success">EXPORT TO EXCEL</button>
+                        <button type="button" onclick="tablesToExcel('Leave_Application_Report')" class="btn btn-success">EXPORT TO EXCEL</button>
                     </form>
                 </div>
             </div>
@@ -338,7 +183,7 @@ th.sortable.desc::after {
                                 <th class="sortable" data-column="5" width="6%" style="text-align: center;  background-color:#20273a; color: white;">Start Date</th>
                                 <th class="sortable" data-column="6" width="6%" style="text-align: center;  background-color:#20273a; color: white;">End Date</th>
                                 <th class="sortable" data-column="7" style="text-align: center;  background-color:#20273a; color: white;">Reason</th>
-                                <th class="sortable" data-column="8" width="7%" style="text-align: center;  background-color:#20273a; color: white;">Date Applied</th>
+                                <th class="sortable" data-column="8" width="9%" style="text-align: center;  background-color:#20273a; color: white;">Date and Time Applied</th>
                                 <th class="sortable" data-column="9" width="7%" style="text-align: center;  background-color:#20273a; color: white;">Status</th>
                                 <th class="sortable" data-column="10" style="text-align: center;  background-color:#20273a; color: white;">HR Remarks</th>
                                 <th class="sortable" data-column="11" style="text-align: center;  background-color:#20273a; color: white;">Approver Remarks</th>
@@ -378,7 +223,15 @@ th.sortable.desc::after {
                                         <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['dayfrom'])); ?></td>
                                         <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['dayto'])); ?></td>
                                         <td style="text-align: justify; vertical-align: middle;"><?= $emp['reason'] ?></td>
-                                        <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['datearray'])) ?></td>
+                                        <td style="text-align: center; vertical-align: middle;">
+                                            <?= date('M d, Y', strtotime($emp['datearray'])) . "<br>" . 
+                                            (!empty($emp['timearray']) ? date('g:i A', strtotime($emp['timearray'])) : ""); ?>
+                                            
+                                            <?php if (!empty($emp['edited_datetime'])): ?>
+                                                <br><strong>Latest Edit:</strong><br><?= date('M d, Y', strtotime($emp['edited_datetime'])) . "<br>" . 
+                                                            date('g:i A', strtotime($emp['edited_datetime'])); ?>
+                                            <?php endif; ?>
+                                        </td>
                                         <td style="text-align: center; vertical-align: middle;"><?= $emp['appstatus'] ?></td>
                                         <td style="text-align: <?= ($emp['remarks'] == 'POSTED') ? 'center' : 'justify'; ?>; vertical-align: middle;">
                                             <?=$emp['remarks'];?>
@@ -787,6 +640,7 @@ function resetFilter() {
 //Sorting Columns
 document.addEventListener("DOMContentLoaded", function () {
     const headers = document.querySelectorAll(".sortable");
+    
     headers.forEach(header => {
         header.addEventListener("click", function () {
             const table = header.closest("table");
@@ -807,8 +661,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 const bText = b.cells[columnIndex].innerText.trim();
 
                 return isAscending
-                    ? compareDates(bText, aText)
-                    : compareDates(aText, bText);
+                    ? compareValues(bText, aText) // Sort descending if currently ascending
+                    : compareValues(aText, bText); // Sort ascending if currently descending
             });
 
             // Append sorted rows back to the table body
@@ -816,7 +670,18 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    function compareDates(a, b) {
+    function compareValues(a, b) {
+        const dateA = parseDateTime(a);
+        const dateB = parseDateTime(b);
+
+        // Check if both values are valid dates, if so, compare as dates
+        if (dateA && dateB) return dateA - dateB;
+
+        // Otherwise, compare as case-insensitive strings (for names, text, etc.)
+        return a.localeCompare(b, undefined, { sensitivity: 'base' });
+    }
+
+    function parseDateTime(dateStr) {
         const monthMap = {
             "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
             "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
@@ -826,35 +691,26 @@ document.addEventListener("DOMContentLoaded", function () {
         const dateRegex = /^([A-Za-z]+)\s(\d{1,2}),\s(\d{4})$/;  // Format: Jan 02, 2025
         const dateTimeRegex = /^([A-Za-z]+)\s(\d{1,2}),\s(\d{4})\s(\d{1,2}):(\d{2})\s(AM|PM)$/;  // Format: Jan 02, 2025 6:42 AM
 
-        const parseDateTime = (dateStr) => {
-            let match = dateStr.match(dateTimeRegex);
-            if (match) {
-                const [, month, day, year, hours, minutes, meridian] = match;
-                let hour24 = convertTo24Hour(parseInt(hours), meridian);
-                return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), hour24, parseInt(minutes));
-            }
+        const matchDateTime = dateStr.match(dateTimeRegex);
+        if (matchDateTime) {
+            const [, month, day, year, hours, minutes, meridian] = matchDateTime;
+            let hour24 = convertTo24Hour(parseInt(hours), meridian);
+            return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), hour24, parseInt(minutes));
+        }
 
-            match = dateStr.match(dateRegex);
-            if (match) {
-                const [, month, day, year] = match;
-                return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), 0, 0);
-            }
+        const matchDate = dateStr.match(dateRegex);
+        if (matchDate) {
+            const [, month, day, year] = matchDate;
+            return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), 0, 0);
+        }
 
-            return null; // If the format doesn't match
-        };
+        return null; // If not a date, return null (so it will be sorted alphabetically)
+    }
 
-        const convertTo24Hour = (hours, meridian) => {
-            if (meridian === "PM" && hours !== 12) return hours + 12; // Convert PM hours
-            if (meridian === "AM" && hours === 12) return 0; // Midnight case
-            return hours; // Otherwise, return as is
-        };
-
-        const dateA = parseDateTime(a);
-        const dateB = parseDateTime(b);
-
-        if (!dateA || !dateB) return 0; // Handle invalid dates
-
-        return dateA - dateB; // Compare full Date objects
+    function convertTo24Hour(hours, meridian) {
+        if (meridian === "PM" && hours !== 12) return hours + 12; // Convert PM hours
+        if (meridian === "AM" && hours === 12) return 0; // Midnight case
+        return hours; // Otherwise, return as is
     }
 });
 
@@ -989,3 +845,158 @@ function tablesToExcel() {
     }
 }
 </script>
+<style>
+/* Modal Overlay to Blur Background */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+/* Modal Container */
+.modal-container {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+    width: 400px;
+    max-width: 90%;
+    z-index: 1000;
+}
+
+/* Panel Heading Styling */
+.panel-heading- {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+/* Close Button */
+.panel-heading- a {
+    color: #333;
+    text-decoration: none;
+}
+
+/* Form Input and Button Styling */
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.form-group input[type="submit"] {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+/* Change button color on hover */
+.form-group input[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+.modal-dialog {
+    width: auto; /* adjust the width to fit your content */
+    max-width: 500px; /* set a maximum width */
+}
+
+.modal-content {
+    width: 100%;
+    padding:0;
+    overflow-y: auto; /* add a scrollbar if the content is too long */
+}
+
+.modal-body form {
+    width: 300%; /* adjust the width to fit your content */
+    margin: 0 auto; /* center the form horizontally */
+}
+
+/* Panel Heading Styling */
+.panel-heading- {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Close Button */
+.panel-heading- a {
+    color: #333;
+    text-decoration: none;
+}
+/*Form Group for remarks modal*/
+/* Form Input and Button Styling */
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.form-group input[type="submit"] {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background-color: #3f4d6a;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+/* Change button color on hover */
+.form-group input[type="submit"]:hover {
+    background-color: #181e2e;
+}
+
+.badge-right {
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translate(50%, -50%);
+    color: white;
+    background-color: red;
+    border-radius: 50%;
+    padding: 4px 8px;
+    font-size: 12px;
+}
+/* Sorting Columns */
+th.sortable {
+    cursor: pointer;
+    position: relative;
+}
+
+th.sortable.asc::after {
+    content: ''; 
+    color: #000;
+}
+
+th.sortable.desc::after {
+    content: '';
+    color: #000;
+}
+/*Date Filter Button*/
+.filter-btn {
+    background-color: #3f4d6a;
+    color: white;
+    border: none;
+    padding: 7px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.filter-btn:hover {
+    background-color: #181e2e;
+}
+</style>
+

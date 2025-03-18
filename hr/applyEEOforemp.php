@@ -8,6 +8,12 @@
 <?php
 include '../config.php'; 
 $idno = $_GET['idno'] ?? '';
+
+$sqlProfile=mysqli_query($con,"SELECT * FROM employee_profile WHERE idno='$idno'");
+$profile=mysqli_fetch_array($sqlProfile);
+$lastname=$profile['lastname'];
+$firstname=$profile['firstname'];
+$suffix=$profile['suffix'];
 ?>
 <style>
   /* Hide the checkbox */
@@ -62,7 +68,7 @@ $idno = $_GET['idno'] ?? '';
 
 <div class="row">
   <div class="col-lg-12">
-    <h4 style="text-indent: 10px;"><a href="?manageemployee"><i class="fa fa-arrow-left"></i> BACK</a> | <i class="fa fa-file-book"></i> EMERGENCY EARLY OUT APPLICATION</h4>      
+    <h4 style="text-indent: 10px;"><a href="?manageemployee"><i class="fa fa-arrow-left"></i> BACK</a> | <i class="fa fa-file-book"></i> EMERGENCY EARLY OUT APPLICATION FOR EMPLOYEE</h4>      
   </div>
 </div>
 
@@ -75,7 +81,7 @@ $idno = $_GET['idno'] ?? '';
     <div class="content-panel">
       <div class="panel-heading">                
         <input type="submit" name="submit" class="btn btn-primary" value="Submit Details" style="float:right;">
-        <h4><i class="fa fa-book"></i> APPLY FOR EMERGENCY EARLY OUT</h4>            
+        <h4><i class="fa fa-user"></i> <?=$lastname;?>, <?=$firstname;?> <?=$suffix;?></h4>            
       </div>
       <div class="panel-body">    
         <div class="form-group">

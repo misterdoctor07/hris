@@ -391,55 +391,6 @@ if (isset($_GET['done'])) {
         echo "<script>alert('Error updating remarks: " . mysqli_error($con) . "');</script>";
     }
 }
-// //Post Logic
-// if (isset($_GET['post'])) {
-//     $id = mysqli_real_escape_string($con, $_GET['id']);
-    
-//     // Update remarks in missed_log_application to "POSTED"
-//     $sqlUpdateMissedLog = mysqli_query($con, "UPDATE missed_log_application SET remarks='POSTED' WHERE id='$id'");
-
-//     if ($sqlUpdateMissedLog) {
-//         // Retrieve the idno and datemissed values
-//         $sqlRetrieve = mysqli_query($con, "SELECT idno, datemissed FROM missed_log_application WHERE id='$id'");
-        
-//         if ($sqlRetrieve && mysqli_num_rows($sqlRetrieve) > 0) {
-//             $missedlogData = mysqli_fetch_array($sqlRetrieve);
-//             $idno = $missedlogData['idno'];
-//             $datemissed = $missedlogData['datemissed'];
-
-//             // Check if the attendance record exists for the missed date
-//             $sqlCheckAttendance = mysqli_query($con, "SELECT * FROM attendance WHERE idno='$idno' AND logindate='$datemissed'");
-            
-//             if (mysqli_num_rows($sqlCheckAttendance) == 0) {
-//                 // Insert a new attendance row if the date doesn't exist
-//                 $sqlInsertAttendance = mysqli_query($con, 
-//                     "INSERT INTO attendance (idno, logindate, loginam, logoutam, loginpm, logoutpm, remarks) 
-//                     VALUES ('$idno', '$datemissed', '00:00:00', '00:00:00', '00:00:00', '00:00:00', 'ML')");
-                
-//                 if (!$sqlInsertAttendance) {
-//                     echo "<script>alert('Error inserting new attendance record for missed date: $datemissed');</script>";
-//                 }
-//             } else {
-//                 // Update the existing attendance row with "ML" in the remarks column
-//                 $sqlUpdateAttendance = mysqli_query($con, "UPDATE attendance SET remarks = 'Code ML' WHERE idno='$idno' AND logindate='$datemissed'");
-                
-//                 if (!$sqlUpdateAttendance) {
-//                     echo "<script>alert('Error updating attendance for missed date: $datemissed');</script>";
-//                 }
-//             }
-            
-//             echo "<script>alert('Missed Log application successfully posted!'); window.location='?missedloginapplication';</script>";
-//         }
-//     } else {
-//         echo "<script>alert('Unable to post missed log application!'); window.location='?missedloginapplication';</script>";
-//     }
-// }
-
-// //Null/Void Logic
-// if (isset($_GET['null'])) {
-//     $id = mysqli_real_escape_string($con, $_GET['id']);
-//     $sqlUpdateMissedLog = mysqli_query($con, "UPDATE missed_log_application SET applic_status='NULL/VOID' WHERE id='$id'");
-// }
 
 // Check if the user clicked 'Add Remarks'
 if (isset($_GET['addremarks'])) {
@@ -548,22 +499,6 @@ $(document).ready(function() {
                 }
             });
         });
-
-        // // Select all buttons with the "confirm-null" class
-        // const confirmNullButtons = document.querySelectorAll('.confirm-null');
-
-        // // Loop through each button and add a click event listener
-        // confirmNullButtons.forEach(button => {
-        //     button.addEventListener('click', function(event) {
-        //         // Display the confirmation dialog
-        //         const confirmAction = confirm("Are you sure you want to VOID/NULL this missed log?");
-                
-        //         // If the user clicks "Cancel", prevent the link's default action
-        //         if (!confirmAction) {
-        //             event.preventDefault();
-        //         }
-        //     });
-        // });
     });
 
     function filterTable(input) {
@@ -673,6 +608,7 @@ function resetFilter() {
 //Sorting Columns
 document.addEventListener("DOMContentLoaded", function () {
     const headers = document.querySelectorAll(".sortable");
+    
     headers.forEach(header => {
         header.addEventListener("click", function () {
             const table = header.closest("table");
@@ -693,8 +629,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 const bText = b.cells[columnIndex].innerText.trim();
 
                 return isAscending
-                    ? compareDates(bText, aText)
-                    : compareDates(aText, bText);
+                    ? compareValues(bText, aText) // Sort descending if currently ascending
+                    : compareValues(aText, bText); // Sort ascending if currently descending
             });
 
             // Append sorted rows back to the table body
@@ -702,7 +638,18 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    function compareDates(a, b) {
+    function compareValues(a, b) {
+        const dateA = parseDateTime(a);
+        const dateB = parseDateTime(b);
+
+        // Check if both values are valid dates, if so, compare as dates
+        if (dateA && dateB) return dateA - dateB;
+
+        // Otherwise, compare as case-insensitive strings (for names, text, etc.)
+        return a.localeCompare(b, undefined, { sensitivity: 'base' });
+    }
+
+    function parseDateTime(dateStr) {
         const monthMap = {
             "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
             "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
@@ -712,35 +659,26 @@ document.addEventListener("DOMContentLoaded", function () {
         const dateRegex = /^([A-Za-z]+)\s(\d{1,2}),\s(\d{4})$/;  // Format: Jan 02, 2025
         const dateTimeRegex = /^([A-Za-z]+)\s(\d{1,2}),\s(\d{4})\s(\d{1,2}):(\d{2})\s(AM|PM)$/;  // Format: Jan 02, 2025 6:42 AM
 
-        const parseDateTime = (dateStr) => {
-            let match = dateStr.match(dateTimeRegex);
-            if (match) {
-                const [, month, day, year, hours, minutes, meridian] = match;
-                let hour24 = convertTo24Hour(parseInt(hours), meridian);
-                return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), hour24, parseInt(minutes));
-            }
+        const matchDateTime = dateStr.match(dateTimeRegex);
+        if (matchDateTime) {
+            const [, month, day, year, hours, minutes, meridian] = matchDateTime;
+            let hour24 = convertTo24Hour(parseInt(hours), meridian);
+            return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), hour24, parseInt(minutes));
+        }
 
-            match = dateStr.match(dateRegex);
-            if (match) {
-                const [, month, day, year] = match;
-                return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), 0, 0);
-            }
+        const matchDate = dateStr.match(dateRegex);
+        if (matchDate) {
+            const [, month, day, year] = matchDate;
+            return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), 0, 0);
+        }
 
-            return null; // If the format doesn't match
-        };
+        return null; // If not a date, return null (so it will be sorted alphabetically)
+    }
 
-        const convertTo24Hour = (hours, meridian) => {
-            if (meridian === "PM" && hours !== 12) return hours + 12; // Convert PM hours
-            if (meridian === "AM" && hours === 12) return 0; // Midnight case
-            return hours; // Otherwise, return as is
-        };
-
-        const dateA = parseDateTime(a);
-        const dateB = parseDateTime(b);
-
-        if (!dateA || !dateB) return 0; // Handle invalid dates
-
-        return dateA - dateB; // Compare full Date objects
+    function convertTo24Hour(hours, meridian) {
+        if (meridian === "PM" && hours !== 12) return hours + 12; // Convert PM hours
+        if (meridian === "AM" && hours === 12) return 0; // Midnight case
+        return hours; // Otherwise, return as is
     }
 });
 </script>

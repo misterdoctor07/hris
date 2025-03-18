@@ -72,6 +72,34 @@
     padding: 4px 8px;
     font-size: 12px;
 }
+/* Sorting Columns */
+th.sortable {
+    cursor: pointer;
+    position: relative;
+}
+
+th.sortable.asc::after {
+    content: ''; /* Ascending arrow icon */
+    color: #000;
+}
+
+th.sortable.desc::after {
+    content: ''; /* Descending arrow icon */
+    color: #000;
+}
+/*Date Filter Button*/
+.filter-btn {
+    background-color: #3f4d6a;
+    color: white;
+    border: none;
+    padding: 7px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.filter-btn:hover {
+    background-color: #181e2e;
+}
 </style>
 
 <?php
@@ -84,39 +112,6 @@ if (!$sqlCompanies) {
 
 date_default_timezone_set('Asia/Manila'); // Set your timezone
 $currentTime = date('Y-m-d H:i:s');
-
-// // Check for pending EEO applications older than 24 hours
-// $sqlCheckTime = mysqli_query($con, "SELECT id, datemissed, mttime 
-//                                     FROM emergencyearlyout 
-//                                     WHERE eeo_status = 'Pending'");
-
-// if (!$sqlCheckTime) {
-//     die("Query failed: " . mysqli_error($con));
-// }
-
-// while ($application = mysqli_fetch_assoc($sqlCheckTime)) {
-//     $dateApplied = $application['datemissed'];
-//     $timeApplied = $application['mttime'];
-//     $applicationId = $application['id'];
-
-//     // Combine date and time to create a full datetime
-//     $datetimeApplied = $dateApplied . ' ' . $timeApplied;
-
-//     // Calculate the time difference in hours
-//     $timeDifference = (strtotime($currentTime) - strtotime($datetimeApplied)) / 3600;
-
-//     // If more than 24 hours have passed, update the status to "Disapproved"
-//     if ($timeDifference > 24) {
-//         $sqlUpdateStatus = mysqli_query($con, "UPDATE emergencyearlyout 
-//                                                SET eeo_status = 'Disapproved (24 hours passed)', 
-//                                                    updated_at = '$currentTime' 
-//                                                WHERE id = '$applicationId'");
-
-//         if (!$sqlUpdateStatus) {
-//             error_log("Failed to update application ID $applicationId: " . mysqli_error($con));
-//         }
-//     }
-// }
 
 // Handle approval action for EEO
 if (isset($_GET['approved']) && isset($_GET['id'])) {
@@ -160,29 +155,40 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
 
 <div class="col-lg-12">
     <div class="content-panel">
-        <div class="panel-heading">
-            <h4>
-                <a href="?main"><i class="fa fa-arrow-left"></i> HOME</a> | 
-                <i class="fa fa-file-text"></i> EMERGENCY EARLY OUT APPLICATION
-                <div style="float:right; margin-bottom: 20px;">
+    <div class="panel-heading">
+            <div class="flex-container" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <!-- Left Section -->
+                <div class="flex-item-left" style="display: flex; align-items: center; gap: 10px;">
+                    <h4>
+                        <a href="?main"><i class="fa fa-arrow-left"></i> HOME</a> | 
+                        <i class="fa fa-file-text"></i> EMERGENCY EARLY OUT APPLICATION
+                    </h4>
+                </div>
+
+                <!-- Date Filter Section -->
+                <div class="date-filter" style="display: flex; align-items: center; gap: 10px;">
+                    <h5 style="font-weight: bold; margin-left: 30px;">Filter Date of EEO Column</h5>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label for="fromDate" style="margin-bottom: 0;">From:</label>
+                        <input type="date" id="fromDate" class="form-control" 
+                            value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>" 
+                            style="width: 150px; height: 35px;">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label for="toDate" style="margin-bottom: 0;">To:</label>
+                        <input type="date" id="toDate" class="form-control" 
+                            value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>" 
+                            style="width: 150px; height: 35px;">
+                    </div>
+                    <button type="button" onclick="filterByDate()" class="filter-btn">Filter</button>
+                    <button type="button" onclick="resetFilter()" class="btn btn-default">Reset</button>
+                </div>
+
+                <!-- Export to Excel Button -->
+                <div class="export-btn" style="display: flex; align-items: center; margin-left: auto">
                     <form>
-                        <button type="button" onclick="tablesToExcel('EEO_Application_Report')" class="btn btn-success">EXPORT TO EXCEL</button>
+                        <button type="button" onclick="tablesToExcel('EEO_Applications_Report')" class="btn btn-success">EXPORT TO EXCEL</button>
                     </form>
-                </div>
-            </h4>
-            <!-- Date Filter -->
-            <div class="row" style="margin-bottom: 20px;">
-                <div class="col-md-3">
-                    <label for="fromDate">From:</label>
-                    <input type="date" id="fromDate" class="form-control" value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>">
-                </div>
-                <div class="col-md-3">
-                    <label for="toDate">To:</label>
-                    <input type="date" id="toDate" class="form-control" value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>">
-                </div>
-                <div class="col-md-2">
-                    <button type="button" onclick="filterByDate()" class="btn btn-primary" style="margin-top: 25px;">Filter</button>
-                    <button type="button" onclick="resetFilter()" class="btn btn-default" style="margin-top: 25px;">Reset</button>
                 </div>
             </div>
         </div>
@@ -292,9 +298,11 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                         ORDER BY 
                             CASE 
                                 WHEN eeo.eeo_status = 'Pending' THEN 1
-                                WHEN eeo.eeo_status LIKE '%*%' THEN 2
-                                WHEN eeo.eeo_status LIKE '%*Disapproved%' THEN 3
-                                ELSE 4
+                                WHEN eeo.eeo_status LIKE 'Approved%' THEN 2
+                                WHEN eeo.eeo_status LIKE 'HR%' THEN 3
+                                WHEN eeo.eeo_status LIKE 'Disapproved%' THEN 4
+                                WHEN eeo.eeo_status LIKE '%*%' THEN 5
+                                ELSE 6
                             END,
                             eeo.date_applied,
                             eeo.time_applied DESC");
@@ -310,17 +318,17 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                     <table class="table table-bordered table-striped table-condensed">
                         <thead>
                             <tr>
-                                <th width="2%" style="text-align: center;  background-color:#20273a; color: white;">No.</th>
-                                <th width="6%" style="text-align: center;  background-color:#20273a; color: white;">Employee ID</th>
-                                <th width="7%" style="text-align: center;  background-color:#20273a; color: white;">Employee Name</th>
-                                <th width="5%" style="text-align: center;  background-color:#20273a; color: white;">Type of EEO</th>
-                                <th width="7%" style="text-align: center;  background-color:#20273a; color: white;">Date of EEO</th>
-                                <th width="5%" style="text-align: center;  background-color:#20273a; color: white;">Time of EEO</th>
-                                <th style="text-align: center;  background-color:#20273a; color: white;">Reason</th>
-                                <th width="10%" style="text-align: center;  background-color:#20273a; color: white;">Date and Time Applied</th>
-                                <th width="10%" style="text-align: center;  background-color:#20273a; color: white;">Status</th>
-                                <th width="15%"  style="text-align: center;  background-color:#20273a; color: white;">Approver's Remarks</th>
-                                <th width="10%"  style="text-align: center;  background-color:#20273a; color: white;">Acknowledged by:</th>
+                                <th class="sortable" data-column="0" width="2%" style="text-align: center;  background-color:#20273a; color: white;">No.</th>
+                                <th class="sortable" data-column="1" width="6%" style="text-align: center;  background-color:#20273a; color: white;">Employee ID</th>
+                                <th class="sortable" data-column="2" width="7%" style="text-align: center;  background-color:#20273a; color: white;">Employee Name</th>
+                                <th class="sortable" data-column="3" width="5%" style="text-align: center;  background-color:#20273a; color: white;">Type of EEO</th>
+                                <th class="sortable" data-column="4" width="7%" style="text-align: center;  background-color:#20273a; color: white;">Date of EEO</th>
+                                <th class="sortable" data-column="5" width="5%" style="text-align: center;  background-color:#20273a; color: white;">Time of EEO</th>
+                                <th class="sortable" data-column="6" style="text-align: center;  background-color:#20273a; color: white;">Reason</th>
+                                <th class="sortable" data-column="7" width="10%" style="text-align: center;  background-color:#20273a; color: white;">Date and Time Applied</th>
+                                <th class="sortable" data-column="8" width="10%" style="text-align: center;  background-color:#20273a; color: white;">Status</th>
+                                <th class="sortable" data-column="9" width="15%"  style="text-align: center;  background-color:#20273a; color: white;">Approver's Remarks</th>
+                                <th class="sortable" data-column="10" width="10%"  style="text-align: center;  background-color:#20273a; color: white;">Acknowledged by:</th>
                                 <th width="6%" style="text-align: center;  background-color:#20273a; color: white;">Action</th>
                             </tr>
                         </thead>
@@ -352,10 +360,10 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                                     <td style='text-align: center; vertical-align: middle;'><?= $emp['idno']; ?></td>
                                     <td style='text-align: center; vertical-align: middle;'><?= $emp['lastname'] . ', ' . $emp['firstname']; ?></td>
                                     <td style='text-align: center; vertical-align: middle;'><?= $emp['type_EEO']?></td>
-                                    <td style='text-align: center; vertical-align: middle;'><?= date('m/d/Y', strtotime($emp['dateEEO'])); ?></td>
+                                    <td style='text-align: center; vertical-align: middle;'><?= date('M j, Y', strtotime($emp['dateEEO'])); ?></td>
                                     <td style='text-align: center; vertical-align: middle;'><?= date("g:i A", strtotime($emp['timeEEO'])); ?></td>
                                     <td style='text-align: justify; vertical-align: middle;'><?= $emp['reason'] ?></td>
-                                    <td style='text-align: center; vertical-align: middle;'><?= date('m/d/Y', strtotime($emp['date_applied'])) . "<br>" . date('g:i:s A', strtotime($emp['time_applied'])); ?></td>
+                                    <td style='text-align: center; vertical-align: middle;'><?= date('M j, Y', strtotime($emp['date_applied'])) . "<br>" . date('g:i:s A', strtotime($emp['time_applied'])); ?></td>
                                     <td style='text-align: center; vertical-align: middle;'><?= $emp['eeo_status'] ?></td>
                                     <td style='text-align: justify; vertical-align: middle;'><?= $emp['approvers_remarks'] ?></td>
                                     <td style='text-align: justify; vertical-align: middle;'><?= $emp['acknowledged'] ?></td>
@@ -433,55 +441,6 @@ if (isset($_GET['done'])) {
         echo "<script>alert('Error updating remarks: " . mysqli_error($con) . "');</script>";
     }
 }
-// //Post Logic
-// if (isset($_GET['post'])) {
-//     $id = mysqli_real_escape_string($con, $_GET['id']);
-    
-//     // Update remarks in emergencyearlyout to "POSTED"
-//     $sqlUpdateMissedLog = mysqli_query($con, "UPDATE emergencyearlyout SET remarks='POSTED' WHERE id='$id'");
-
-//     if ($sqlUpdateMissedLog) {
-//         // Retrieve the idno and datemissed values
-//         $sqlRetrieve = mysqli_query($con, "SELECT idno, datemissed FROM emergencyearlyout WHERE id='$id'");
-        
-//         if ($sqlRetrieve && mysqli_num_rows($sqlRetrieve) > 0) {
-//             $missedlogData = mysqli_fetch_array($sqlRetrieve);
-//             $idno = $missedlogData['idno'];
-//             $datemissed = $missedlogData['datemissed'];
-
-//             // Check if the attendance record exists for the missed date
-//             $sqlCheckAttendance = mysqli_query($con, "SELECT * FROM attendance WHERE idno='$idno' AND logindate='$datemissed'");
-            
-//             if (mysqli_num_rows($sqlCheckAttendance) == 0) {
-//                 // Insert a new attendance row if the date doesn't exist
-//                 $sqlInsertAttendance = mysqli_query($con, 
-//                     "INSERT INTO attendance (idno, logindate, loginam, logoutam, loginpm, logoutpm, remarks) 
-//                     VALUES ('$idno', '$datemissed', '00:00:00', '00:00:00', '00:00:00', '00:00:00', 'eeo')");
-                
-//                 if (!$sqlInsertAttendance) {
-//                     echo "<script>alert('Error inserting new attendance record for missed date: $datemissed');</script>";
-//                 }
-//             } else {
-//                 // Update the existing attendance row with "eeo" in the remarks column
-//                 $sqlUpdateAttendance = mysqli_query($con, "UPDATE attendance SET remarks = 'Code eeo' WHERE idno='$idno' AND logindate='$datemissed'");
-                
-//                 if (!$sqlUpdateAttendance) {
-//                     echo "<script>alert('Error updating attendance for missed date: $datemissed');</script>";
-//                 }
-//             }
-            
-//             echo "<script>alert('EEO application successfully posted!'); window.location='?EEOapplication';</script>";
-//         }
-//     } else {
-//         echo "<script>alert('Unable to post EEO application!'); window.location='?EEOapplication';</script>";
-//     }
-// }
-
-// //Null/Void Logic
-// if (isset($_GET['null'])) {
-//     $id = mysqli_real_escape_string($con, $_GET['id']);
-//     $sqlUpdateMissedLog = mysqli_query($con, "UPDATE emergencyearlyout SET eeo_status='NULL/VOID' WHERE id='$id'");
-// }
 
 // Check if the user clicked 'Add Remarks'
 if (isset($_GET['addremarks'])) {
@@ -590,22 +549,6 @@ $(document).ready(function() {
                 }
             });
         });
-
-        // // Select all buttons with the "confirm-null" class
-        // const confirmNullButtons = document.querySelectorAll('.confirm-null');
-
-        // // Loop through each button and add a click event listener
-        // confirmNullButtons.forEach(button => {
-        //     button.addEventListener('click', function(event) {
-        //         // Display the confirmation dialog
-        //         const confirmAction = confirm("Are you sure you want to VOID/NULL this EEO?");
-                
-        //         // If the user clicks "Cancel", prevent the link's default action
-        //         if (!confirmAction) {
-        //             event.preventDefault();
-        //         }
-        //     });
-        // });
     });
 
     function filterTable(input) {
@@ -624,46 +567,37 @@ $(document).ready(function() {
 
     function tablesToExcel() {
         const dataType = 'application/vnd.ms-excel';
-        let tableHTeeo = '';
-
+        let tableHTML = '';
         // Define filenames based on the outer tab index
         const filenames = ['NESI1_EEO_Application_Report.xls', 'NESI2_EEO_Application_Report.xls', 'NEWIND_EEO_Application_Report.xls'];
-
         // Get all outer tabs
         const outerTabs = document.querySelectorAll('.nav-tabs li a');
         let activeTabIndex = -1;
-
         // Find the index of the active outer tab
         outerTabs.forEach((tab, index) => {
             if (tab.parentElement.classList.contains('active')) {
                 activeTabIndex = index; // Set the index of the active tab
             }
         });
-
         // Set the filename based on the active tab index
         const filename = (activeTabIndex >= 0 && activeTabIndex < filenames.length) ? filenames[activeTabIndex] : 'EEO_Application_Report.xls';
-
         // Get the currently active outer tab
         const activeOuterTab = outerTabs[activeTabIndex];
         if (activeOuterTab) {
             const outerTabHref = activeOuterTab.getAttribute('href'); // Get the href of the active outer tab
             const activeOuterTabPane = document.querySelector(outerTabHref); // Get the corresponding tab pane
-
             // Gather all inner tabs and their corresponding tables from the active outer tab pane
             const innerTabs = activeOuterTabPane.querySelectorAll('.nav-pills li a');
             innerTabs.forEach(innerTab => {
                 // Get the inner tab name and remove any trailing numbers
                 let innerTabName = innerTab.textContent.trim();
                 innerTabName = innerTabName.replace(/\s+\d+$/, ''); // Remove trailing space and number
-
                 const innerTabContent = document.querySelector(innerTab.getAttribute('href')); // Get the corresponding inner tab content
-
                 // Check if the inner tab content has a table
                 const table = innerTabContent.querySelector('table');
                 if (table) {
                     // Add inner tab name as a header before the table
-                    tableHTeeo += `<h3>${innerTabName}</h3>`; // Add header for the table
-
+                    tableHTML += `<h3>${innerTabName}</h3>`; // Add header for the table
                     // Clone the table to modify it
                     const clonedTable = table.cloneNode(true);
                     
@@ -673,34 +607,28 @@ $(document).ready(function() {
                         cell.style.border = '1px solid black'; // Add border to each cell
                         cell.style.padding = '5px'; // Optional: Add padding for better spacing
                     });
-
-                    tableHTeeo += clonedTable.outerHTeeo + '<br>'; // Append each table's HTeeo
+                    tableHTML += clonedTable.outerHTML + '<br>'; // Append each table's HTML
                 }
             });
-
             // Create a download link
             const downloadLink = document.createElement("a");
             document.body.appendChild(downloadLink);
-
-            // Create a Blob with the combined table HTeeo
-            const blob = new Blob([tableHTeeo], {
+            // Create a Blob with the combined table HTML
+            const blob = new Blob([tableHTML], {
                 type: dataType
             });
-
             // Create a URL for the Blob
             const url = URL.createObjectURL(blob);
             downloadLink.href = url;
             downloadLink.download = filename; // Set the correct filename
-
             // Trigger the download
             downloadLink.click();
-
             // Clean up
             document.body.removeChild(downloadLink);
         }
     }
 function filterByDate() {
-    const fromDate = document.getElementById('fromDate').value;
+    const fromDate = document.getElementById('fromDate').value; 
     const toDate = document.getElementById('toDate').value;
 
     if (fromDate && toDate) {
@@ -712,4 +640,79 @@ function filterByDate() {
 function resetFilter() {
     window.location.href = '?EEOapplication';
 }
+document.addEventListener("DOMContentLoaded", function () {
+    const headers = document.querySelectorAll(".sortable");
+    
+    headers.forEach(header => {
+        header.addEventListener("click", function () {
+            const table = header.closest("table");
+            const tbody = table.querySelector("tbody");
+            const columnIndex = parseInt(header.getAttribute("data-column"));
+            const isAscending = header.classList.contains("asc");
+
+            // Clear existing sorting classes
+            headers.forEach(h => h.classList.remove("asc", "desc"));
+
+            // Toggle sorting order
+            header.classList.toggle("asc", !isAscending);
+            header.classList.toggle("desc", isAscending);
+
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+            rows.sort((a, b) => {
+                const aText = a.cells[columnIndex].innerText.trim();
+                const bText = b.cells[columnIndex].innerText.trim();
+
+                return isAscending
+                    ? compareValues(bText, aText) // Sort descending if currently ascending
+                    : compareValues(aText, bText); // Sort ascending if currently descending
+            });
+
+            // Append sorted rows back to the table body
+            rows.forEach(row => tbody.appendChild(row));
+        });
+    });
+
+    function compareValues(a, b) {
+        const dateA = parseDateTime(a);
+        const dateB = parseDateTime(b);
+
+        // Check if both values are valid dates, if so, compare as dates
+        if (dateA && dateB) return dateA - dateB;
+
+        // Otherwise, compare as case-insensitive strings (for names, text, etc.)
+        return a.localeCompare(b, undefined, { sensitivity: 'base' });
+    }
+
+    function parseDateTime(dateStr) {
+        const monthMap = {
+            "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
+            "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+        };
+
+        // Regex patterns to detect date and date-time formats
+        const dateRegex = /^([A-Za-z]+)\s(\d{1,2}),\s(\d{4})$/;  // Format: Jan 02, 2025
+        const dateTimeRegex = /^([A-Za-z]+)\s(\d{1,2}),\s(\d{4})\s(\d{1,2}):(\d{2})\s(AM|PM)$/;  // Format: Jan 02, 2025 6:42 AM
+
+        const matchDateTime = dateStr.match(dateTimeRegex);
+        if (matchDateTime) {
+            const [, month, day, year, hours, minutes, meridian] = matchDateTime;
+            let hour24 = convertTo24Hour(parseInt(hours), meridian);
+            return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), hour24, parseInt(minutes));
+        }
+
+        const matchDate = dateStr.match(dateRegex);
+        if (matchDate) {
+            const [, month, day, year] = matchDate;
+            return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), 0, 0);
+        }
+
+        return null; // If not a date, return null (so it will be sorted alphabetically)
+    }
+
+    function convertTo24Hour(hours, meridian) {
+        if (meridian === "PM" && hours !== 12) return hours + 12; // Convert PM hours
+        if (meridian === "AM" && hours === 12) return 0; // Midnight case
+        return hours; // Otherwise, return as is
+    }
+});
 </script>

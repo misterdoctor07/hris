@@ -13,7 +13,7 @@
                       <th width="6%" style="text-align: center; background-color:#20273a; color: white;">From</th>
                       <th width="6%" style="text-align: center; background-color:#20273a; color: white;">To</th>
                       <th style="text-align: center; background-color:#20273a; color: white;">Reason</th>
-                      <th width="6%" style="text-align: center; background-color:#20273a; color: white;">Date Applied</th>
+                      <th width="10%" style="text-align: center; background-color:#20273a; color: white;">Date and Time Applied</th>
                       <th width="10%" style="text-align: center; background-color:#20273a; color: white;">Status</th>
                       <th style="text-align: center; background-color:#20273a; color: white;">HR's Remarks</th>
                       <th style="text-align: center; background-color:#20273a; color: white;">Approver's Remarks</th>
@@ -23,7 +23,7 @@
                   <tbody>
                   <?php
             $x = 1;
-            $sqlEmployee = mysqli_query($con, "SELECT la.id AS leave_id, ep.idno, ep.lastname, ep.firstname, la.leavetype, la.numberofdays, la.dayfrom, la.dayto, la.reason, la.datearray, la.appstatus, la.remarks, la.approver_remarks
+            $sqlEmployee = mysqli_query($con, "SELECT la.id AS leave_id, ep.idno, ep.lastname, ep.firstname, la.leavetype, la.numberofdays, la.dayfrom, la.dayto, la.reason, la.datearray, la.timearray, la.edited_datetime, la.appstatus, la.remarks, la.approver_remarks
               FROM leave_application la
               INNER JOIN employee_profile ep ON ep.idno = la.idno   
               WHERE la.idno = '" . mysqli_real_escape_string($con, $_SESSION['idno']) . "' 
@@ -52,10 +52,18 @@
                         <td align='center'><?= $x++; ?>.</td>
                         <td align='center'><?= $emp['leavetype']?></td>
                         <td align='center'><?= $emp['numberofdays']?></td>
-                        <td align='center'><?= date('m/d/Y', strtotime($emp['dayfrom'])); ?></td>
-                        <td align='center'><?= date('m/d/Y', strtotime($emp['dayto'])); ?></td>
+                        <td align='center'><?= date('M d, Y', strtotime($emp['dayfrom'])); ?></td>
+                        <td align='center'><?= date('M d, Y', strtotime($emp['dayto'])); ?></td>
                         <td><?= $emp['reason'] ?></td>
-                        <td align='center'><?= date('m/d/Y', strtotime($emp['datearray'])) ?></td>
+                        <td align='center'>
+                            <?= date('M d, Y', strtotime($emp['datearray'])) . "<br>" . 
+                              (!empty($emp['timearray']) ? date('g:i A', strtotime($emp['timearray'])) : ""); ?>
+
+                            <?php if (!empty($emp['edited_datetime'])): ?>
+                                <br><strong>Latest Edit:</strong><br><?= date('M d, Y', strtotime($emp['edited_datetime'])) . "<br>" . 
+                                            date('g:i A', strtotime($emp['edited_datetime'])); ?>
+                            <?php endif; ?>
+                        </td>
                         <td align='center'><?= $emp['appstatus'] ?></td>
                         <td style="text-align: <?= ($emp['remarks'] == 'POSTED') ? 'center' : 'justify' ?>; vertical-align: middle;">
                             <?= $emp['remarks'] ?>

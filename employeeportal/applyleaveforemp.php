@@ -5,6 +5,13 @@
 </script>
 <?php 
 $idno = $_GET['idno'];
+
+$sqlProfile=mysqli_query($con,"SELECT * FROM employee_profile WHERE idno='$idno'");
+$profile=mysqli_fetch_array($sqlProfile);
+$lastname=$profile['lastname'];
+$firstname=$profile['firstname'];
+$suffix=$profile['suffix'];
+
 $sqlCredits = mysqli_query($con, "SELECT * FROM leave_credits WHERE idno='$idno'");
 $credits = []; 
 if (mysqli_num_rows($sqlCredits) > 0) {
@@ -47,7 +54,7 @@ if(mysqli_num_rows($sqlStartShift)>0){
     <div class="col-lg-12">
         <h4 style="text-indent: 10px;">
             <a href="?manageemployee"><i class="fa fa-arrow-left"></i> BACK</a> | 
-            <i class="fa fa-file-text"></i> LEAVE APPLICATION
+            <i class="fa fa-file-text"></i> LEAVE APPLICATION FOR EMPLOYEE
         </h4>      
     </div>
 </div>
@@ -58,7 +65,7 @@ if(mysqli_num_rows($sqlStartShift)>0){
         <div class="content-panel">
             <div class="panel-heading">                
             <input type="submit" id="submitBtn" name="submit" class="btn btn-primary" value="Submit Details" style="float:right;">
-                <h4><i class="fa fa-file-text"></i> APPLY FOR LEAVE</h4>            
+                <h4><i class="fa fa-user"></i> <?=$lastname;?>, <?=$firstname;?> <?=$suffix;?></h4>            
             </div>
             <div class="panel-body"> 
                 <div class="form-group">

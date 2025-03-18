@@ -12,6 +12,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
         $dayto = $leaveDetails['dayto'];
         $reason = $leaveDetails['reason'];
         $leaveId = $leaveDetails['id'];
+        $datearray = $leaveDetails['datearray'];
     } else {
         echo "<script>alert('Leave application not found!');</script>";
         echo "<script>window.location='?manageleave';</script>";
@@ -74,7 +75,8 @@ if(mysqli_num_rows($sqlStartShift)>0){
 
     <input type="hidden" name="editleave">            
     <input type="hidden" name="addedby" value="<?=$fullname;?>">  
-    <input type="hidden" name="id" value="<?=$leaveId;?>">          
+    <input type="hidden" name="id" value="<?=$leaveId;?>">    
+    <input type="hidden" name="datearray" value="<?=$datearray;?>">
 
     <div class="col-lg-4">
         <div class="content-panel">
@@ -171,7 +173,8 @@ if (isset($_GET['submit']) && isset($_GET['editleave'])) {
     $startDate = $_GET['startDate'];
     $endDate = $_GET['endDate'] ?? '';   
     $reasons = $_GET['reasons'];    
-    $datenow = date('Y-m-d H:i:s'); 
+    $datenow = $_GET['datearray']; 
+    $editDateTime = date('Y-m-d H:i:s');
 
     // First check if the leave already exists
     $sqlCheck = mysqli_query($con, "SELECT * FROM leave_application 
@@ -210,6 +213,7 @@ if (strtotime($endDate) < strtotime($startDate)) {
                                                 dayto = '$endDate',
                                                 reason = '$reasons',
                                                 datearray = '$datenow',
+                                                edited_datetime = '$editDateTime',
                                                 appstatus = 'Pending'
                                             WHERE id = '$leaveId'");
 
@@ -468,7 +472,10 @@ function checkCredits() {
     let userBirthdayMonth = "<?= $birthMonth; ?>"; // Extracted from PHP
     let selectedStartDate = new Date(startDate.value);
     let startshift = "<?=$startshift;?>";
-    let datenow = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+    let datearray = "<?= $datearray; ?>";
+    let datenow = new Date(datearray);
+    // Get the weekday name
+    datenow = datenow.toLocaleDateString('en-US', { weekday: 'long' });
     let submitBtn = document.getElementById('submitBtn');
     
     // Check if the selected leave type requires a 3-day protocol
@@ -487,7 +494,7 @@ function checkCredits() {
             }
 
             // Set current date and add 3 working days to it
-            let currentDate = new Date();
+            let currentDate = new Date(datearray);
             let minStartDate = new Date(currentDate); // Clone the current date
             minStartDate.setHours(0, 0, 0, 0); // Reset time to midnight
 
@@ -530,7 +537,7 @@ function checkCredits() {
             }
 
             // Set current date and add 3 working days to it
-            let currentDate = new Date();
+            let currentDate = new Date(datearray);
             let minStartDate = new Date(currentDate); // Clone the current date
             minStartDate.setHours(0, 0, 0, 0); // Reset time to midnight
 

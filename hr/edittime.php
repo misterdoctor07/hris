@@ -351,6 +351,11 @@ function updateLeaveCredits($con, $idno, $leaveType, $operation, $startMonth) {
       case 'SPL':
           mysqli_query($con, "UPDATE leave_credits SET spl_used = spl_used $operation 1 WHERE idno = '$idno'");
           break;
+      case 'MDL':
+      case 'MTL':
+      case 'PTL':
+      case 'BL':
+        break;
       default:
           echo "<script>alert('Invalid leave type.');</script>";
           break;

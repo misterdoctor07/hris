@@ -91,7 +91,7 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                         <th width="6%" style="text-align: center; background-color:#20273a; color: white;">From</th>
                         <th width="6%" style="text-align: center; background-color:#20273a; color: white;">To</th>
                         <th style="text-align: center; background-color:#20273a; color: white;">Reason</th>
-                        <th width="7%" style="text-align: center; background-color:#20273a; color: white;">Date Applied</th>
+                        <th width="7%" style="text-align: center; background-color:#20273a; color: white;">Date and Time Applied</th>
                         <th width="6%" style="text-align: center; background-color:#20273a; color: white;">Status</th>
                         <th style="text-align: center; background-color:#20273a; color: white;">HR's Remarks</th>
                         <th style="text-align: center; background-color:#20273a; color: white;">Remarks</th>
@@ -198,7 +198,15 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                             echo "<td style='text-align: center; vertical-align: middle'>" . date('M j, Y', strtotime($company['dayfrom'])) . "</td>";
                             echo "<td style='text-align: center; vertical-align: middle'>" . date('M j, Y', strtotime($company['dayto'])) . "</td>";
                             echo "<td style='text-align: justify; vertical-align: middle'>{$company['reason']}</td>";
-                            echo "<td style='text-align: center; vertical-align: middle'>" . date('M j, Y', strtotime($company['datearray'])) . "</td>";
+                            echo "<td align='center'>" .
+                                            date('M d, Y', strtotime($company['datearray'])) . "<br>" . 
+                                            (!empty($company['timearray']) ? date('g:i A', strtotime($company['timearray'])) : "");
+
+                                    if (!empty($company['edited_datetime'])) {
+                                        echo "<br><strong>Latest Edit:</strong><br>" . 
+                                            date('M d, Y', strtotime($company['edited_datetime'])) . "<br>" . 
+                                            date('g:i A', strtotime($company['edited_datetime']));
+                                    };
                             echo "<td style='text-align: center; vertical-align: middle'>$statusText</td>";
                             echo "<td style='text-align: " . (($company['remarks'] == 'POSTED') ? 'center' : 'justify') . "; vertical-align: middle;'>
                                     {$company['remarks']}

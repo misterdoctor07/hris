@@ -16,16 +16,32 @@
     $department=$employee['department'];
     $fullname = $employee['firstname'] . ' ' . $employee['lastname'] . ' ' . $employee['suffix'];
 
-
+    $sssAmount=$phicAmount=$hdmfAmount=$philcareAmount=$philcareAmount=$generaliAmount=$fwdAmount=$taxAmount=$CompanyGovBenAmount=$CompanyPaidGovBenAmount="";
+    $CompanyGovBen=$CompanyPaidGovBen=0;
     $sqlPayrollDetails=mysqli_query($con,"SELECT * FROM employee_payroll WHERE idno='$idno'");
     $payrolldetails=mysqli_fetch_array($sqlPayrollDetails);
     $sss=$payrolldetails['sss'];
+    $sssAmount .=number_format($sss,2)."<br>";
     $phic=$payrolldetails['phic'];
+    $phicAmount .=number_format($phic,2)."<br>";
     $hdmf=$payrolldetails['hdmf'];
+    $hdmfAmount .=number_format($hdmf,2)."<br>";
+    $philcare=$payrolldetails['philcare'];
+    $philcareAmount .=number_format($philcare,2)."<br>";
+    $generali=$payrolldetails['generali'];
+    $generaliAmount .=number_format($generali,2)."<br>";
+    $fwd=$payrolldetails['fwd'];
+    $fwdAmount .=number_format($fwd,2)."<br>";
+    $tax=$payrolldetails['tax'];
+    $taxAmount .=number_format($tax,2)."<br>";
     $baserate=$payrolldetails['salary'];
     $baseFixed = number_format($baserate, 2);
     $salaryFixed = $baserate * 10;
     $fixedSalary = number_format($salaryFixed, 2);
+    $CompanyPaidGovBen = $sss + $phic + $hdmf + $tax;
+    $CompanyPaidGovBenAmount = number_format($CompanyPaidGovBen, 2);
+    $CompanyGovBen = $philcare + $generali + $fwd;
+    $CompanyGovBenAmount = number_format($CompanyGovBen, 2);
 
     $sqlPeriod=mysqli_query($con,"SELECT * FROM payroll WHERE id='$period'");
     $payrollperiod=mysqli_fetch_array($sqlPeriod);
@@ -79,7 +95,7 @@
     $addonList="";
     $addonAmount="";
     $totaladdons=0;
-    $totaladdAmount="";
+    $totaladdAmount=0;
     $sqlAddons=mysqli_query($con, "SELECT * FROM payroll_addons WHERE idno='$idno' AND payrollperiod='$period'");
     if(mysqli_num_rows($sqlAddons)>0){
         while($addons=mysqli_fetch_array($sqlAddons)){
@@ -87,16 +103,44 @@
                 $addonList .=$addons['description']."<br>"."<br>";
                 $addonAmount .=number_format($addons['amount'],2)."<br>"."<br>";
                 $totaladdons +=$addons['amount'];
-                $totaladdAmount = number_format($totaladdons,2)."<br>";
             // }
         }
     }
+    $totaladdAmount = number_format($totaladdons,2);
+
+        // Categorize addons into Allowances, Incentives, or Reimbursements
+    $sqlAddons = mysqli_query($con, "SELECT * FROM payroll_addons WHERE idno='$idno' AND payrollperiod='$period'");
+
+    $allowanceList = $incentiveList = $reimbursementList = ""; // Initialize lists as empty strings
+    $allowanceAmount = $incentiveAmount = $reimbursementAmount = 0; // Initialize amounts as 0
+
+    if (mysqli_num_rows($sqlAddons) > 0) {
+        while ($addons = mysqli_fetch_array($sqlAddons)) {
+            $description = strtolower($addons['description']); // Convert to lowercase for case-insensitive comparison
+            $amount = floatval($addons['amount']); // Ensure it's a numeric value
+            
+            if (stripos($description, 'allowance') !== false) {
+                $allowanceList .= $addons['description'] . "<br><br>";
+                $allowanceAmount += $amount; // Keep it numeric
+            } elseif (stripos($description, 'incentive') !== false) {
+                $incentiveList .= $addons['description'] . "<br><br>";
+                $incentiveAmount += $amount;
+            } elseif (stripos($description, 'reimbursement') !== false) {
+                $reimbursementList .= $addons['description'] . "<br><br>";
+                $reimbursementAmount += $amount;
+            }
+        }
+    }
+    // Format for display
+    $allowanceTotal = number_format($allowanceAmount, 2);
+    $incentiveTotal = number_format($incentiveAmount, 2);
+    $reimbursementTotal = number_format($reimbursementAmount, 2);
 
     //Fetch employee deductions
     $deductionList="";
     $deductionAmount="";
     $totaldeductions=0;
-    $totaldeductAmount="";
+    $totaldeductAmount=0;
     $sqlDeductions=mysqli_query($con, "SELECT * FROM payroll_deductions WHERE idno='$idno' AND payrollperiod='$period'");
     if(mysqli_num_rows($sqlDeductions)>0){
         while($deductions=mysqli_fetch_array($sqlDeductions)){
@@ -104,10 +148,10 @@
                 $deductionList .=$deductions['description']."<br>"."<br>";
                 $deductionAmount .=number_format($deductions['amount'],2)."<br>"."<br>";
                 $totaldeductions +=$deductions['amount'];
-                $totaldeductAmount = number_format($totaldeductions,2)."<br>";
                 // }
         }
     }
+    $totaldeductAmount = number_format($totaldeductions,2);
 
 
 ?>
@@ -159,18 +203,19 @@
     </style>
 </head>
 <body>
-    <div style="border: 2px solid black; padding: 20px;" class="background">
+    <div style="border: 2px solid black; padding: 10px; width: 47%; justify-content: center; align-items: center; font-size: 70%; position: absolute; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%);" class="background">
         <!-- Header -->
         <div style="display: flex; justify-content: space-between;">
             <div style="width: 49%;">
                 <table class="header-table">
                     <tr>
                         <td><strong>EMPLOYEE NAME:</strong></td>
-                        <td style="padding-left: 50px;"><?=$fullname?></td>
+                        <td style="padding-left: 70px;"><?=$fullname?></td>
                     </tr>
                     <tr>
                         <td><strong>TEAM:</strong></td>
-                        <td style="padding-left: 50px;"><?=$department?></td>
+                        <td style="padding-left: 70px;"><?=$department?></td>
                     </tr>
                 </table>
             </div>
@@ -179,113 +224,189 @@
                 <table class="header-table">
                     <tr>
                         <td><strong>FIXED SEMI-MONTHLY SALARY:</strong></td>
-                        <td style="padding-left: 50px;"><?=$fixedSalary?></td>
+                        <td style="text-align: right; white-space: nowrap;"><?=$fixedSalary?></td>
                     </tr>
                     <tr>
                         <td><strong>PAY PER DAY:</strong></td>
-                        <td style="padding-left: 50px;"><?=$baseFixed?></td>
+                        <td style="text-align: right; white-space: nowrap;"><?=$baseFixed?></td>
                     </tr>
                     <tr>
                         <td><strong>Pay Period:</strong></td>
-                        <td style="padding-left: 50px;"><?=date('M j, Y',strtotime($payrollperiod['periodfrom']));?> to <?=date('M j, Y',strtotime($payrollperiod['periodto']));?></td>
+                        <td style="text-align: right; white-space: nowrap;"><?=date('M j, Y',strtotime($payrollperiod['periodfrom']));?> to <?=date('M j, Y',strtotime($payrollperiod['periodto']));?></td>
                     </tr>
                 </table>
             </div>
         </div>
         <!--  -->
-        <div style="display: flex; justify-content: space-between;">
-            <div style="width: 49%;">
-                <h4 style="text-align: center; background-color: #1d2437; color: white; padding: 5px">GROSS EARNINGS AND BENEFITS FOR THIS PAY PERIOD</h4>
-                <table class="header-table">
-                    <tr>
-                        <td>Fixed Rate Salary</td>
-                        <td><?=$fixedSalary?></td>
-                    </tr>
-                    <tr>
-                        <td><?=$addonList?></td>
-                        <td><?=$addonAmount?></td>
-                    </tr>
-                    <tr>
-                        <td>Company Paid Government Benefits</td>
-                        <td>2,790.00</td>
-                    </tr>
-                    <tr>
-                        <td>Other Company Paid Benefits</td>
-                        <td>1,521.54</td>
-                    </tr>
-                    <?php
-                        $gross = $salaryFixed + $totaladdons;
-                        $grossEarnings = number_format($gross,2)."<br>";
-                    ?>
-                    <tr class="highlight">
-                        <td>TOTAL GROSS EARNINGS & BENEFITS FOR THIS PAY PERIOD</td>
-                        <td><?=$grossEarnings?></td>
-                    </tr>
-                </table>
+        <style>
+            .payroll-container {
+                display: flex;
+                justify-content: space-between;
+            }
+
+            .payroll-section {
+                width: 49%;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .header-table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            .header-table td {
+                padding: 8px;
+                vertical-align: middle;
+            }
+
+            /* Ensure both tables have equal height */
+            .table-wrapper {
+                display: table;
+                width: 100%;
+            }
+        </style>
+        <div class="payroll-container">
+            <!-- Gross Earnings Table -->
+            <div class="payroll-section">
+                <h4 style="text-align: center; background-color: #1d2437; color: white; padding: 5px">
+                    GROSS EARNINGS AND BENEFITS FOR THIS PAY PERIOD
+                </h4>
+                <div class="table-wrapper">
+                    <table class="header-table">
+                        <?php
+                            // Collecting all the rows dynamically to count and match both tables
+                            $grossEarningsRows = [
+                                ["Fixed Rate Salary", $fixedSalary],
+                                ["Allowances", $allowanceTotal],
+                                ["Incentives", $incentiveTotal],
+                                ["Reimbursements", $reimbursementTotal],
+                                ["Company Paid Government Benefits", $CompanyPaidGovBenAmount],
+                                ["Other Company Paid Benefits", $CompanyGovBenAmount]
+                            ];
+
+                            $gross = $salaryFixed + $totaladdons + $CompanyPaidGovBen + $CompanyGovBen;
+                            $grossEarnings = number_format($gross, 2);
+                            
+                            foreach ($grossEarningsRows as $row) {
+                                echo "<tr>
+                                        <td style='padding-left: 20px;'>{$row[0]}</td>
+                                        <td style='text-align: right; white-space: nowrap;'>{$row[1]}</td>
+                                    </tr>";
+                            }
+                        ?>
+                        <tr class="highlight">
+                            <td>TOTAL GROSS EARNINGS & BENEFITS FOR THIS PAY PERIOD</td>
+                            <td style="text-align: right; white-space: nowrap; font-size:small"><?=$grossEarnings?></td>
+                        </tr>
+                    </table>
+                </div>
             </div>
-            
-            <div style="width: 49%;">
-                <h4 style="text-align: center; background-color: #1d2437; color: white; padding: 5px">TAKE HOME PAY COMPUTATION</h4>
-                <table class="header-table">
-                    <tr>
-                        <td>Fixed Rate Salary</td>
-                        <td><?=$fixedSalary?></td>
-                    </tr>
-                    <tr>
-                        <td>Add On Pay</td>
-                        <td><?=$totaladdAmount?></td>
-                    </tr>
-                    <tr>
-                        <td>Deductions</td>
-                        <td>-<?=$totaldeductAmount?></td>
-                    </tr>
-                    <?php
-                        $takehomepay = ($salaryFixed + $totaladdons) - $totaldeductions;
-                        $takehome = number_format($takehomepay,2)."<br>";
-                    ?>
-                    <tr class="highlight">
-                        <td>TOTAL TAKE HOME PAY FOR THIS PAY PERIOD</td>
-                        <td><?=$takehome?></td>
-                    </tr>
-                </table>
+
+            <!-- Take Home Pay Table -->
+            <div class="payroll-section">
+                <h4 style="text-align: center; background-color: #1d2437; color: white; padding: 5px">
+                    TAKE HOME PAY COMPUTATION
+                </h4>
+                <div class="table-wrapper">
+                    <table class="header-table">
+                        <?php
+                            $takeHomePayRows = [
+                                ["Fixed Rate Salary", $fixedSalary],
+                                ["Add On Pay", $totaladdAmount],
+                                ["Deductions", "- " . $totaldeductAmount]
+                            ];
+
+                            $takehomepay = ($salaryFixed + $totaladdons) - $totaldeductions;
+                            $takehome = number_format($takehomepay, 2);
+                            
+                            // Match row count for alignment
+                            $maxRows = max(count($grossEarningsRows), count($takeHomePayRows));
+                            for ($i = 0; $i < $maxRows; $i++) {
+                                $leftRow = $grossEarningsRows[$i] ?? ["&nbsp;", "&nbsp;"];
+                                $rightRow = $takeHomePayRows[$i] ?? ["&nbsp;", "&nbsp;"];
+                                echo "<tr>
+                                        <td style='padding-left: 20px;'>{$rightRow[0]}</td>
+                                        <td style='text-align: right; white-space: nowrap;'>{$rightRow[1]}</td>
+                                    </tr>";
+                            }
+                        ?>
+                        <tr class="highlight">
+                            <td>TOTAL TAKE HOME PAY FOR THIS PAY PERIOD</td>
+                            <td style="text-align: right; white-space: nowrap; font-size:small"><?=$takehome?></td>
+                        </tr>
+                    </table>
+                </div>
             </div>
         </div>
         <div>
-            <h3 style="text-align: center; background-color: #1d2437; color: white; padding: 5px">BREAKDOWN OF SALARY AND BENEFITS</h3>
-            <div style="display: flex; justify-content: space-between;">
-                <div style="width: 49%;">
-                    <table class="header-table">
-                        <tr>
-                            <td><strong>Deductions Breakdown</td>
-                        </tr>
-                        <tr>
-                            <td><?=$deductionList?></td>
-                            <td><?=$deductionAmount?></td>
-                        </tr>
-                        <tr class="highlight">
-                            <td>TOTAL DEDUCTIONS</td>
-                            <td><?=$totaldeductAmount?></td>
-                        </tr>
-                    </table>
-                </div>
-                
-                <div style="width: 49%;">
-                    <table class="header-table">
-                        <tr>
-                            <td><strong>Add On Pay Breakdown</td>
-                        </tr>
-                        <tr>
-                            <td><?=$addonList?></td>
-                            <td><?=$addonAmount?></td>
-                        </tr>
-                        <tr class="highlight">
-                            <td>TOTAL ADD ON PAY</td>
-                            <td><?=$totaladdAmount?></td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
+    <h3 style="text-align: center; background-color: #1d2437; color: white; padding: 5px">
+        BREAKDOWN OF SALARY AND BENEFITS
+    </h3>
+    <div style="display: flex; justify-content: space-between;">
+
+        <!-- Deductions Breakdown -->
+        <div style="width: 49%;">
+            <table class="header-table" style="width: 100%;">
+                <tr>
+                    <td><strong>Deductions Breakdown</strong></td>
+                    <td style="text-align: right;"><strong>Amount</strong></td>
+                </tr>
+                <?php
+                // Convert deduction list into an array
+                $deductionItems = explode("<br><br>", trim($deductionList, "<br><br>"));
+                $deductionAmounts = explode("<br><br>", trim($deductionAmount, "<br><br>"));
+
+                // Convert addon list into an array
+                $addonItems = explode("<br><br>", trim($addonList, "<br><br>"));
+                $addonAmounts = explode("<br><br>", trim($addonAmount, "<br><br>"));
+
+                // Find the maximum number of rows needed
+                $maxRows = max(count($deductionItems), count($addonItems));
+
+                for ($i = 0; $i < $maxRows; $i++) {
+                    echo "<tr>";
+                    echo "<td style='padding-left: 20px;'>" . ($deductionItems[$i] ?? '&nbsp;') . "</td>";
+                    echo "<td style='text-align: right; white-space: nowrap;'>" . ($deductionAmounts[$i] ?? '&nbsp;') . "</td>";
+                    echo "</tr>";
+                }
+                ?>
+                <tr class="highlight">
+                    <td style="padding-left: 20px;"><strong>TOTAL DEDUCTIONS</strong></td>
+                    <td style="text-align: right; white-space: nowrap; font-size:small">
+                        <strong><?=$totaldeductAmount?></strong>
+                    </td>
+                </tr>
+            </table>
         </div>
+        
+        <!-- Add On Pay Breakdown -->
+        <div style="width: 49%;">
+            <table class="header-table" style="width: 100%;">
+                <tr>
+                    <td><strong>Add On Pay Breakdown</strong></td>
+                    <td style="text-align: right;"><strong>Amount</strong></td>
+                </tr>
+                <?php
+                for ($i = 0; $i < $maxRows; $i++) {
+                    echo "<tr>";
+                    echo "<td style='padding-left: 20px;'>" . ($addonItems[$i] ?? '&nbsp;') . "</td>";
+                    echo "<td style='text-align: right; white-space: nowrap;'>" . ($addonAmounts[$i] ?? '&nbsp;') . "</td>";
+                    echo "</tr>";
+                }
+                ?>
+                <tr class="highlight">
+                    <td style="padding-left: 20px;"><strong>TOTAL ADD ON PAY</strong></td>
+                    <td style="text-align: right; white-space: nowrap; font-size:small">
+                        <strong><?=$totaladdAmount?></strong>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+    </div>
+</div>
+
 
         <div style="display: flex; justify-content: space-between; margin-top: 20px;">
             <div style="width: 49%;">
@@ -294,20 +415,24 @@
                         <td><strong>Government Benefits Breakdown</td>
                     </tr>
                     <tr>
-                        <td>SSS Contribution</td>
-                        <td>1,440.00</td>
+                        <td style="padding-left: 20px;">SSS Contribution</td>
+                        <td style="text-align: right; white-space: nowrap;"><?=$sssAmount?></td>
                     </tr>
                     <tr>
-                        <td>Philhealth Contribution</td>
-                        <td>1,040.00</td>
+                        <td style="padding-left: 20px;">Philhealth Contribution</td>
+                        <td style="text-align: right; white-space: nowrap;"><?=$phicAmount?></td>
                     </tr>
                     <tr>
-                        <td>Pag-ibig Contribution</td>
-                        <td>310.00</td>
+                        <td style="padding-left: 20px;">Pag-ibig Contribution</td>
+                        <td style="text-align: right; white-space: nowrap;"><?=$hdmfAmount?></td>
+                    </tr>
+                    <tr>
+                        <td style="padding-left: 20px;">Withholding Tax</td>
+                        <td style="text-align: right; white-space: nowrap;"><?=$taxAmount?></td>
                     </tr>
                     <tr class="highlight">
                         <td>TOTAL COMPANY PAID GOVERNMENT BENEFITS</td>
-                        <td>2,790.00</td>
+                        <td style="text-align: right; white-space: nowrap; font-size:small"><?=$CompanyPaidGovBenAmount?></td>
                     </tr>
                 </table>
             </div>
@@ -318,20 +443,24 @@
                         <td><strong>Company Paid Benefits</td>
                     </tr>
                     <tr>
-                        <td>Life Insurance</td>
-                        <td>0.00</td>
+                        <td style="padding-left: 20px;">Life Insurance</td>
+                        <td style="text-align: right; white-space: nowrap;"><?=$generaliAmount?></td>
                     </tr>
                     <tr>
-                        <td>Philcare (HMO)</td>
-                        <td>0.00</td>
+                        <td style="padding-left: 20px;">Philcare (HMO)</td>
+                        <td style="text-align: right; white-space: nowrap;"><?=$philcareAmount?></td>
                     </tr>
                     <tr>
-                        <td>FWD Retirement Benefit</td>
-                        <td>0.00</td>
+                        <td style="padding-left: 20px;">FWD Retirement Benefit</td>
+                        <td style="text-align: right; white-space: nowrap;"><?=$fwdAmount?></td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
                     </tr>
                     <tr class="highlight">
                         <td>TOTAL OTHER COMPANY PAID BENEFITS</td>
-                        <td>0.00</td>
+                        <td style="text-align: right; white-space: nowrap; font-size:small"><?=$CompanyGovBenAmount?></td>
                     </tr>
                 </table>
             </div>

@@ -5,6 +5,11 @@ $company=$_GET['company'];
 $sqlEmployee=mysqli_query($con,"SELECT * FROM employee_profile WHERE idno='$idno'");
 $employee=mysqli_fetch_array($sqlEmployee);
 
+function isNightShift($startShift, $endShift) {
+  // Check if the shift starts at midnight and ends in the morning
+  return ($startShift == '00:00:00' && $endShift == '09:00:00');
+}
+
 $sqlEmployeeDetails=mysqli_query($con,"SELECT * FROM employee_details WHERE idno='$idno'");
 $employeedetails=mysqli_fetch_array($sqlEmployeeDetails);
 
@@ -25,6 +30,14 @@ if(mysqli_num_rows($sqlPayrollDetails)>0){
   $payroll_id=$pd['id'];
   $okay=1;
 }
+$sqlPayrollInfo = mysqli_query($con, "SELECT * FROM employee_payroll WHERE idno='$idno'");
+if (mysqli_num_rows($sqlPayrollInfo) > 0) {
+    $payrollInfo = mysqli_fetch_array($sqlPayrollInfo);
+    $salary_type = $payrollInfo['salary_type']; // Fetch the salary type
+} else {
+    $salary_type = 'Rated'; // Default value if not set
+}
+
     ?>
     <script type="text/javascript">
       function SubmitDetails(){
@@ -33,7 +46,7 @@ if(mysqli_num_rows($sqlPayrollDetails)>0){
     </script>
     <div class="row">
       <div class="col-lg-12">
-      <h4 style="text-indent: 10px;"><a href="?managepayroll.php"><i class="fa fa-arrow-left"></i> BACK</a> | <i class="fa fa-money"></i> EDIT PAYROLL</h4>
+      <h4 style="text-indent: 10px;"><a href="?managepayroll&period=<?=$period;?>&company=<?=$company;?>"><i class="fa fa-arrow-left"></i> BACK</a> | <i class="fa fa-money"></i> EDIT PAYROLL</h4>
     </div>
     </div>
     <?php
@@ -45,46 +58,78 @@ if(mysqli_num_rows($sqlPayrollDetails)>0){
       <input type="hidden" name="period" value="<?=$period;?>">
       <input type="hidden" name="company" value="<?=$company;?>">
       <input type="hidden" name="idno" value="<?=$idno;?>">
+   <form class="form-horizontal style-form" method="GET" onSubmit="return SubmitDetails();">
+    <input type="hidden" name="editpayroll">
+    <input type="hidden" name="addedby" value="<?=$fullname;?>">
+    <input type="hidden" name="period" value="<?=$period;?>">
+    <input type="hidden" name="company" value="<?=$company;?>">
+    <input type="hidden" name="idno" value="<?=$idno;?>">
     <div class="col-lg-12 mt">
-            <div class="content-panel">
-              <div class="panel-heading">
-                <input type="submit" name="submitPayroll" class="btn btn-primary" value="Save Details" style="float:right;"><a href="?editpayroll&idno=<?=$idno;?>&period=<?=$period;?>&deduction&company=<?=$company;?>" class="btn btn-warning" style="float:right; margin-right:10px">Deductions</a><a href="?editpayroll&idno=<?=$idno;?>&period=<?=$period;?>&addons&company=<?=$company;?>" class="btn btn-info" style="float:right; margin-right:10px">Addons</a><a href="?editpayroll&idno=<?=$idno;?>&period=<?=$period;?>&benefits&company=<?=$company;?>" class="btn btn-success" style="float:right; margin-right:10px">Company Benefits</a> <a href='?edittime&idno=<?=$idno;?>&period=<?=$period;?>&logindate=&id=&company=<?=$company;?>' class='btn btn-default' title='Add Time'  style='float:right;  margin-right:10px'><i class='fa fa-plus'></i> Add Time</a>
-                <?php
-                if($okay==1){
-                  ?>
-                  <a href="payslip.php?id=<?=$payroll_id;?>" class="btn btn-warning" title="Print Payslip" target="_blank" style="float:right; margin-right:10px;"><i class='fa fa-print'></i></a>
-                  <?php
-                }
-                ?>
-              <h4><i class="fa fa-user"></i> <?=$employee['lastname'];?>, <?=$employee['firstname'];?> <?=$employee['suffix'];?></h4>
-            </div>
+        <div class="content-panel">
+            
+         <div class="panel-heading">
+    <input type="submit" name="submitPayroll" class="btn btn-primary" value="Save Details" style="float:right;">
+    <a href="?editpayroll&idno=<?=$idno;?>&period=<?=$period;?>&deduction&company=<?=$company;?>" class="btn btn-warning" style="float:right; margin-right:10px">Deductions</a>
+    <a href="?editpayroll&idno=<?=$idno;?>&period=<?=$period;?>&addons&company=<?=$company;?>" class="btn btn-info" style="float:right; margin-right:10px">Addons</a>
+    <a href="?editpayroll&idno=<?=$idno;?>&period=<?=$period;?>&benefits&company=<?=$company;?>" class="btn btn-success" style="float:right; margin-right:10px">Company Benefits</a>
+    <a href='?edittime&idno=<?=$idno;?>&period=<?=$period;?>&logindate=&id=&company=<?=$company;?>' class='btn btn-default' title='Add Time' style='float:right; margin-right:10px'><i class='fa fa-plus'></i> Add Time</a>
+    <?php if ($okay == 1) { ?>
+      <?php if ($salary_type == 'Rated') { ?>
+        <a href="payslipRated.php?id=<?=$payroll_id;?>" class="btn btn-warning" title="Print Payslip" target="_blank" style="float:right; margin-right:10px;"><i class='fa fa-print'></i></a>
+      <?php } else if ($salary_type == 'Fixed') { ?>  
+        <a href="payslip.php?id=<?=$payroll_id;?>" class="btn btn-warning" title="Print Payslip" target="_blank" style="float:right; margin-right:10px;"><i class='fa fa-print'></i></a>
+      <?php } ?>
+    <?php } ?>
+    <div class="form-group" style="display: block; font-family: Arial, sans-serif; font-size: 14px; color: #333;">
+        <label class="col-sm-2 col-sm-2 control-label">Salary Type:</label>
+        <div class="col-sm-10">
+            <label class="radio-inline">
+                <input type="radio" name="salary_type" value="Fixed" <?= ($salary_type === 'Fixed') ? 'checked' : ''; ?>> Fixed
+            </label>
+            <label class="radio-inline">
+                <input type="radio" name="salary_type" value="Rated" <?= ($salary_type === 'Rated') ? 'checked' : ''; ?>> Rated
+            </label>
+        </div>
+    </div>
+    <div>
+        <span style="display: block; font-family: Arial, sans-serif; font-size: 14px; color: #333; margin-bottom: 5px;">
+            <i class="fa fa-user"></i> 
+            <strong style="font-size: 18px;"> <?=$employee['lastname'];?>, 
+            <?=$employee['firstname'];?> <?=$employee['suffix'];?></strong>
+        </span>
+        <span style="display: block; font-family: Arial, sans-serif; font-size: 14px; color: #333; margin-bottom: 5px;">
+            Shift: <?= date("h:i A", strtotime($employeedetails['startshift'])); ?> - <?= date("h:i A", strtotime($employeedetails['endshift'])); ?>
+        </span>
+        <span style="display: block; font-family: Arial, sans-serif; font-size: 14px; color: #333;">
+            Location: <?=$employeedetails['location'];?>
+        </span>
+    </div>
+</div>
             <div class="panel-body">
               <div class="form-group">
                 <div class="col-sm-12">
                 <table class="table table-bordered">
                   <thead>
                     <tr>
-                      <th>Date</th>
-                      <th>Time In</th>
-                      <th>Time Out</th>
-                      <th>Time In</th>
-                      <th>Time Out</th>
-                      <th>Total Hrs</th>
-                      <th>Reg Hrs</th>
-                      <th width="5%">Hrs Not Work</th>
-                      <th>OT</th>
-                      <th>ND</th>
-                      <th>PTO</th>
-                      <th>Rate/Day</th>
-                      <th width="5%">Reg Days OT Rate</th>
-                      <th>ND Rate</th>
-                      <th>Tax</th>
-                      <th width="5%">Special Non Working Holiday</th>
-                      <th width="5%">OT Special Holiday</th>
-                      <th width="5%">OT Regular Holiday</th>
-                      <th width="6%">Reg Holidays</th>
-                      <th>Total Pay</th>
-                      <th width="4%"></th>
+                      <th style="text-align: center; vertical-align: middle;">Date</th>
+                      <th style="text-align: center; vertical-align: middle;">Time In</th>
+                      <th style="text-align: center; vertical-align: middle;">Time Out</th>
+                      <th style="text-align: center; vertical-align: middle;">Time In</th>
+                      <th style="text-align: center; vertical-align: middle;">Time Out</th>
+                      <th style="text-align: center; vertical-align: middle;">Total Hrs</th>
+                      <th style="text-align: center; vertical-align: middle;">Reg Hrs</th>
+                      <th style="text-align: center; vertical-align: middle;" width="5%">Hrs Not Work</th>
+                      <th style="text-align: center; vertical-align: middle;">OT</th>
+                      <th style="text-align: center; vertical-align: middle;">ND</th>
+                      <th style="text-align: center; vertical-align: middle;">Rate/Day</th>
+                      <th style="text-align: center; vertical-align: middle;" width="5%">Reg Days OT Rate</th>
+                      <th style="text-align: center; vertical-align: middle;">ND Rate</th>
+                      <th style="text-align: center; vertical-align: middle;" width="5%">Special Non Working Holiday</th>
+                      <th style="text-align: center; vertical-align: middle;" width="5%">OT Special Holiday</th>
+                      <th style="text-align: center; vertical-align: middle;" width="5%">OT Regular Holiday</th>
+                      <th style="text-align: center; vertical-align: middle;" width="6%">Reg Holidays</th>
+                      <th style="text-align: center; vertical-align: middle;">Total Pay</th>
+                      <th style="text-align: center; vertical-align: middle;" width="4%">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -123,32 +168,80 @@ if(mysqli_num_rows($sqlPayrollDetails)>0){
                     $paidBLamount=0;
                     $bdayleavehrs=0;
                     $bdayleaveamount=0;
-                    $sqlAttendance = mysqli_query($con, "SELECT * FROM attendance WHERE logindate BETWEEN '$periodstart' AND '$periodend' AND idno='$idno' GROUP BY id ORDER BY logindate ASC");
+                    $sqlEmployeeShift = mysqli_query($con, "SELECT startshift, endshift FROM employee_details WHERE idno = '$idno'");
+                    if (mysqli_num_rows($sqlEmployeeShift) > 0) {
+                        $shiftDetails = mysqli_fetch_array($sqlEmployeeShift);
+                        $shiftStart = $shiftDetails['startshift'];
+                        $shiftEnd = $shiftDetails['endshift'];
+                    
+                        // Check if the employee is on a night shift
+                        $isNightShift = isNightShift($shiftStart, $shiftEnd);
+                    
+                        // Adjust the period start and end dates for night shifts
+                        if ($isNightShift) {
+                            $adjustedPeriodStart = date('Y-m-d', strtotime($periodstart . ' -1 day'));
+                            $adjustedPeriodEnd = date('Y-m-d', strtotime($periodend . ' -1 day'));
+                        } else {
+                            $adjustedPeriodStart = $periodstart;
+                            $adjustedPeriodEnd = $periodend;
+                        }
+                    } else {
+                        // Default to regular shift if shift details are not found
+                        $isNightShift = false;
+                        $adjustedPeriodStart = $periodstart;
+                        $adjustedPeriodEnd = $periodend;
+                    }
+                    
+                    // Query attendance with adjusted dates for night shifts
+                    $sqlAttendance = mysqli_query($con, "SELECT * FROM attendance 
+                                                         WHERE logindate BETWEEN '$adjustedPeriodStart' AND '$adjustedPeriodEnd' 
+                                                         AND idno = '$idno' 
+                                                         GROUP BY id 
+                                                         ORDER BY logindate ASC");
+                    
                     if (mysqli_num_rows($sqlAttendance) > 0) {
                         while ($attendance = mysqli_fetch_array($sqlAttendance)) {
                             $attendid = $attendance['id'];
-                            $sqlEmployeePayroll = mysqli_query($con, "SELECT * FROM employee_payroll WHERE idno='$idno'");
+                            $sqlEmployeePayroll = mysqli_query($con, "SELECT * FROM employee_payroll WHERE idno = '$idno'");
                             $employeepayroll = mysqli_fetch_array($sqlEmployeePayroll);
                     
+                            $sqlEmployeeDetails = mysqli_query($con, "SELECT * FROM employee_details WHERE idno='$idno'");
+                            $EmployeeDetails = mysqli_fetch_array($sqlEmployeeDetails);
+
+                            $startshift = $EmployeeDetails['startshift'];
+                            $endshift = $EmployeeDetails['endshift'];
                             $empsalary = $employeepayroll['salary'];
                             $logindate = $attendance['logindate'];
-                            $loginam = $attendance['loginam'];
-                            $logoutam = $attendance['logoutam'];
-                            $loginpm = $attendance['loginpm'];
-                            $logoutpm = $attendance['logoutpm'];
+                            $loginam = ( $attendance['loginam'] === "0") ? "0" : date('h:i:s A', strtotime($attendance['loginam']));
+                            $logoutam = ( $attendance['logoutam'] === "0") ? "0" : date('h:i:s A', strtotime($attendance['logoutam']));
+                            $loginpm = ( $attendance['loginpm'] === "0") ? "0" : date('h:i:s A', strtotime($attendance['loginpm']));
+                            $logoutpm = ($attendance['logoutpm'] === "0") ? "0" : date('h:i:s A', strtotime($attendance['logoutpm']));
                             $status = $attendance['status'];
                             $remarks = $attendance['remarks'];
                     
-                            // Adjust logindate for nightshift
-                          
-                    
-                            $time1am = strtotime($loginam);
-                            $time2am = strtotime($logoutam);
-                            $time1pm = strtotime($loginpm);
-                            $time2pm = strtotime($logoutpm);
+                            // Adjust the displayed logindate for night shifts
+                            if ($isNightShift) {
+                                $displayLogindate = date('m/d/Y', strtotime($logindate . ' +1 day'));
+                            } else {
+                                $displayLogindate = date('m/d/Y', strtotime($logindate));
+                            }
+                            $time1am = ( $loginam === "0") ? 0 : strtotime($loginam);
+                            $time2am = ($logoutam === "0") ? 0 : strtotime($logoutam);
+                            $time1pm = ( $loginpm === "0") ? 0 : strtotime($loginpm);
+                            $time2pm = ( $logoutpm === "0") ? 0 : strtotime($logoutpm);
+                            $timestart = strtotime($startshift);
+                            $timeend = strtotime($endshift);
+
+                            
                     
                             $difference_am = round(abs($time2am - $time1am) / 3600, 2);
                             $difference_pm = round(abs($time2pm - $time1pm) / 3600, 2);
+                            
+                            $totalstart = round(abs($timestart - $time2am) / 3600, 2);
+                            $totalam = round(abs($time2am  - $time2pm) / 3600, 2);
+                            $totalwo = (($totalstart + $totalam) - .5);
+                            $shiftdiff = round(abs($timestart - $timeend) / 3600, 2);
+                            $totalhrs = $totalwo;
                     
                             $nd = 0;
                             $work = 0;
@@ -160,10 +253,8 @@ if(mysqli_num_rows($sqlPayrollDetails)>0){
                             $pot = 0;
                             $totalhrs = 0;
                            
-                            // Reset salary logic or other processing
-                           
 
-                        if($employeedetails['startshift']=="23:00:00"){
+                        if($employeedetails['startshift']=="00:00:00"){
                           $reghrs=7;
                         }else{
                           $reghrs=8;
@@ -179,6 +270,7 @@ if(mysqli_num_rows($sqlPayrollDetails)>0){
                         $regholidayot=0;
                         $totalpay=0;
                         $p=explode('/',$status);
+                        
                         for($i=0;$i<sizeof($p);$i++){
                           if($p[$i]=="nd"){
                             $nd++;
@@ -203,48 +295,71 @@ if(mysqli_num_rows($sqlPayrollDetails)>0){
                           }
                         }
 
-                        if($nd > 0 && $work >0){//Regular worked with Night Differential
-                          if($employeedetails['startshift']=="04:00:00"){
-                            $ndhrs1=round(abs(strtotime('06:00:00') - $time1am) / 3600,2);
-                            $ndhrs2=round(abs($time2am - strtotime('06:00:00')) / 3600,2);
-                            $ndhrs=$ndhrs1;
-                            $totalhrs=$ndhrs1+$ndhrs2+$difference_pm;
-                          }else{
-                            $totalhrs=$difference_am+$difference_pm;
-                            $ndhrs=$totalhrs;
-                          }
-                          if($totalhrs>$reghrs){
-                            $reghrs=$totalhrs-($totalhrs-$reghrs);
-                            $ndhrs=$reghrs;
-                          }else{
-                            $reghrs=$totalhrs;
-                          }
-
-
-                        }
+                       
                         if($work > 0){ //Regular worked without Night Differential
-                            $totalhrs=$difference_am+$difference_pm;
+                            
                             $ndhrs=0;
-                          if($totalhrs>8){
-                            $reghrs=$totalhrs-($totalhrs-8);
+                          if($totalwo>8){
+                            $reghrs=$totalwo-($totalwo-8);
                           }
                         }
                         if($leave > 0){//On Leave
-                          $totalhrs=$difference_am+$difference_pm;
-                          $ndhrs=0;
-                        if($totalhrs>8){
-                          $reghrs=$totalhrs-($totalhrs-8);
-                        }else{
-                          $reghrs=$totalhrs;
+                          $empsalary = 0;
+                        $totalwo=0;
                         }
+                        
+                        
+                        
+                        if ($nd > 0 && $work > 0) { // Regular work with Night Differential
+                            $startShift = $employeedetails['startshift']; // Get the employee's shift start time
+                            $ndhrs = 0; 
+                            $totalhrs = 0;
+                        
+                            if ($startShift == "00:00:00") {
+                                // Shift starting at midnight (Full night shift)
+                                $ndhrs1 = round(abs(strtotime('06:00:00') - $time1am) / 3600, 2);
+                                $ndhrs2 = round(abs($time2am - strtotime('06:00:00')) / 3600, 2);
+                                $ndhrs = $ndhrs1; // ND applies only until 6 AM
+                                $totalhrs = $ndhrs1 + $ndhrs2 + $difference_pm;
+                        
+                            } elseif ($startShift == "03:00:00") {
+                                // Shift starting at 3:00 AM (Partial Night Differential)
+                                $ndhrs1 = round(abs(strtotime('06:00:00') - $time1am) / 3600, 2);
+                                $ndhrs2 = round(abs($time2am - strtotime('06:00:00')) / 3600, 2);
+                                $ndhrs = $ndhrs1; // ND applies only until 6 AM
+                                $totalhrs = $ndhrs1 + $ndhrs2 + $difference_pm;
+                        
+                            } elseif ($startShift == "04:00:00") {
+                                // Shift starting at 4:00 AM (Limited Night Differential)
+                                $ndhrs1 = round(abs(strtotime('06:00:00') - $time1am) / 3600, 2);
+                                $ndhrs2 = round(abs($time2am - strtotime('06:00:00')) / 3600, 2);
+                                $ndhrs = $ndhrs1; // ND only applies for 2 hours (4 AM - 6 AM)
+                                $totalhrs = $ndhrs1 + $ndhrs2 + $difference_pm;
+                        
+                            } else {
+                                // Default calculation for other shifts
+                                $totalhrs = $difference_am + $difference_pm;
+                                $ndhrs = $totalhrs;
+                            }
+                        
+                            // Adjust regular hours
+                            if ($totalhrs > $reghrs) {
+                                $reghrs = $totalhrs - ($totalhrs - $reghrs);
+                                $ndhrs = $reghrs;
+                            } else {
+                                $reghrs = $totalhrs;
+                            }
                         }
 
+                        
+                        
+                        
                         if($nd>0 && $pot>0 && $employeedetails['location']=="OS"){ //Night differential with Overtime before 8 hrs worked
                           $totalhrs=$difference_am+$difference_pm;
                           if($totalhrs>8.17){
                             $totalhrs1=8.17;
                           }else{
-                            if($employeedetails['startshift']=="23:00:00"){
+                            if($employeedetails['startshift']=="00:00:00"){
                               $totalhrs1=$totalhrs;
                               $totalhrs=$totalhrs1;
                               $ndhrs=1;
@@ -258,20 +373,20 @@ if(mysqli_num_rows($sqlPayrollDetails)>0){
                             $ndhrs=$ndhrs1=round(abs(strtotime('06:00:00') - $time1am) / 3600,2);
                           }
                         }
-                        if($nd>0 && $ot>0 && $pot==0){ //Night differential with Overtime afer 8 hrs worked
-                          $totalhrs=$difference_am+$difference_pm;
-                            if($employeedetails['startshift']=="23:00:00"){
-                              $totalhrs1=$totalhrs;
-                              $totalhrs=$totalhrs1;
-                            }
-                            $totalhrs1=$totalhrs;
+                        // if($nd>0 && $ot>0 && $pot==0){ //Night differential with Overtime afer 8 hrs worked
+                        
+                        //     if($employeedetails['startshift']=="00:00:00"){
+                        //       $totalhrs1=$totalwo;
+                        //       $totalwo=$totalhrs1;
+                        //     }
+                        //     $totalhrs1=$totalwo;
 
-                          $totalhrs=$totalhrs1;
-                          $overtime=$totalhrs-$reghrs;
-                          if($employeedetails['startshift']=="04:00:00"){
-                            $ndhrs=round(abs(strtotime('06:00:00') - $time1am) / 3600,2);
-                          }
-                        }
+                        //   $totalwo=$totalhrs1;
+                        //   $overtime=$totalwo-$reghrs;
+                        //   if($employeedetails['startshift']=="04:00:00"){
+                        //     $ndhrs=round(abs(strtotime('06:00:00') - $time1am) / 3600,2);
+                        //   }
+                        // }
                         if($work>0 && $pot>0 && $employeedetails['location']=="OS"){ //Regular Work with Overtime before 8 hrs worked
                           $totalhrs=$difference_am+$difference_pm;
                           $thrs=round(abs(strtotime($employeedetails['startshift'])-$time1am));
@@ -304,14 +419,17 @@ if(mysqli_num_rows($sqlPayrollDetails)>0){
                           $overtime=0;
                           $ndhrs=0;
                         }
-                        if($nd>0 && $ot>0){ //$Night Differential with Overtime after 8 hrs worked
+                        if($nd>0 && $ot>0 && $work){ //$Night Differential with Overtime after 8 hrs worked
                           $totalhrs=$difference_am+$difference_pm;
                           $overtime=$totalhrs-$reghrs;
                         }
-                        if($work>0 && $ot>0){ //Regular with Overtime after 8 hrs worked
-                          $totalhrs=$difference_am+$difference_pm;
-                          $overtime=$totalhrs-$reghrs;
-                        }
+                       if ($work > 0 && $ot > 0) { // Regular with Overtime after 8 hrs worked
+                                $endShift = strtotime($employeedetails['endshift']); // Convert end shift time to Unix timestamp
+                                $time2pm = strtotime($logoutpm); // Convert PM logout time to Unix timestamp
+                            
+                                // Calculate overtime hours
+                                $overtime = round(abs($endShift - $time2pm) / 3600, 2); // Difference in hours
+                            }
                         if($rh>0 && $nd==0 && $work==0){ //Regular Holiday Not worked
                           $totalhrs=0;
                           $reghrs=0;
@@ -415,33 +533,158 @@ if(mysqli_num_rows($sqlPayrollDetails)>0){
                           $ndhrs=0;
                         }
                         $ndrate=$ndhrs*(($empsalary/8)*.1);
-                        if($employeedetails['startshift']=="23:00:00"){
+                        if($employeedetails['startshift']=="00:00:00"){
                           $empsalary=($empsalary/8)*$reghrs;
                         }
                         $totalpay=$empsalary+$regdaysot+$ndrate+$spholiday+$spholidayot+$regholiday+$regholidayot;
+                        
+                            $startshift = strtotime($employeedetails['startshift']); // Example shift start time
+                            $endshift = strtotime($employeedetails['endshift']); // Example shift end time
+                            
+                            // Convert login/logout times to timestamps
+                            $loginam = strtotime($loginam);
+                            $logoutam = strtotime($logoutam);
+                            $loginpm = strtotime($loginpm);
+                            $logoutpm = strtotime($logoutpm);
+                        
+                             $loginam_adjusted = $loginam;
+                             $logoutam_adjusted = $logoutam;
+                             $loginpm_adjusted = $loginpm;
+                             $logoutpm_adjusted = $logoutpm;
+                             
+                            if ($startshift == strtotime("12:00 AM")) {
+                        // Handle night shift (startshift at midnight)
+                        if ($loginam >= strtotime("11:50 PM") && $loginam < $startshift) {
+                            $loginam_adjusted = $startshift - 600; // Subtract 10 minutes from shift start
+                        }
+                    } else {
+                        // Handle day shift
+                        if ($loginam < $startshift && ($startshift - $loginam) >= 600) {
+                            $loginam_adjusted = $startshift - 600; // Subtract 10 minutes from shift start
+                        }
+                    }
+                            // Adjust logoutam and loginpm
+                            $logoutam_adjusted = $logoutam;
+                            $loginpm_adjusted = $loginpm;
+                            
+                            if (abs($logoutam - $loginpm) <= 3600) { // 3600 seconds = 1 hour
+                                if ($logoutam >= strtotime("12:00 PM") && $logoutam < strtotime("06:00 PM")) { // Day shift
+                                    $logoutam_adjusted = strtotime("12:00 PM");
+                                    $loginpm_adjusted = strtotime("01:00 PM");
+                                } else { // Night shift
+                                    $logoutam_adjusted = strtotime("06:00 AM");
+                                    $loginpm_adjusted = strtotime("07:00 AM");
+                                }
+                            }
+                            
                         echo "<tr>";
-                        echo "<td>".date('m/d/Y',strtotime($logindate))."</td>";
-                        echo "<td>".date('h:i A',strtotime($loginam))."</td>";
-                        echo "<td>".date('h:i A',strtotime($logoutam))."</td>";
-                        echo "<td>".date('h:i A',strtotime($loginpm))."</td>";
-                        echo "<td>".date('h:i A',strtotime($logoutpm))."</td>";
-                        echo "<td align='center'>$totalhrs</td>";
-                        echo "<td align='center'>$reghrs</td>";
-                        echo "<td align='center'>$hrsnotworked</td>";
-                        echo "<td align='center'>$overtime</td>";
-                        echo "<td align='center'>$ndhrs</td>";
-                        echo "<td align='center'>0</td>";
-                        echo "<td align='right'>".number_format($empsalary,2)."</td>";
-                        echo "<td align='right'>".number_format($regdaysot,2)."</td>";
-                        echo "<td align='right'>".number_format($ndrate,2)."</td>";
-                        echo "<td></td>";
-                        echo "<td align='right'>".number_format($spholiday,2)."</td>";
-                        echo "<td align='right'>".number_format($spholidayot,2)."</td>";
-                        echo "<td align='right'>".number_format($regholidayot,2)."</td>";
-                        echo "<td align='right'>".number_format($regholiday,2)."</td>";
-                        echo "<td align='right'>".number_format($totalpay,2)."</td>";
-                        echo "<td align='center'><a href='?edittime&idno=$idno&period=$period&id=$attendid&company=$company' title='Edit Time'><i class='fa fa-edit'></i></a> | ";
+                          echo "<td align='center'>" . date('m/d/Y',strtotime($displayLogindate))."</td>";
+                          echo "<td align='center'>" . date('h:i A', $loginam_adjusted) . "</td>";
+                          echo "<td align='center'>" . date('h:i A', $logoutam_adjusted) . "</td>";
+                          echo "<td align='center'>" . date('h:i A', $loginpm_adjusted) . "</td>";
+                          echo "<td align='center'>" . date('h:i A', $logoutpm_adjusted) . "</td>";
+                          echo "<td align='center'>$totalwo</td>";
+                          echo "<td align='center'>$reghrs</td>";
+                          echo "<td align='center'>$hrsnotworked</td>";
+                          echo "<td align='center' data-id='$attendid'>$overtime</td>";
+                          echo "<td align='center'>$ndhrs</td>";
+                          echo "<td align='right'>".number_format($empsalary,2)."</td>";
+                          echo "<td align='right'>".number_format($regdaysot,2)."</td>";
+                          echo "<td align='right'>".number_format($ndrate,2)."</td>";
+                          echo "<td align='right'>".number_format($spholiday,2)."</td>";
+                          echo "<td align='right'>".number_format($spholidayot,2)."</td>";
+                          echo "<td align='right'>".number_format($regholidayot,2)."</td>";
+                          echo "<td align='right'>".number_format($regholiday,2)."</td>";
+                          echo "<td align='right'>".number_format($totalpay,2)."</td>";
+                          echo "<td align='center'><a href='?edittime&idno=$idno&period=$period&id=$attendid&company=$company' title='Edit Time'><i class='fa fa-edit'></i></a> | ";
                         ?>
+                    <script>
+    // Enable in-line editing when clicking on a cell
+    document.querySelectorAll('.editable-cell').forEach(cell => {
+        cell.addEventListener('click', function (e) {
+            const currentText = this.textContent.trim();
+            const attendid = this.getAttribute('data-id');
+
+            // If the cell is already being edited, return
+            if (this.querySelector('textarea')) return;
+
+            // Create a textarea for editing
+            const textarea = document.createElement('textarea');
+            textarea.value = currentText;
+            textarea.classList.add('form-control');
+            this.innerHTML = '';  // Clear the cell content
+            this.appendChild(textarea);
+            textarea.focus(); // Ensure the textarea is focused
+
+            // Handle Enter key to save the overtime value
+            textarea.addEventListener('keydown', function (e) {
+                console.log('Key pressed:', e.key); // Debugging
+                if (e.key === 'Enter') {
+                    e.preventDefault();  // Prevent default behavior (line break in textarea)
+                    console.log('Enter key pressed'); // Debugging
+                    saveOvertime(attendid, textarea.value);
+                }
+            });
+
+            // Handle Esc key to cancel the editing
+            textarea.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    e.preventDefault();  // Prevent default behavior
+                    this.value = currentText;  // Restore original text
+                    this.blur();  // Remove focus
+                    cancelEdit();  // Restore the cell to its original state
+                }
+            });
+
+            // Handle clicking outside the editable cell to cancel the editing
+            function cancelEdit() {
+                document.removeEventListener('click', closeEditOnClickOutside);
+                this.innerHTML = currentText;  // Restore original content in cell
+            }
+
+            function closeEditOnClickOutside(event) {
+                // Close editing if the click is outside the cell
+                if (!cell.contains(event.target)) {
+                    cancelEdit();
+                }
+            }
+
+            document.addEventListener('click', closeEditOnClickOutside);
+        });
+    });
+
+    // Function to save overtime to the database
+    function saveOvertime(attendid, value) {
+        value = value.trim();
+
+        if (value === '$overtime') {
+            alert('Overtime cannot be empty!');
+            return;
+        }
+
+        // Make an AJAX request to save the overtime
+        $.ajax({
+            url: 'save_overtime.php', // Update this URL to your PHP script for saving overtime
+            method: 'POST',
+            data: {
+                attendid: attendid,
+                overtime: value
+            },
+            success: function (response) {
+                const res = JSON.parse(response);
+                if (res.success) {
+                    alert('Overtime saved successfully!');
+                    location.reload(); // Refresh the page to show updated overtime
+                } else {
+                    alert('Failed to save overtime: ' + res.message);
+                }
+            },
+            error: function () {
+                alert('Failed to save overtime. Please try again.');
+            }
+        });
+    }
+</script>
                         <a href='?editpayroll&idno=<?=$idno;?>&period=<?=$period;?>&id=<?=$attendid;?>&deletetime&company=<?=$company;?>' title='Delete Time' onclick="return confirm('Do you wish to remove this attendance?'); return false;"><i class='fa fa-trash'></i></a></td>
                         <?php
                         echo "</tr>";
@@ -449,7 +692,7 @@ if(mysqli_num_rows($sqlPayrollDetails)>0){
                           $regular_hours +=$reghrs;
                         }
                         $hoursnotworkedamount +=($empsalary/8)*$hrsnotworked;
-                        $totalhours +=$totalhrs;
+                        $totalhours +=$totalwo;
                         $regularhours +=$reghrs;
                         $totalovertime +=$overtime;
                         $totalhoursnotworked +=$hrsnotworked;
@@ -472,11 +715,9 @@ if(mysqli_num_rows($sqlPayrollDetails)>0){
                       <td align='center'><?=number_format($totalhoursnotworked,2);?></td>
                       <td align='center'><?=number_format($totalovertime,2);?></td>
                       <td align='center'><?=number_format($totalndhrs,2);?></td>
-                      <td align='center'>0</td>
                       <td align='right'><?=number_format($totalbasesalary,2);?></td>
                       <td align='right'><?=number_format($totalregdaysot,2);?></td>
                       <td align='right'><?=number_format($totalndrate,2);?></td>
-                      <td align='right'></td>
                       <td align='right'><?=number_format($totalspholiday,2);?></td>
                       <td align='right'><?=number_format($totalspholidayot,2);?></td>
                       <td align='right'><?=number_format($totalregholidayot,2);?></td>
@@ -999,7 +1240,7 @@ if(isset($_GET['removeBenefits'])){
   }
 }
 
-    if(isset($_GET['submitPayroll'])){
+  if(isset($_GET['submitPayroll'])){
         $addedby=$_GET['addedby'];
         $datenow=date('Y-m-d H:i:s');
         $period=$_GET['period'];
@@ -1021,6 +1262,7 @@ if(isset($_GET['removeBenefits'])){
         $spholidayamount2=$_GET['spholidayamount2'];
         $spholidayothrs=$_GET['spholidayothrs'];
         $spholidayotamount=$_GET['spholidayotamount'];
+       	$salary_type = $_GET['salary_type']; 
         $ndhrs=$_GET['ndhrs'];
         $ndamount=$_GET['ndamount'];
         $paidSLhrs=$_GET['paidSLhrs'];
@@ -1033,26 +1275,63 @@ if(isset($_GET['removeBenefits'])){
         $bdayleaveamount=$_GET['bdayleaveamount'];
         $totalpay=$_GET['totalpay'];
 
-        $sqlCheck=mysqli_query($con,"SELECT * FROM payroll_details WHERE payrollperiod='$period' AND idno='$idno'");
-        if(mysqli_num_rows($sqlCheck)>0){
-            $payroll=mysqli_fetch_array($sqlCheck);
-            $table="payroll_details";
-            $values="SET reghours='$reghours',reghoursot='$reghoursot',reghoursotamount='$reghoursotamount',regholidayhrsnotwork='$reghoursnw',regholidayamountnotwork='$reghoursnwamount',regholidayhrswork1='$regholidaywork1',regholidayamountwork1='$regholidayworkamount1',regholidayhrswork2='$regholidaywork2',regholidayamountwork2='$regholidayworkamount2',regholidayothrs='$regholidayothrs',regholidayotamount='$regholidayotamount',spholidayhrs1='$spholidayhours1',spholidayamount1='$spholidayamount1',spholidayhrs2='$spholidayhours2',spholidayamount2='$spholidayamount2',spholidayothrs='$spholidayothrs',spholidayotamount='$spholidayotamount',ndhrs='$ndhrs',ndamount='$ndamount',paidslhrs='$paidSLhrs',paidslamount='$paidSLamount',paidvlhrs='$paidVLhrs',paidvlamount='$paidVLamount',paidblhrs='$paidBLhrs',paidblamount='$paidBLamount',bdayleavehrs='$bdayleavehrs',bdayleaveamount='$bdayleaveamount',totalpay='$totalpay',updatedby='$addedby',updateddatetime='$datenow' WHERE idno='$idno' AND payrollperiod='$period'";
-            $sqlAddEmployee=mysqli_query($con,"UPDATE $table $values");
-        }else{
-            $table="payroll_details(idno,payrollperiod,reghours,reghoursot,reghoursotamount,regholidayhrsnotwork,regholidayamountnotwork,regholidayhrswork1,regholidayamountwork1,regholidayhrswork2,regholidayamountwork2,regholidayothrs,regholidayotamount,spholidayhrs1,spholidayamount1,spholidayhrs2,spholidayamount2,spholidayothrs,spholidayotamount,ndhrs,ndamount,paidslhrs,paidslamount,paidvlhrs,paidvlamount,paidblhrs,paidblamount,bdayleavehrs,bdayleaveamount,totalpay,addedby,addeddatetime)";
-            $values="VALUES('$idno','$period','$reghours','$reghoursot','$reghoursotamount','$reghoursnw','$reghoursnwamount','$regholidaywork1','$regholidayworkamount1','$regholidaywork2','$regholidayworkamount2','$regholidayothrs','$regholidayotamount','$spholidayhours1','$spholidayamount1','$spholidayhours2','$spholidayamount2','$spholidayothrs','$spholidayotamount','$ndhrs','$ndamount','$paidSLhrs','$paidSLamount','$paidVLhrs','$paidVLamount','$paidBLhrs','$paidBLamount','$bdayleavehrs','$bdayleaveamount','$totalpay','$addedby','$datenow')";
-            $sqlAddEmployee=mysqli_query($con,"INSERT INTO $table $values");
+        $sqlCheck = mysqli_query($con, "SELECT * FROM payroll_details WHERE payrollperiod='$period' AND idno='$idno'");
+        if (mysqli_num_rows($sqlCheck) > 0) {
+            $payroll = mysqli_fetch_array($sqlCheck);
+            $table = "payroll_details";
+            $values = "SET reghours='$reghours',reghoursot='$reghoursot',reghoursotamount='$reghoursotamount',regholidayhrsnotwork='$reghoursnw',
+                      regholidayamountnotwork='$reghoursnwamount',regholidayhrswork1='$regholidaywork1',regholidayamountwork1='$regholidayworkamount1',
+                      regholidayhrswork2='$regholidaywork2',regholidayamountwork2='$regholidayworkamount2',regholidayothrs='$regholidayothrs',
+                      regholidayotamount='$regholidayotamount',spholidayhrs1='$spholidayhours1',spholidayamount1='$spholidayamount1',
+                      spholidayhrs2='$spholidayhours2',spholidayamount2='$spholidayamount2',spholidayothrs='$spholidayothrs',spholidayotamount='$spholidayotamount',
+                      ndhrs='$ndhrs',ndamount='$ndamount',paidslhrs='$paidSLhrs',paidslamount='$paidSLamount',paidvlhrs='$paidVLhrs',paidvlamount='$paidVLamount',
+                      paidblhrs='$paidBLhrs',paidblamount='$paidBLamount',bdayleavehrs='$bdayleavehrs',bdayleaveamount='$bdayleaveamount',totalpay='$totalpay',
+                      updatedby='$addedby',updateddatetime='$datenow' WHERE idno='$idno' AND payrollperiod='$period'";
+            $sqlAddEmployee = mysqli_query($con, "UPDATE $table $values");
+
+            // Update salary_type in employee_payroll
+            $sqlUpdateEmployeePayroll = mysqli_query($con, 
+                "UPDATE employee_payroll 
+                SET salary_type='$salary_type' 
+                WHERE idno='$idno'");
+
+        } else {
+            $table = "payroll_details(idno,payrollperiod,reghours,reghoursot,reghoursotamount,regholidayhrsnotwork,regholidayamountnotwork,regholidayhrswork1,
+                      regholidayamountwork1,regholidayhrswork2,regholidayamountwork2,regholidayothrs,regholidayotamount,spholidayhrs1,spholidayamount1,spholidayhrs2,
+                      spholidayamount2,spholidayothrs,spholidayotamount,ndhrs,ndamount,paidslhrs,paidslamount,paidvlhrs,paidvlamount,paidblhrs,paidblamount,bdayleavehrs,
+                      bdayleaveamount,totalpay,addedby,addeddatetime)";
+            $values = "VALUES('$idno','$period','$reghours','$reghoursot','$reghoursotamount','$reghoursnw','$reghoursnwamount','$regholidaywork1',
+                      '$regholidayworkamount1','$regholidaywork2','$regholidayworkamount2','$regholidayothrs','$regholidayotamount','$spholidayhours1',
+                      '$spholidayamount1','$spholidayhours2','$spholidayamount2','$spholidayothrs','$spholidayotamount','$ndhrs','$ndamount','$paidSLhrs',
+                      '$paidSLamount','$paidVLhrs','$paidVLamount','$paidBLhrs','$paidBLamount','$bdayleavehrs','$bdayleaveamount','$totalpay','$addedby','$datenow')";
+            $sqlAddEmployee = mysqli_query($con, "INSERT INTO $table $values");
+
+            // Check if employee_payroll entry exists
+            $sqlCheckProfile = mysqli_query($con, "SELECT * FROM employee_payroll WHERE idno='$idno'");
+            if (mysqli_num_rows($sqlCheckProfile) > 0) {
+                // Update salary_type in employee_profile if entry exists
+                $sqlUpdateEmployeePayroll = mysqli_query($con, 
+                    "UPDATE employee_payroll 
+                    SET salary_type='$salary_type' 
+                    WHERE idno='$idno'");
+            } else {
+                // Insert into employee_payroll if no entry exists
+                $sqlInsertEmployeePayroll = mysqli_query($con, 
+                    "INSERT INTO employee_payroll (idno, salary_type) 
+                    VALUES ('$idno', '$salary_type')");
+            }
         }
-      if($sqlAddEmployee){
-          echo "<script>";
-          echo "alert('Payroll successfully saved!'); window.location='?editpayroll&idno=$idno&period=$period&company=$company';";
-        echo "</script>";
-      }else{
-        echo "<script>";
-          echo "alert('Unable to saved details!'); window.location='?editpayroll&idno=$idno&period=$period&company=$company';";
-        echo "</script>";
-      }
+
+        // Success/Failure Message
+        if ($sqlAddEmployee) {
+            echo "<script>";
+            echo "alert('Payroll successfully saved!'); window.location='?editpayroll&idno=$idno&period=$period&company=$company';";
+            echo "</script>";
+        } else {
+            echo "<script>";
+            echo "alert('Unable to save details!'); window.location='?editpayroll&idno=$idno&period=$period&company=$company';";
+            echo "</script>";
+        }
     }
     if(isset($_GET['deletetime'])){
       $idno=$_GET['idno'];

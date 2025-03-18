@@ -56,19 +56,33 @@ if($type=="pending"){
 .badge-switch button {
     margin-top: 0; /* Remove unnecessary top margin */
 }
+/* Sorting Columns */
 th.sortable {
     cursor: pointer;
     position: relative;
 }
 
 th.sortable.asc::after {
-    content: '↑'; /* Ascending arrow icon */
+    content: ''; 
     color: #000;
 }
 
 th.sortable.desc::after {
-    content: '↓'; /* Descending arrow icon */
+    content: '';
     color: #000;
+}
+/*Date Filter Button*/
+.filter-btn {
+    background-color: #3f4d6a;
+    color: white;
+    border: none;
+    padding: 7px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.filter-btn:hover {
+    background-color: #181e2e;
 }
 </style>
 
@@ -84,13 +98,22 @@ th.sortable.desc::after {
 
               <!-- Date Filter Section -->
               <div class="date-filter" style="display: flex; align-items: center; gap: 10px;">
-                  <label for="fromDate">From:</label>
-                  <input type="date" id="fromDate" class="form-control" value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>" style="width: 150px;">
-                  <label for="toDate">To:</label>
-                  <input type="date" id="toDate" class="form-control" value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>" style="width: 150px;">
-                  <button type="button" onclick="filterByDate()" class="btn btn-primary">Filter</button>
-                  <button type="button" onclick="resetFilter()" class="btn btn-default">Reset</button>
-              </div>
+                    <h5 style="font-weight: bold; margin-left: 30px;">Filter Date Issued Column</h5>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label for="fromDate" style="margin-bottom: 0;">From:</label>
+                        <input type="date" id="fromDate" class="form-control" 
+                            value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>" 
+                            style="width: 150px; height: 35px;">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label for="toDate" style="margin-bottom: 0;">To:</label>
+                        <input type="date" id="toDate" class="form-control" 
+                            value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>" 
+                            style="width: 150px; height: 35px;">
+                    </div>
+                    <button type="button" onclick="filterByDate()" class="filter-btn">Filter</button>
+                    <button type="button" onclick="resetFilter()" class="btn btn-default">Reset</button>
+                </div>
 
               <!-- Issue Infraction Button -->
               <div class="flex-item" style="margin-left: auto;">
@@ -161,15 +184,15 @@ th.sortable.desc::after {
                     // Fetch employees for the company and department
                     $fromDate = isset($_GET['fromDate']) ? $_GET['fromDate'] : null;
                     $toDate = isset($_GET['toDate']) ? $_GET['toDate'] : null;
-                    $sqlEmployee = mysqli_query($con, "SELECT ep.*, ed.*, ep.*,i.id,i.dateserved,i.dateissued,i.typeofoffense,i.typeofmemo,i.points,i.memonumber,i.dateofsuspension,i.status, d.department, ed.designation, jt.jobtitle 
-                        FROM employee_profile ep
-                        INNER JOIN employee_details ed ON ed.idno = ep.idno
+                    $sqlEmployee = mysqli_query($con, "SELECT ep.*, ed.*, ep.*,i.id,i.dateserved,i.dateissued,i.typeofoffense,i.typeofmemo,i.points,i.memonumber,i.dateofsuspension, i.dateofincident, i.status, d.department, ed.designation, jt.jobtitle 
+                        FROM infraction i
+                        INNER JOIN employee_details ed ON ed.idno = i.idno
+                        INNER JOIN employee_profile ep ON ep.idno=ed.idno
                         INNER JOIN department d ON d.id = ed.department
                         INNER JOIN jobtitle jt ON jt.id = ed.designation
-                        INNER JOIN infraction i ON i.idno=ep.idno
                         WHERE ed.company = '$companyCode' 
                         AND d.department = '$departmentName'
-                        AND (i.dateserved BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '')  
+                        AND (i.dateissued BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '')  
                         AND ed.status NOT LIKE '%RESIGNED%'
                         ORDER BY 
                           CASE 
@@ -183,55 +206,41 @@ th.sortable.desc::after {
                         echo "Error fetching employees: " . mysqli_error($con);
                         continue;
                     }
+                    ?>    
+                    <!-- Search Bar -->
+                    <div class="d-flex align-items-center mb-3" style="margin-bottom: 3px;">
+                        <div class="input-group" style="width: 300px;">
+                            <input type="text" class="form-control" placeholder="Search..." onkeyup="filterTable(this)">
+                        </div>
+                    </div>
 
-                    echo '<!-- Search Bar -->';
-                    echo '<div class="d-flex align-items-center mb-3" style="margin-bottom: 3px;">';
-                    echo '    <div class="input-group" style="width: 300px;">';
-                    echo '        <input type="text" class="form-control" placeholder="Search..." onkeyup="filterTable(this)">';
-                    echo '    </div>';
-                    echo '</div>';
-
-                    echo "<table class='table table-bordered table-striped table-condensed'>
+                    <table class='table table-bordered table-striped table-condensed'>
                         <thead>
                             <tr>
                               <th class='sortable' data-column='0' style='text-align: center;'>No.</th>
                               <th class='sortable' data-column='1' style='text-align: center;'>Emp ID</th>
                               <th class='sortable' data-column='2' style='text-align: center;'>Employee Name</th>
                               <th class='sortable' data-column='3' style='text-align: center;'>Job Title</th>
-                              <th class='sortable' data-column='3' style='text-align: center;'>Team</th>
-                              <th class='sortable' data-column='4' style='text-align: center;'>Company</th>
-                              <th class='sortable' data-column='5' style='text-align: center;'>Date Issued</th>
-                              <th class='sortable' data-column='6' style='text-align: center;'>Date Served</th>
-                              <th class='sortable' data-column='7' style='text-align: center;'>Type of Memo</th>
-                              <th class='sortable' data-column='8' style='text-align: center;'>Type of Offense</th>
-                              <th class='sortable' data-column='9' style='text-align: center;'>Points</th>
-                              <th class='sortable' data-column='10' style='text-align: center;'>Memo No.</th>
-                              <th class='sortable' data-column='11' style='text-align: center;'>Date of Incident</th>
-                              <th class='sortable' data-column='12' style='text-align: center;'>Suspension Dates</th>
-                              <th class='sortable' data-column='13' style='text-align: center;'>Status</th>
+                              <th class='sortable' data-column='4' style='text-align: center;'>Team</th>
+                              <th class='sortable' data-column='5' style='text-align: center;'>Company</th>
+                              <th class='sortable' data-column='6' width="6%"  style='text-align: center;'>Date Issued</th>
+                              <th class='sortable' data-column='7' width="6%"  style='text-align: center;'>Date Served</th>
+                              <th class='sortable' data-column='8' style='text-align: center;'>Type of Memo</th>
+                              <th class='sortable' data-column='9' style='text-align: center;'>Type of Offense</th>
+                              <th class='sortable' data-column='10' style='text-align: center;'>Points</th>
+                              <th class='sortable' data-column='11' style='text-align: center;'>Memo No.</th>
+                              <th class='sortable' data-column='12' width="6%" style='text-align: center;'>Date of Incident</th>
+                              <th class='sortable' data-column='13' style='text-align: center;'>Suspension Dates</th>
+                              <th class='sortable' data-column='14' style='text-align: center;'>Status</th>
+                              <th class='sortable' data-column='15' style='text-align: center;'>Added by</th>
+                              <th class='sortable' data-column='16' style='text-align: center;'>Updated By</th>
                               <th style='text-align: center;'>Action</th>
                             </tr>
                         </thead>
-                        <tbody>";
-
+                        <tbody>
+                    <?php
                     $x = 1;
-                    $sqlEmployee=mysqli_query($con,"SELECT ep.*, ed.*, ep.*,i.id,i.dateserved,i.dateofincident,i.dateissued,i.typeofoffense,i.typeofmemo,i.points,i.memonumber,i.dateofsuspension,i.status, d.department, ed.designation, jt.jobtitle 
-                        FROM employee_profile ep
-                        INNER JOIN employee_details ed ON ed.idno = ep.idno
-                        INNER JOIN department d ON d.id = ed.department
-                        INNER JOIN jobtitle jt ON jt.id = ed.designation
-                        INNER JOIN infraction i ON i.idno=ep.idno
-                        WHERE ed.company = '$companyCode' 
-                          AND d.department = '$departmentName' 
-                          AND ed.status NOT LIKE '%RESIGNED%'
-                          AND (i.dateserved OR i.dateissued BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '')  
-                        ORDER BY 
-                          CASE 
-                              WHEN i.status = 'pending' THEN 1
-                              WHEN i.status = 'Served' THEN 2
-                              ELSE 3
-                          END,
-                          i.dateissued ASC");
+                   
                     if(mysqli_num_rows($sqlEmployee)>0){
                       while($company=mysqli_fetch_array($sqlEmployee)){
                         $idno=$company['idno'];
@@ -245,6 +254,8 @@ th.sortable.desc::after {
                         $dateofincident=$company['dateofincident'];
                         $typeofoffense=$company['typeofoffense'];
                         $typeofmemo=$company['typeofmemo'];
+                        $addedby=$company['addedby'];
+                        $updatedby=$company['updatedby'];
                         $points=$company['points'];
                         $memonumber=$company['memonumber'];
                         $dateofsuspension=$company['dateofsuspension'];
@@ -260,23 +271,28 @@ th.sortable.desc::after {
                         }else{
                           $style="class='success'";
                         }
-                        echo "<tr $style>";
-                          echo "<td align='center'>$x.</td>";
-                          echo "<td align='center'>$idno</td>";
-                          echo "<td>$lastname, $firstname $middlename $suffix</td>";
-                          echo "<td>$jobtitle</td>";
-                          echo "<td align='center'>$dept[department]</td>";
-                          echo "<td align='center'>$comp[company]</td>";
-                          echo "<td align='center'>$dateissued</td>";
-                          echo "<td align='center'>$dateserved</td>";
-                          echo "<td align='center'>$typeofmemo</td>";
-                          echo "<td align='center'>$typeofoffense</td>";                            
-                          echo "<td align='center'>$points</td>";
-                          echo "<td align='center'>$memonumber</td>";
-                          echo "<td align='center'>$dateofincident</td>";
-                          echo "<td align='center'>$dateofsuspension</td>";
-                          echo "<td align='center'>$status</td>";
-                          ?>
+                        ?>
+                        <tr  <?= $style ?>>
+                         <td align='center'><?=$x;?>.</td>
+                         <td align='center'><?=$idno?></td>
+                         <td><?=$lastname?>, <?=$firstname?> <?=$middlename?> <?=$suffix?></td>
+                         <td><?=$jobtitle?></td>
+                         <td align='center'><?=$dept['department']?></td>
+                         <td align='center'><?=$comp['company']?></td> 
+                         <td align='center'><?= date('M j, Y', strtotime($dateissued)); ?></td> 
+                         <td align='center'>
+                            <?= ($dateserved == "0000-00-00") ? "" : date('M j, Y', strtotime($dateserved)); ?>
+                        </td>   
+                         <td align='center'><?=$typeofmemo?></td>    
+                         <td align='center'><?=$typeofoffense?></td>                             
+                         <td align='center'><?=$points?></td>    
+                         <td align='center'><?=$memonumber?></td>    
+                         <td align='center'><?= date('M j, Y', strtotime($dateofincident));?></td>    
+                         <td align='center'><?=$dateofsuspension?></td>  
+                         <td align='center'><?=$status?></td>    
+                         <td align='center'><?=$addedby?></td>   
+                         <td align='center'><?=$updatedby?></td> 
+                          
                           <td align="center">
                           <?php
                             if($status=="pending"){
@@ -291,7 +307,7 @@ th.sortable.desc::after {
                             <?php
                             }else{
                               ?>
-                              <a href="?manageinfraction&id=<?=$company['id'];?>&undo" class="btn btn-info btn-xs" title="Restore Infraction" onclick="return confirm('Do you wish to restore this infraction?'); return false;"><i class='fa fa-exchange'></i></a>
+                              <a href="?manageinfraction&id=<?=$company['id'];?>&undo" class="btn btn-info btn-xs" title="Restore Infraction" onclick="return confirm('Do you wish to restore this infraction?'); return false;"><i class='fa fa-undo'></i></a>
                               <?php
                             }
                             ?>
@@ -331,7 +347,7 @@ th.sortable.desc::after {
     if(isset($_GET['undo'])){
       $id=$_GET['id'];
       $datenow=date('Y-m-d H:i:s');
-      $sqlDelete=mysqli_query($con,"UPDATE infraction SET `status`='pending', 'viewstatus'='new', updatedby='$fullname',updateddatetime='$datenow' WHERE id='$id'");
+      $sqlDelete=mysqli_query($con,"UPDATE infraction SET `status`='pending', viewstatus='new', updatedby='$fullname',updateddatetime='$datenow' WHERE id='$id'");
       if($sqlDelete){
         echo "<script>alert('Infraction successfully restored!');window.location='?manageinfraction';</script>";
       }else{
@@ -341,7 +357,7 @@ th.sortable.desc::after {
     if(isset($_GET['serve'])){
       $id=$_GET['id'];              
       $datenow=date('Y-m-d H:i:s');
-      $sqlDelete=mysqli_query($con,"UPDATE infraction SET `status`='Served', 'viewstatus'='new', updatedby='$fullname',updateddatetime='$datenow' WHERE id='$id'");
+      $sqlDelete=mysqli_query($con,"UPDATE infraction SET `status`='Served', viewstatus='new', updatedby='$fullname',updateddatetime='$datenow' WHERE id='$id'");
       if($sqlDelete){
         echo "<script>alert('Infraction successfully served!');window.location='?manageinfraction';</script>";
       }else{
@@ -544,16 +560,17 @@ function resetFilter() {
     window.location.href = '?manageinfraction';
 }
 
-//Sorting
+//Sorting Columns
 document.addEventListener("DOMContentLoaded", function () {
     const headers = document.querySelectorAll(".sortable");
+    
     headers.forEach(header => {
         header.addEventListener("click", function () {
             const table = header.closest("table");
             const tbody = table.querySelector("tbody");
             const columnIndex = parseInt(header.getAttribute("data-column"));
             const isAscending = header.classList.contains("asc");
-            
+
             // Clear existing sorting classes
             headers.forEach(h => h.classList.remove("asc", "desc"));
 
@@ -566,10 +583,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 const aText = a.cells[columnIndex].innerText.trim();
                 const bText = b.cells[columnIndex].innerText.trim();
 
-                // Handle numeric vs. string comparison
                 return isAscending
-                    ? compareValues(bText, aText)
-                    : compareValues(aText, bText);
+                    ? compareValues(bText, aText) // Sort descending if currently ascending
+                    : compareValues(aText, bText); // Sort ascending if currently descending
             });
 
             // Append sorted rows back to the table body
@@ -578,10 +594,46 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     function compareValues(a, b) {
-        if (!isNaN(a) && !isNaN(b)) {
-            return parseFloat(a) - parseFloat(b); // Numeric comparison
+        const dateA = parseDateTime(a);
+        const dateB = parseDateTime(b);
+
+        // Check if both values are valid dates, if so, compare as dates
+        if (dateA && dateB) return dateA - dateB;
+
+        // Otherwise, compare as case-insensitive strings (for names, text, etc.)
+        return a.localeCompare(b, undefined, { sensitivity: 'base' });
+    }
+
+    function parseDateTime(dateStr) {
+        const monthMap = {
+            "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
+            "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+        };
+
+        // Regex patterns to detect date and date-time formats
+        const dateRegex = /^([A-Za-z]+)\s(\d{1,2}),\s(\d{4})$/;  // Format: Jan 02, 2025
+        const dateTimeRegex = /^([A-Za-z]+)\s(\d{1,2}),\s(\d{4})\s(\d{1,2}):(\d{2})\s(AM|PM)$/;  // Format: Jan 02, 2025 6:42 AM
+
+        const matchDateTime = dateStr.match(dateTimeRegex);
+        if (matchDateTime) {
+            const [, month, day, year, hours, minutes, meridian] = matchDateTime;
+            let hour24 = convertTo24Hour(parseInt(hours), meridian);
+            return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), hour24, parseInt(minutes));
         }
-        return a.localeCompare(b); // String comparison
+
+        const matchDate = dateStr.match(dateRegex);
+        if (matchDate) {
+            const [, month, day, year] = matchDate;
+            return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), 0, 0);
+        }
+
+        return null; // If not a date, return null (so it will be sorted alphabetically)
+    }
+
+    function convertTo24Hour(hours, meridian) {
+        if (meridian === "PM" && hours !== 12) return hours + 12; // Convert PM hours
+        if (meridian === "AM" && hours === 12) return 0; // Midnight case
+        return hours; // Otherwise, return as is
     }
 });
 </script>

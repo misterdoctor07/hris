@@ -20,6 +20,7 @@ if (!$userDetails) {
     exit();
 }
 
+
 $userDept = $userDetails['department'];
 $designation = $userDetails['designation'];
 $userCompany = $userDetails['company'];
@@ -51,9 +52,7 @@ $departments = [
     43 => "Newiwnd GY",  // Add more department mappings here
 ];
 
-// Ensure the logged-in user is an assessor (designation 8)
-if ($designation == 8|| $designation == 59 || $designation == 65 || $designation == 94) {  //Assessor || TL || TM || OIC
-    // Assessor: View only own department
+if ($userId == '103417'){
     $query = "SELECT 
                 ep.*, 
                 i.id, i.dateserved, i.dateissued, i.typecat, i.typeofoffense, 
@@ -63,10 +62,24 @@ if ($designation == 8|| $designation == 59 || $designation == 65 || $designation
               FROM employee_profile ep
               INNER JOIN infraction i ON i.idno = ep.idno
               INNER JOIN employee_details ed ON ed.idno = ep.idno
-              WHERE ed.department = '$userDept'
+              WHERE ed.department = '16'
               ORDER BY 
                 i.dateissued ASC";
-} elseif ($designation == 50 || $designation == 89 || ($designation == 8 && $userCompany =="NEWIND")) { //OS || OM
+} else if($userId == '103341'){
+    $query = "SELECT 
+                ep.*, 
+                i.id, i.dateserved, i.dateissued, i.typecat, i.typeofoffense, 
+                i.dateofincident, i.typeofmemo, i.points, i.memonumber, 
+                i.dateofsuspension, i.status,
+                ed.department, ed.company 
+            FROM employee_profile ep
+            INNER JOIN infraction i ON i.idno = ep.idno
+            INNER JOIN employee_details ed ON ed.idno = ep.idno
+            WHERE ed.department = '16'
+            OR ed.company = 'NEWIND'
+            ORDER BY 
+                i.dateissued ASC";
+} else if ($designation == 50 || $designation == 89) { //OS || OM
     // View all departments in the same company
     $query = "SELECT 
                 ep.*, 
@@ -80,7 +93,37 @@ if ($designation == 8|| $designation == 59 || $designation == 65 || $designation
               WHERE ed.company = '$userCompany'
               ORDER BY 
                 i.dateissued ASC";
-} else if($designation == 102 || $designation == 3 || $designation == 88|| $designation == 114||$designation == 92){ // Accounting Assistant || Accounting Specialist || Accounting Associate || Admin Executive || Senor Admin Auditor
+}
+// Ensure the logged-in user is an assessor (designation 8)
+elseif ($designation == 8|| $designation == 59 || $designation == 65 || $designation == 94) {  //Assessor || TL || TM || OIC
+    // Assessor: View only own department
+    $query = "SELECT 
+                ep.*, 
+                i.id, i.dateserved, i.dateissued, i.typecat, i.typeofoffense, 
+                i.dateofincident, i.typeofmemo, i.points, i.memonumber, 
+                i.dateofsuspension, i.status,
+                ed.department, ed.company 
+              FROM employee_profile ep
+              INNER JOIN infraction i ON i.idno = ep.idno
+              INNER JOIN employee_details ed ON ed.idno = ep.idno
+              WHERE ed.department = '$userDept'
+              ORDER BY 
+                i.dateissued ASC";
+} elseif ($designation == 50 || $designation == 89||$userId == '103341') { //OS || OM
+    // View all departments in the same company
+    $query = "SELECT 
+                ep.*, 
+                i.id, i.dateserved, i.dateissued, i.typecat, i.typeofoffense, 
+                i.dateofincident, i.typeofmemo, i.points, i.memonumber, 
+                i.dateofsuspension, i.status,
+                ed.department, ed.company 
+              FROM employee_profile ep
+              INNER JOIN infraction i ON i.idno = ep.idno
+              INNER JOIN employee_details ed ON ed.idno = ep.idno
+              WHERE ed.company = '$userCompany'
+              ORDER BY 
+                i.dateissued ASC";
+} else if($designation == 102 || $designation == 3 || $designation == 88|| $designation == 114 || $designation == 92){ // Accounting Assistant || Accounting Specialist || Accounting Associate || Admin Executive || Senor Admin Auditor
     $query = "SELECT 
     ep.*, 
     i.id, i.dateserved, i.dateissued, i.typecat, i.typeofoffense, 
@@ -97,7 +140,6 @@ if ($designation == 8|| $designation == 59 || $designation == 65 || $designation
   ORDER BY 
     i.dateissued ASC";
 } 
-
 else {
     echo "<script>alert('Access Denied!');window.location='?main';</script>";
     exit();

@@ -14,11 +14,6 @@ if (!$sqlCompanies) {
             <h4>
                 <a href="?main"><i class="fa fa-arrow-left"></i> HOME</a> |
                 <i class="fa fa-user"></i> EMPLOYEE LIST
-                <div style="float:right;">
-                    <a href="?addemployee" class="btn btn-primary">
-                        <i class="fa fa-plus-circle"></i> Add Employee
-                    </a>
-                </div>
             </h4>
         </div>
 
