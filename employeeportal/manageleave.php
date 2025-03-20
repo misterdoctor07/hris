@@ -106,28 +106,6 @@ if (isset($_GET['cancel'])) {
 
 
         if ($sqlCancel) {
-            // Update leave credits based on leave type
-            // switch ($leaveType) {
-            //     case 'VL':
-            //         $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET vlused = vlused - $numberOfDays WHERE idno = '$idno'");
-            //         break;
-            //     case 'SL':
-            //         $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET slused = slused - $numberOfDays WHERE idno = '$idno'");
-            //         break;
-            //     case 'PTO':
-            //         $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET ptoused = ptoused - $numberOfDays WHERE idno = '$idno'");
-            //         break;
-            //     case 'BLP':
-            //         $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET blp_used = blp_used - $numberOfDays WHERE idno = '$idno'");
-            //         break;
-            //     case 'EO':
-            //         $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET eo_used = eo_used - $numberOfDays WHERE idno = '$idno'");
-            //         break;                                      
-            //     default:
-            //         echo "<script>alert('Leave type not recognized. No credits updated.');</script>";
-            //         break;
-            // }
-            
             echo "<script>";
             echo "alert('Leave successfully cancelled!');";
             echo "window.location='?manageleave';";

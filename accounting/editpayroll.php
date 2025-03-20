@@ -7,7 +7,7 @@ $employee=mysqli_fetch_array($sqlEmployee);
 
 function isNightShift($startShift, $endShift) {
   // Check if the shift starts at midnight and ends in the morning
-  return ($startShift == '00:00:00' && $endShift == '09:00:00');
+  return (($startShift == '00:00:00' && $endShift == '09:00:00')||( $startShift == '23:00:00' && $endShift == '08:00:00'));
 }
 
 $sqlEmployeeDetails=mysqli_query($con,"SELECT * FROM employee_details WHERE idno='$idno'");
@@ -118,7 +118,7 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                       <th style="text-align: center; vertical-align: middle;">Time Out</th>
                       <th style="text-align: center; vertical-align: middle;">Total Hrs</th>
                       <th style="text-align: center; vertical-align: middle;">Reg Hrs</th>
-                      <th style="text-align: center; vertical-align: middle;" width="5%">Hrs Not Work</th>
+                      <!-- <th style="text-align: center; vertical-align: middle;" width="5%">Hrs Not Work</th> -->
                       <th style="text-align: center; vertical-align: middle;">OT</th>
                       <th style="text-align: center; vertical-align: middle;">ND</th>
                       <th style="text-align: center; vertical-align: middle;">Rate/Day</th>
@@ -210,7 +210,7 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
 
                             $startshift = $EmployeeDetails['startshift'];
                             $endshift = $EmployeeDetails['endshift'];
-                            $empsalary = $employeepayroll['salary'];
+                            $empsalary = $employeepayroll['salary'] ?? 0;
                             $logindate = $attendance['logindate'];
                             $loginam = ( $attendance['loginam'] === "0") ? "0" : date('h:i:s A', strtotime($attendance['loginam']));
                             $logoutam = ( $attendance['logoutam'] === "0") ? "0" : date('h:i:s A', strtotime($attendance['logoutam']));
@@ -231,17 +231,27 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                             $time2pm = ( $logoutpm === "0") ? 0 : strtotime($logoutpm);
                             $timestart = strtotime($startshift);
                             $timeend = strtotime($endshift);
-
-                            
                     
                             $difference_am = round(abs($time2am - $time1am) / 3600, 2);
                             $difference_pm = round(abs($time2pm - $time1pm) / 3600, 2);
-                            
                             $totalstart = round(abs($timestart - $time2am) / 3600, 2);
                             $totalam = round(abs($time2am  - $time2pm) / 3600, 2);
-                            $totalwo = (($totalstart + $totalam) - .5);
                             $shiftdiff = round(abs($timestart - $timeend) / 3600, 2);
+                            // Convert times to Unix timestamps
+
+
+                            // Check if the shift crosses midnight
+                            if ($time2pm < $time1am) {
+                              // Add 24 hours to the end time
+                              $time2pm += 86400;
+                            }
+                            
+                            // Calculate total working hours
+                            $totalwo = (round(abs($time2pm - $time1am) / 3600, 2)-.5);
+                            
+                            // Subtract break time (if applicable)
                             $totalhrs = $totalwo;
+                            $totalhrs -= 0.5;
                     
                             $nd = 0;
                             $work = 0;
@@ -251,6 +261,8 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                             $ndhrs = 0;
                             $ot = 0;
                             $pot = 0;
+                            $ab = 0;
+                            $sus =0;
                             $totalhrs = 0;
                            
 
@@ -293,22 +305,36 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                           if($p[$i]=="pt"){
                             $pot++;
                           }
+                          if($p[$i]=="ab"){
+                                $ab++;
+                           }
+                          if($p[$i]=="sus"){
+                                $sus++;
+                          }
                         }
 
                        
                         if($work > 0){ //Regular worked without Night Differential
                             
-                            $ndhrs=0;
+                          
                           if($totalwo>8){
                             $reghrs=$totalwo-($totalwo-8);
                           }
                         }
+
                         if($leave > 0){//On Leave
                           $empsalary = 0;
                         $totalwo=0;
                         }
-                        
-                        
+                        if($sus > 0){//On Leave
+                          $empsalary = 0;
+                        $totalwo=0;
+                        }
+                        if($ab > 0){//On Leave
+                          $empsalary = 0;
+                        $totalwo=0;
+                        }
+                      
                         
                         if ($nd > 0 && $work > 0) { // Regular work with Night Differential
                             $startShift = $employeedetails['startshift']; // Get the employee's shift start time
@@ -373,20 +399,20 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                             $ndhrs=$ndhrs1=round(abs(strtotime('06:00:00') - $time1am) / 3600,2);
                           }
                         }
-                        // if($nd>0 && $ot>0 && $pot==0){ //Night differential with Overtime afer 8 hrs worked
+                        if($nd>0 && $ot>0 && $pot==0){ //Night differential with Overtime afer 8 hrs worked
                         
-                        //     if($employeedetails['startshift']=="00:00:00"){
-                        //       $totalhrs1=$totalwo;
-                        //       $totalwo=$totalhrs1;
-                        //     }
-                        //     $totalhrs1=$totalwo;
+                            if($employeedetails['startshift']=="00:00:00"){
+                              $totalhrs1=$totalwo;
+                              $totalwo=$totalhrs1;
+                            }
+                            $totalhrs1=$totalwo;
 
-                        //   $totalwo=$totalhrs1;
-                        //   $overtime=$totalwo-$reghrs;
-                        //   if($employeedetails['startshift']=="04:00:00"){
-                        //     $ndhrs=round(abs(strtotime('06:00:00') - $time1am) / 3600,2);
-                        //   }
-                        // }
+                          $totalwo=$totalhrs1;
+                          $overtime=$totalwo-$reghrs;
+                          if($employeedetails['startshift']=="04:00:00"){
+                            $ndhrs=round(abs(strtotime('06:00:00') - $time1am) / 3600,2);
+                          }
+                        }
                         if($work>0 && $pot>0 && $employeedetails['location']=="OS"){ //Regular Work with Overtime before 8 hrs worked
                           $totalhrs=$difference_am+$difference_pm;
                           $thrs=round(abs(strtotime($employeedetails['startshift'])-$time1am));
@@ -585,7 +611,7 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                           echo "<td align='center'>" . date('h:i A', $logoutpm_adjusted) . "</td>";
                           echo "<td align='center'>$totalwo</td>";
                           echo "<td align='center'>$reghrs</td>";
-                          echo "<td align='center'>$hrsnotworked</td>";
+                          // echo "<td align='center'>$hrsnotworked</td>";
                           echo "<td align='center' data-id='$attendid'>$overtime</td>";
                           echo "<td align='center'>$ndhrs</td>";
                           echo "<td align='right'>".number_format($empsalary,2)."</td>";

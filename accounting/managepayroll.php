@@ -5,7 +5,6 @@
     $sqlPayroll = mysqli_query($con, "SELECT * FROM payroll WHERE id='$id'");
     $payroll = mysqli_fetch_array($sqlPayroll);
 
-    // Fetch Payroll Status Counts
     // Fetch Payroll Status Counts and Salary Type
     $posted = 0;
     $notposted = 0;
