@@ -109,6 +109,74 @@ $sqlCompanies = mysqli_query($con, "SELECT DISTINCT company FROM employee_detail
 if (!$sqlCompanies) {
     echo "Query error: " . mysqli_error($con);
 }
+
+// Automatic Disapprove when the application is 24hrs due
+$sqlMissedLog = mysqli_query($con, "SELECT * FROM missed_log_application WHERE applic_status = 'Pending'");
+
+while ($missedlog = mysqli_fetch_array($sqlMissedLog)) {
+    $datemissed = $missedlog['datemissed']; // Expected format: YYYY-MM-DD
+    $timemissed = explode('.', $missedlog['mttime'])[0] ?: '00:00:00'; // Remove microseconds
+    $dateapplied = $missedlog['date_applied']; // Expected format: YYYY-MM-DD
+    $timeapplied = explode('.', $missedlog['time_applied'])[0] ?: '00:00:00'; // Remove microseconds
+    $id = $missedlog['id'];
+
+    // Create DateTime objects with corrected format
+    $incident_datetime = new DateTime("$datemissed $timemissed");
+    $application_datetime = new DateTime("$dateapplied $timeapplied");
+
+    // Check if DateTime objects were created successfully
+    if (!$incident_datetime || !$application_datetime) {
+        continue; // Skip invalid rows
+    }
+
+    // Calculate the time difference in total hours
+    $interval = $incident_datetime->diff($application_datetime);
+    $diff_in_hours = ($interval->days * 24) + $interval->h + ($interval->i / 60) + ($interval->s / 3600);
+
+    // Check if more than 24 hours have passed
+    if ($diff_in_hours >= 24) { 
+        $sqlUpdate = mysqli_query($con, "UPDATE missed_log_application SET applic_status='Disapproved due to 24 hrs filing violation.' WHERE id = '$id'");
+    }
+}
+
+// Handle approval action for missed log
+if (isset($_GET['approved']) && isset($_GET['id'])) {
+    $id = intval($_GET['id']); 
+    $datetime = date('M j, Y - g:i A');
+    $sqlUpdate = mysqli_query($con, "UPDATE missed_log_application SET applic_status='Approved' WHERE id='$id'");
+
+    if ($sqlUpdate) {
+        echo "<script>alert('Missed log application successfully approved!'); window.location='?missedloginapplication';</script>";
+    } else {
+        echo "<script>alert('Unable to approve missed log application!'); window.location='?missedloginapplication';</script>";
+    }
+}
+
+// Handle disapproval action for missed log
+if (isset($_GET['disapproved']) && isset($_GET['id'])) {
+    $id = intval($_GET['id']); // Sanitize the ID
+    $datetime = date('M j, Y - g:i A');
+    $sqlUpdate = mysqli_query($con, "UPDATE missed_log_application SET applic_status='Disapproved' WHERE id='$id'");
+
+    if ($sqlUpdate) {
+        echo "<script>alert('Missed log application successfully disapproved!'); window.location='?missedloginapplication';</script>";
+    } else {
+        echo "<script>alert('Unable to disapprove missed log application!'); window.location='?missedloginapplication';</script>";
+    }
+}
+
+// Handle undo action for leave application
+if (isset($_GET['undo']) && isset($_GET['id'])) {
+    $id = intval($_GET['id']); 
+
+    $sqlUpdate = mysqli_query($con, "UPDATE missed_log_application SET applic_status='Pending' WHERE id='$id'");
+
+    if ($sqlUpdate) {
+        echo "<script>alert('Action successfully undone!'); window.location='?missedloginapplication';</script>";
+    } else {
+        echo "<script>alert('Action taken was not successful!'); window.location='?missedloginapplication';</script>";
+    }
+}
 ?>
 
 <div class="col-lg-12">
@@ -165,10 +233,7 @@ if (!$sqlCompanies) {
                         INNER JOIN employee_details ed ON ml.idno = ed.idno
                         WHERE ed.company = '$companyCode'
                         AND (ml.datemissed BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
-                        AND ml.applic_status != 'Pending' 
-                        AND ml.applic_status != 'Cancelled' 
-                        AND ml.applic_status NOT LIKE '*Approved%'
-                        AND ml.applic_status NOT LIKE '*Disapproved%'");  
+                        AND ml.applic_status = 'Pending'");  
                     $count = mysqli_fetch_assoc($sqlCount)['total'];
                     
                     // Display company name with badge
@@ -216,9 +281,7 @@ if (!$sqlCompanies) {
                         AND d.department = '$departmentName'
                         AND ml.datemissed IS NOT NULL
                         AND ('$fromDate' = '' OR '$toDate' = '' OR DATE(ml.datemissed) BETWEEN '$fromDate' AND '$toDate')
-                        AND ml.applic_status NOT LIKE '*Approved%' 
-                        AND ml.applic_status NOT LIKE '*Disapproved%' 
-                        AND ml.applic_status NOT IN ('Pending', 'Cancelled')");
+                        AND ml.applic_status = 'Pending'");
                         $deptCount = mysqli_fetch_assoc($sqlDeptCount)['total'];
 
                         // Assign unique ID using company and department names
@@ -258,11 +321,13 @@ if (!$sqlCompanies) {
                         AND (ml.datemissed BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '') 
                         ORDER BY 
                             CASE 
-                                WHEN ml.applic_status LIKE 'Approved%' THEN 1
-                                WHEN ml.applic_status LIKE 'Disapproved%' THEN 2
-                                WHEN ml.applic_status = 'Pending' THEN 3
-                                WHEN ml.remarks = 'POSTED' THEN 4
-                                ELSE 5
+                                WHEN ml.applic_status = 'Pending' THEN 1
+                                WHEN ml.applic_status LIKE 'Approved%' THEN 2
+                                WHEN ml.applic_status LIKE '*Approved%' THEN 3
+                                WHEN ml.applic_status LIKE 'Disapproved%' THEN 4
+                                WHEN ml.applic_status LIKE '*Disapproved%' THEN 5
+                                WHEN ml.remarks = 'POSTED' THEN 6
+                                ELSE 7
                             END,
                             ml.date_applied,
                             ml.time_applied DESC");
@@ -290,8 +355,6 @@ if (!$sqlCompanies) {
                                 <th class="sortable" data-column="9" width="10%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Date and Time Applied</th>
                                 <th class="sortable" data-column="10" width="10%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Status</th>
                                 <th class="sortable" data-column="11" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">HR Remarks</th>
-                                <th class="sortable" data-column="12" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Monitoring Remarks</th>
-                                <th class="sortable" data-column="13" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Approver Remarks</th>
                                 <th width="6%" style="text-align: center; vertical-align: middle;  background-color:#20273a; color: white;">Action</th>
                             </tr>
                         </thead>
@@ -309,9 +372,9 @@ if (!$sqlCompanies) {
                                         $status = $emp['applic_status'];
 
                                         // Determine the row class based on the applic_status
-                                        if (strpos($status, '*Disapproved') !== false || strpos($status, 'Disapproved') !== false) {
+                                        if (strpos($status, 'Disapproved') !== false) {
                                             $rowClass = "danger"; // Red
-                                        } elseif (strpos($status, '*Approved') !== false) {
+                                        } elseif (strpos($status, 'Approved') !== false) {
                                             $rowClass = "success"; // Green
                                         } elseif ($status == "Pending") {
                                             $rowClass = "warning"; // Yellow
@@ -334,25 +397,31 @@ if (!$sqlCompanies) {
                                             <td style="text-align: center; vertical-align: middle;"><?= date('M j, Y', strtotime($emp['date_applied'])) . "<br>" . date('g:i A', strtotime($emp['time_applied'])); ?></td>
                                             <td style="text-align: center; vertical-align: middle;"><?= $emp['applic_status'] ?></td>
                                             <td style="text-align: justify; vertical-align: middle;"><?= $emp['remarks'] ?></td>
-                                            <td style="text-align: <?= ($emp['monitoring_remarks'] == 'verified') ? 'center' : 'justify'; ?>; vertical-align: middle;">
-                                                <?=$emp['monitoring_remarks'];?>
-                                            </td>
-                                            <td style="text-align: justify; vertical-align: middle;"><?= $emp['approver_remarks'] ?></td>
                                             <td style="text-align: center; vertical-align: middle;">
-                                                <?php if (strpos($emp['applic_status'], '*Approved') === false && strpos($emp['applic_status'], '*Disapproved') === false): ?>
-                                                    <?php if ($emp['applic_status'] != 'Cancelled' && $emp['applic_status'] != 'Pending'): ?>
-                                                        <a href="?missedloginapplication&done&id=<?= $emp['mlid']; ?>&remarks=<?= $emp['remarks']; ?>" 
-                                                            class="btn btn-success btn-xs confirm-done" 
-                                                            title="Done">
-                                                            <i class='fa fa-check-square-o'></i>
-                                                        </a>
-                                                    <?php endif; ?>
+                                                <?php if ($emp['applic_status'] == 'Pending'): ?>
+                                                    <a href="?missedloginapplication&approved&id=<?= $emp['mlid']; ?>" 
+                                                        class="btn btn-success btn-xs" 
+                                                        title="Approve">
+                                                        <i class='fa fa-thumbs-up'></i>
+                                                    </a>
+                                                    <a href="?missedloginapplication&disapproved&id=<?= $emp['mlid']; ?>" 
+                                                        class="btn btn-danger btn-xs" 
+                                                        title="Disapprove">
+                                                        <i class='fa fa-thumbs-down'></i>
+                                                    </a>
+                                                    <a href="?missedloginapplication&addremarks&id=<?= $emp['mlid']; ?>&remarks=<?= $emp['remarks']; ?>" 
+                                                        class="btn btn-primary btn-xs"
+                                                        title="Remarks">
+                                                        <i class='fa fa-comment'></i>
+                                                    </a>
                                                 <?php endif; ?>
-                                                <a href="?missedloginapplication&addremarks&id=<?= $emp['mlid']; ?>&remarks=<?= $emp['remarks']; ?>" 
-                                                    class="btn btn-primary btn-xs"
-                                                    title="Remarks">
-                                                    <i class='fa fa-comment'></i>
-                                                </a>
+                                                <?php if ($emp['applic_status'] == 'Approved' || $emp['applic_status'] == 'Disapproved'): ?>
+                                                    <a href="?missedloginapplication&undo&id=<?= $emp['mlid']; ?>" 
+                                                        class="btn btn-warning btn-xs" 
+                                                        title="Undo">
+                                                        <i class='fa fa-undo'></i>
+                                                    </a>
+                                                <?php endif; ?>
                                             </td>
                                         </tr>
                                         <?php

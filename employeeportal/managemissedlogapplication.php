@@ -95,9 +95,6 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                         <th width="10%" style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Date and Time Applied</th>
                         <th width="10%" style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Status</th>
                         <th style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">HR's Remarks</th>
-                        <th style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Monitoring's Remarks</th>
-                        <th style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Remarks</th>
-                        <th width="6%" style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -211,19 +208,6 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                                 echo "<td style='text-align: center; vertical-align: middle'>" . date('M j, Y', strtotime($company['date_applied'])) . "<br>" . date('g:i:s A', strtotime($company['time_applied'])) . "</td>";
                                 echo "<td style='text-align: center; vertical-align: middle'>$statusText</td>";
                                 echo "<td style='text-align: justify; vertical-align: middle'>{$company['remarks']}</td>";
-                                echo "<td style='text-align: " . (($company['monitoring_remarks'] == 'verified') ? 'center' : 'justify') . "; vertical-align: middle;'>
-                                        {$company['monitoring_remarks']}
-                                    </td>";
-                                echo "<td style='text-align: justify; vertical-align: middle'>{$company['approver_remarks']}</td>";
-                                echo "<td style='text-align: center; vertical-align: middle'>";
-                                        if ($appStatus == "Pending") {
-                                            echo "<a href='?managemissedlogapplication&id={$company['mlid']}&approved' class='btn btn-success btn-xs' title='Approve' onclick=\"return confirm('Do you wish to approve this missed log application?'); return false;\"><i class='fa fa-thumbs-up'></i></a>";
-                                            echo "<a href='?managemissedlogapplication&id={$company['mlid']}&disapproved' class='btn btn-danger btn-xs' title='Disapprove' onclick=\"return confirm('Do you wish to disapprove this missed log application?'); return false;\"><i class='fa fa-thumbs-down'></i></a>";
-                                            echo "<a href='?managemissedlogapplication&addremarks&id={$company['mlid']}&approver_remarks' class='btn btn-primary btn-xs' title='Remarks');\"><i class='fa fa-comment'></i></a>";
-                                        } else {
-                                            echo "<a href='?managemissedlogapplication&id={$company['mlid']}&undo' class='btn btn-warning btn-xs' title='Undo Action' onclick=\"return confirm('Do you wish to undo the action taken?'); return false;\"><i class='fa fa-exchange'></i></a>";
-                                        }
-                                echo "</td>";
                                 echo "</tr>";
                                 $x++;
                             }

@@ -144,6 +144,8 @@ date_default_timezone_set("Asia/Manila");
             $image = $target_dir . $userId . ".jpg";
         } elseif (file_exists($target_dir . $userId . ".jpeg")) {
             $image = $target_dir . $userId . ".jpeg";
+        } else{
+          $image = $target_dir . "default_image.png";
         }
         ?>
               
@@ -161,7 +163,7 @@ date_default_timezone_set("Asia/Manila");
               <span>Profile</span>
               </a>
           </li>
-          <li class="sub-menu" id="app-menu">
+          <li class="sub-menu">
               <a href="#" class="menu-toggle" style="position: relative;">
                   <i class="fa fa-envelope-open"></i>
                   <span>Applications</span>
@@ -169,78 +171,38 @@ date_default_timezone_set("Asia/Manila");
               </a>
               <ul class="sub">
                   <li>
-                      <a href="dashboard.php?manageleave" class="submenu-item" onclick="markNotifseen('leave')">
-                          Apply Leave
-                          <span id="leave-notif" class="notif-icon"></span>
-                      </a>
+                    <a href="dashboard.php?manageleave" class="submenu-item" onclick="markNotifseen('leave')" style="position: relative; display: inline-block;">
+                        Apply Leave
+                        <span id="leave-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
+                    </a>
                   </li>
                   <li>
-                      <a href="dashboard.php?applymissedlog" class="submenu-item" onclick="markNotifseen('missedlog')">
-                          Apply Missed Log
-                          <span id="missedlog-notif" class="notif-icon"></span>
-                      </a>
+                    <a href="dashboard.php?applymissedlog" class="submenu-item" onclick="markNotifseen('missedlog')" style="position: relative; display: inline-block;">
+                        Apply Missed Log
+                        <span id="missedlog-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
+                    </a>
                   </li>
                   <li>
-                      <a href="dashboard.php?applyovertime" class="submenu-item" onclick="markNotifseen('overtime')">
-                          Apply Overtime
-                          <span id="overtime-notif" class="notif-icon"></span>
-                      </a>
+                    <a href="dashboard.php?applyovertime" class="submenu-item" onclick="markNotifseen('overtime')" style="position: relative; display: inline-block;">
+                        Apply Overtime
+                        <span id="overtime-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
+                    </a>
                   </li>
                   <li>
-                      <a href="dashboard.php?emergencyearlyout" class="submenu-item" onclick="markNotifseen('eeo')">
-                          Apply EEO
-                          <span id="eeo-notif" class="notif-icon"></span>
-                      </a>
+                    <a href="dashboard.php?emergencyearlyout" class="submenu-item" onclick="markNotifseen('eeo')" style="position: relative; display: inline-block;">
+                        Apply EEO
+                        <span id="eeo-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
+                    </a>
                   </li>
                   <?php if ($designation == 114): ?>
-                  <li>
-                      <a href="dashboard.php?manageemployee" class="submenu-item">
+                    <li>
+                      <a href="dashboard.php?manageemployee" class="submenu-item" style="position: relative; display: inline-block;">
                           Apply Leave for Employee
                       </a>
-                  </li>
+                    </li>
                   <?php endif; ?>
               </ul>
           </li>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const appMenu = document.querySelector(".sub-menu");
-    const menuToggle = appMenu.querySelector(".menu-toggle");
-
-    // Check localStorage for menu state
-    let isOpen = localStorage.getItem("appMenuOpen") === "true";
-
-    // Apply stored state
-    if (isOpen) {
-        appMenu.classList.add("open");
-    }
-
-    // Toggle menu on click
-    menuToggle.addEventListener("click", function (event) {
-        event.preventDefault();
-        isOpen = !isOpen; // Toggle state
-
-        if (isOpen) {
-            appMenu.classList.add("open");
-            localStorage.setItem("appMenuOpen", "true");
-        } else {
-            appMenu.classList.remove("open");
-            localStorage.setItem("appMenuOpen", "false");
-        }
-    });
-});
-</script>
-<style>
-  .sub-menu ul {
-    display: none;
-}
-
-.sub-menu.open ul {
-    display: block;
-}
-
-</style>
-
           <li class="sub-menu">
               <a  <?= $view; ?> href="javascript:;">
                 <i class="fa fa-archive"></i>
@@ -280,6 +242,38 @@ document.addEventListener("DOMContentLoaded", function () {
                 <?php endif; ?>
               </ul>
           </li>
+          <script>
+              document.addEventListener("DOMContentLoaded", function() {
+                  let menuItems = document.querySelectorAll("ul.sidebar-menu li a");
+
+                  menuItems.forEach(item => {
+                      item.addEventListener("click", function(event) {
+                          let parentLi = this.parentElement; // Get the parent <li>
+
+                          // Check if it has a submenu
+                          let submenu = parentLi.querySelector("ul.sub");
+                          if (submenu) {
+                              event.preventDefault(); // Prevent default link action
+                              parentLi.classList.toggle("open"); // Toggle "open" class
+                          }
+
+                          // Store the active state in localStorage
+                          let activeMenu = this.getAttribute("href"); // Get clicked menu link
+                          localStorage.setItem("activeMenu", activeMenu);
+                      });
+                  });
+
+                  // Restore active state on page load
+                  let activeMenu = localStorage.getItem("activeMenu");
+                  if (activeMenu) {
+                      let activeItem = document.querySelector(`ul.sidebar-menu li a[href="${activeMenu}"]`);
+                      if (activeItem) {
+                          activeItem.parentElement.classList.add("open"); // Keep the parent <li> open
+                          activeItem.classList.add("active"); // Add active styling
+                      }
+                  }
+              });
+          </script>
           <li>
             <a href="dashboard.php?viewpayroll">
               <i class="fa fa-credit-card"></i>

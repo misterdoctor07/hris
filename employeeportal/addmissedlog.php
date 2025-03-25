@@ -84,11 +84,11 @@ if(isset($_POST['submit'])) {
     // Check if the query was successful
     if($sqlAddEmployee) {
         echo "<script>";
-        echo "alert('Details successfully saved!'); window.location='?addmissedlog';";
+        echo "alert('Details successfully saved!'); window.location='?applymissedlog';";
         echo "</script>";
     } else {
         echo "<script>";
-        echo "alert('Unable to save details!'); window.location='?addmissedlog';";
+        echo "alert('Unable to save details!'); window.location='?applymissedlog';";
         echo "</script>";
     }
 }

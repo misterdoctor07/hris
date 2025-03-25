@@ -12,7 +12,7 @@ date_default_timezone_set("Asia/Manila");
   <meta name="keyword" content="Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
-  <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Montserrat:400,700'><link rel="stylesheet" href="./style-clock.css">
+  <link rel='preload' href='https://fonts.googleapis.com/css?family=Montserrat:400,700'><link rel="stylesheet" href="./style-clock.css">
   <link href="lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <!--external css-->
   <link href="lib/font-awesome/css/font-awesome.css" rel="stylesheet" />
@@ -23,7 +23,7 @@ date_default_timezone_set("Asia/Manila");
   <link href="css/style-responsive.css" rel="stylesheet">
   <script src="lib/chart-master/Chart.js"></script>
   <title>HRIS - North East Solutions Inc.</title>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;700&display=swap" rel="stylesheet">
 
   <style>
     /* Additional styles for positioning the button */
@@ -202,54 +202,50 @@ date_default_timezone_set("Asia/Manila");
 <div class="lock-screen" style="margin-left: 140px; ">
           <table width="90%" >
 		<tr>
-              <td height="100" colspan="4" align="center" >               
-              
-                    
-              </td>
-            </tr>              
-              <tr>
-              <td>
-              <h2>
-    <a data-toggle="modal" href="#myModal" class="btn btn-primary attendance" data-id="loginam" data-title="LOG IN" style="background: transparent; border: none;">
-      <img src="img/LOG_IN.png" height="90" alt="Heart Image"> <!-- Replace with your heart image -->
-      <br>
-      <span style="color:white; font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: bold;">LOG IN</span>
-    </a>
-  </h2>
-                  </td>
-                  <td>
-                  <h2>
-    <a data-toggle="modal" href="#myModal" class="btn btn-primary attendance" data-id="logoutam" data-title="LUNCH OUT" style="background: transparent; border: none;">
-      <img src="img/LUNCH_OUT.png" height="90" alt="Heart Image">
-      <br>
-      <span style="color:white; font-size: 26px; font-family: 'Montserrat', sans-serif; font-weight: bold;">LUNCH OUT</span>
-    </a>
-  </h2>                   
-                  </td>
-                  <td>
-                  <h2>
-    <a data-toggle="modal" href="#myModal" class="btn btn-primary attendance" data-id="loginpm" data-title="LUNCH IN" style="background: transparent; border: none;">
-      <img src="img/LUNCH_IN.png" height="90" alt="Heart Image">
-      <br>
-      <span style="color:white; font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: bold;">LUNCH IN</span>
-    </a>
-  </h2>
-                  </td>
-                  <td>
-                  <h2>
-    <a data-toggle="modal" href="#myModal" class="btn btn-primary attendance" data-id="logoutpm" data-title="LOG OUT" style="background: transparent; border: none;">
-      <img src="img/LOG_OUT.png" height="90" alt="Heart Image">
-      <br>
-      <span style="color:white; font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: bold;">LOGOUT</span>
-    </a>
-  </h2>
-                    <div class="top-right-button" style="position: absolute;  top: 20px; right: 20px;">
-                    <a href="/hris/employeeportal/" class="btn btn-primary attendance" style="background:#3f4d6b; border-radius: 40px 40px; float: right; padding: 10px 20px; border: none;">
-                           EMPLOYEE PORTAL
-                 </a>
-                    </div>
-                      </h2>
-                  </td>
+      <td height="100" colspan="4" align="center" >                   
+      </td>
+    </tr>              
+    <tr>
+      <td>
+        <h2>
+          <a data-toggle="modal" href="#myModal" class="btn btn-primary attendance" data-id="loginam" data-title="LOG IN" style="background: transparent; border: none;">
+            <img src="img/LOG_IN.png" height="90" alt="Login Icon" loading="eager">
+            <br>
+            <span style="color:white; font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: bold;">LOG IN</span>
+          </a>
+        </h2>
+      </td>
+      <td>
+        <h2>
+          <a data-toggle="modal" href="#myModal" class="btn btn-primary attendance" data-id="logoutam" data-title="LUNCH OUT" style="background: transparent; border: none;">
+            <img src="img/LUNCH_OUT.png" height="90" alt="Lunch out Icon" loading="eager">
+            <br>
+            <span style="color:white; font-size: 26px; font-family: 'Montserrat', sans-serif; font-weight: bold;">LUNCH OUT</span>
+          </a>
+        </h2>                   
+      </td>
+      <td>
+        <h2>
+          <a data-toggle="modal" href="#myModal" class="btn btn-primary attendance" data-id="loginpm" data-title="LUNCH IN" style="background: transparent; border: none;">
+            <img src="img/LUNCH_IN.png" height="90" alt="Lunch in Icon" loading="eager">
+            <br>
+            <span style="color:white; font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: bold;">LUNCH IN</span>
+          </a>
+        </h2>
+      </td>
+      <td>
+        <h2>
+          <a data-toggle="modal" href="#myModal" class="btn btn-primary attendance" data-id="logoutpm" data-title="LOG OUT" style="background: transparent; border: none;">
+            <img src="img/LOG_OUT.png" height="90" alt="Logout Icon" loading="eager">
+            <br>
+            <span style="color:white; font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: bold;">LOGOUT</span>
+          </a>
+        </h2>
+<div class="top-right-button" style="position: absolute;  top: 20px; right: 20px;">
+  <a href="/hris/employeeportal/" class="btn btn-primary attendance" style="background:#3f4d6b; border-radius: 40px 40px; float: right; padding: 10px 20px; border: none;">
+         EMPLOYEE PORTAL
+   </a>
+</div>    
                 
                      <?php
                         // Assuming you have established a connection to the database

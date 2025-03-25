@@ -76,7 +76,8 @@ if (isset($_POST['submit'])) {
     // Form data from the POST request
     $dateEEO = $_POST['dateEEO'];
     $timeEEO = $_POST['timeEEO'];
-    $reason = $_POST['reason'];
+    $reason = isset($_POST['reason']) ? urldecode($_POST['reason']) : ''; // Decode the input
+    $reason = mysqli_real_escape_string($con, $reason); // Sanitize for SQL
     $eeo_type = isset($_POST['eeo_type']) ? $_POST['eeo_type'] : null; // If nothing is selected, store NULL
 
     // Automatically get current date and time for date_applied and time_applied

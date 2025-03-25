@@ -52,22 +52,20 @@ while ($details = mysqli_fetch_array($sqlDetails)) {
     <div class="content-panel">
         <div class="panel-heading">
             <h4>
-                <a href="?viewpayroll"><i class="fa fa-arrow-left"></i> BACK</a> | 
-                <i class="fa fa-calendar"></i> PAYROLL PERIOD (<?= date('F d, Y', strtotime($payroll['periodfrom'])); ?> - <?= date('F d, Y', strtotime($payroll['periodto'])); ?>)
-                
-                <?php if ($notposted > 0) { ?>
-                    <a href="?managepayroll&postpayslip&period=<?= $id; ?>&company=<?= $comp; ?>" 
-                       class="btn btn-primary" style="float:right;" 
-                       onclick="return confirm('Do you wish to post payslip?');">
-                        POST PAYSLIP
-                    </a>
-                <?php } elseif ($posted > 0) { ?>
-                    <a href="?managepayroll&undopostpayslip&period=<?= $id; ?>&company=<?= $comp; ?>" 
-                       class="btn btn-warning" style="float:right;" 
-                       onclick="return confirm('Do you wish to undo post?');">
-                        UNDO POST
-                    </a>
-                <?php } ?>
+                <a href="?viewpayroll"><i class="fa fa-arrow-left"></i> BACK</a> | <i class="fa fa-calendar"></i> PAYROLL PERIOD (<?=date('F d, Y',strtotime($payroll['periodfrom']));?> - <?=date('F d, Y',strtotime($payroll['periodto']));?>)
+                    <?php
+                    if($posted==0 && $notposted==0){
+
+                }elseif($notposted>0){
+                    ?>
+                    <a href="?managepayroll&postpayslip&period=<?=$id;?>&company=<?=$comp;?>" class="btn btn-primary" style="float:right;" onclick="return confirm('Do you wish to post payslip?');return false;">POST PAYSLIP</a>
+                    <?php
+                }else{
+                    ?>
+                    <a href="?managepayroll&undopostpayslip&period=<?=$id;?>&company=<?=$comp;?>" class="btn btn-warning" style="float:right;" onclick="return confirm('Do you wish to undo post?');return false;">UNDO POST</a>
+                    <?php
+                }
+                ?>
             </h4>
         </div>
 
@@ -157,19 +155,18 @@ while ($details = mysqli_fetch_array($sqlDetails)) {
                                                     <i class='fa fa-pencil'></i>
                                                 </a>
                                                 <?php 
-// Fetch employee salary type
-$sqlSalaryType = mysqli_query($con, "SELECT salary_type FROM employee_payroll WHERE idno='$idno'");
-$salaryData = mysqli_fetch_array($sqlSalaryType);
-$empSalaryType = $salaryData['salary_type'] ?? 'Rated'; // Default to 'Rated' if not found
+                                                // Fetch employee salary type
+                                                $sqlSalaryType = mysqli_query($con, "SELECT salary_type FROM employee_payroll WHERE idno='$idno'");
+                                                $salaryData = mysqli_fetch_array($sqlSalaryType);
+                                                $empSalaryType = $salaryData['salary_type'] ?? 'Rated'; // Default to 'Rated' if not found
 
-if ($payroll_id) { ?>
-    <?php if ($empSalaryType == 'Rated') { ?>
-        <a href="payslipRated.php?id=<?=$payroll_id;?>" class="btn btn-warning btn-xs" title="Print Payslip" target="_blank"><i class='fa fa-print'></i></a>
-    <?php } else if ($empSalaryType == 'Fixed') { ?>  
-        <a href="payslip.php?id=<?=$payroll_id;?>" class="btn btn-warning btn-xs" title="Print Payslip" target="_blank"><i class='fa fa-print'></i></a>
-    <?php } ?>
-<?php } ?>
-
+                                                if ($payroll_id) { ?>
+                                                    <?php if ($empSalaryType == 'Rated') { ?>
+                                                        <a href="payslipRated.php?id=<?=$payroll_id;?>" class="btn btn-warning btn-xs" title="Print Payslip" target="_blank"><i class='fa fa-print'></i></a>
+                                                    <?php } else if ($empSalaryType == 'Fixed') { ?>  
+                                                        <a href="payslip.php?id=<?=$payroll_id;?>" class="btn btn-warning btn-xs" title="Print Payslip" target="_blank"><i class='fa fa-print'></i></a>
+                                                    <?php } ?>
+                                                <?php } ?>
                                             </td>
                                         </tr>
                                         <?php
@@ -188,35 +185,38 @@ if ($payroll_id) { ?>
     </div>
 </div>
 <?php
-    $sqlAllEmployees = mysqli_query($con, "SELECT ed.idno, ed.department FROM employee_details ed 
-        WHERE ed.company='$comp' AND ed.status != 'RESIGNED'");
-    
-    $allEmployees = [];
-    while ($row = mysqli_fetch_assoc($sqlAllEmployees)) {
-        $allEmployees[$row['department']][] = $row['idno'];
-    }
-
-    // Batch Process Posting Payslip per Department
-    if (isset($_GET['postpayslip']) && isset($_GET['department'])) {
-        $departmentID = $_GET['department'];
-        
-        if (!empty($allEmployees[$departmentID])) {
-            foreach ($allEmployees[$departmentID] as $empID) {
-                mysqli_query($con, "UPDATE payroll_details SET status='posted' WHERE idno='$empID' AND payrollperiod='$id'");
-            }
-            echo "<script>alert('Payslip posted for department.'); window.location='?managepayroll&period=$id&company=$comp';</script>";
+    if(isset($_GET['postpayslip'])){
+      $id=$_GET['period'];
+      $company=$_GET['company'];
+      $datenow=date('Y-m-d H:i:s');
+      $sqlCheck=mysqli_query($con,"SELECT idno FROM employee_details WHERE company='$company' AND status NOT LIKE '%RESIGNED%'");
+      if(mysqli_num_rows($sqlCheck)>0){
+        while($check=mysqli_fetch_array($sqlCheck)){
+          $idno=$check['idno'];
+          $sqlUpdate=mysqli_query($con,"UPDATE payroll_details SET status='posted',dateposted='$datenow' WHERE idno='$idno' AND payrollperiod='$id' AND status='pending'");
         }
+      }
+      if($sqlUpdate){
+        echo "<script>alert('Payslip successfully posted!');window.location='?managepayroll&period=$id&company=$company';</script>";
+      }else{
+        echo "<script>alert('Unable to post payslip!');window.location='?managepayroll&period=$id&company=$company';</script>";
+      }
     }
-
-    // Batch Undo Posting Payslip per Department
-    if (isset($_GET['undopostpayslip']) && isset($_GET['department'])) {
-        $departmentID = $_GET['department'];
-        
-        if (!empty($allEmployees[$departmentID])) {
-            foreach ($allEmployees[$departmentID] as $empID) {
-                mysqli_query($con, "UPDATE payroll_details SET status='unposted' WHERE idno='$empID' AND payrollperiod='$id'");
-            }
-            echo "<script>alert('Payslip posting undone for department.'); window.location='?managepayroll&period=$id&company=$comp';</script>";
+    if(isset($_GET['undopostpayslip'])){
+      $id=$_GET['period'];
+      $company=$_GET['company'];
+      $datenow=date('Y-m-d H:i:s');
+      $sqlCheck=mysqli_query($con,"SELECT idno FROM employee_details WHERE company='$company' AND status NOT LIKE '%RESIGNED%'");
+      if(mysqli_num_rows($sqlCheck)>0){
+        while($check=mysqli_fetch_array($sqlCheck)){
+          $idno=$check['idno'];
+          $sqlUpdate=mysqli_query($con,"UPDATE payroll_details SET status='pending',dateposted=null WHERE idno='$idno' AND payrollperiod='$id' AND status='posted'");
         }
+      }
+      if($sqlUpdate){
+        echo "<script>alert('Payslip successfully unposted!');window.location='?managepayroll&period=$id&company=$company';</script>";
+      }else{
+        echo "<script>alert('Unable to undo post payslip!');window.location='?managepayroll&period=$id&company=$company';</script>";
+      }
     }
 ?>

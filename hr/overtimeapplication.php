@@ -138,6 +138,19 @@ th.sortable.desc::after {
     content: ''; /* Descending arrow icon */
     color: #000;
 }
+/*Date Filter Button*/
+.filter-btn {
+    background-color: #3f4d6a;
+    color: white;
+    border: none;
+    padding: 7px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.filter-btn:hover {
+    background-color: #181e2e;
+}
 </style>
 
 <?php
@@ -177,7 +190,7 @@ if (isset($_GET['done'])) {
 
                 <!-- Date Filter Section -->
                 <div class="date-filter" style="display: flex; align-items: center; gap: 10px;">
-                    <h5 style="font-weight: bold; margin-left: 30px;">Filter OT Date Column</h5>
+                    <h5 style="font-weight: bold; margin-left: 30px;">Filter Date of Missed Log Column</h5>
                     <div style="display: flex; align-items: center; gap: 5px;">
                         <label for="fromDate" style="margin-bottom: 0;">From:</label>
                         <input type="date" id="fromDate" class="form-control" 

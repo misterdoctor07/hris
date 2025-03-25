@@ -454,27 +454,34 @@
                                 $remarks = "CI-A";
                                 $color = "background-color:#ffcccc;";
                                 $a++;
-                           }  
-                              elseif ($remarks == "Code L") {
-                                $remarks = "P";
-                                $color = "";   
                            } 
-                           elseif ($remarks == "Code L-") {
-                            $remarks = "P";
-                            $color = "";  
-                            } 
-                            elseif ($remarks == "Code I-") {
-                              $remarks = "P";
-                              $color = "";  
-                              }
-                              elseif ($remarks == "Code M") {
-                                $remarks = "P";
-                                $color = "";  
-                                }
-                                elseif ($remarks == "Code B-") {
-                                  $remarks = "P";
-                                  $color = "";  
-                                  }
+                           elseif ($remarks == "Code SD") {
+                            $remarks = "SD";
+                            $color = "background-color:#ffcccc;";
+                            
+                       }  
+                     
+                          
+                        //       elseif ($remarks == "Code L") {
+                        //         $remarks = "P";
+                        //         $color = "";   
+                        //   } 
+                        //   elseif ($remarks == "Code L-") {
+                        //     $remarks = "P";
+                        //     $color = "";  
+                        //     } 
+                        //     elseif ($remarks == "Code I-") {
+                        //       $remarks = "P";
+                        //       $color = "";  
+                        //       }
+                        //       elseif ($remarks == "Code M") {
+                        //         $remarks = "P";
+                        //         $color = "";  
+                        //         }
+                        //         elseif ($remarks == "Code B-") {
+                        //           $remarks = "P";
+                        //           $color = "";  
+                        //           }
                                   elseif ($remarks == "Code GS" || strpos($remarks, "GS") !== false) {
                                     if ($remarks == "Code GS") {
                                         if (empty($rem['loginam']) || $rem['loginam'] === '0') { 
@@ -485,6 +492,16 @@
                                     }
                                     $color = "background-color:#ffcccc;";
                                 }
+                                elseif ($remarks == "Code RD" || strpos($remarks, "RD") !== false) {
+                                  if ($remarks == "Code RD") {
+                                      if (empty($rem['loginam']) || $rem['loginam'] === '0') { 
+                                          $remarks = "CI-RD"; // If loginam is 0 or empty, set to Absent-GS
+                                      } else { 
+                                          $remarks = date('h:i', strtotime($rem['loginam'])) . "-RD"; // If loginam has a value, format time
+                                      }
+                                  }
+                                  $color = "background-color:#ffcccc;";
+                              }
                                 elseif ($remarks == "Code PcP" || strpos($remarks, "PcP") !== false) {
                                   if ($remarks == "Code PcP") {
                                       if (empty($rem['loginam']) || $rem['loginam'] === '0') { 
@@ -604,10 +621,11 @@
                        $logoutpm = $attendance['logoutpm'];
 
                        // Check if the initial remark is a leave type and any login/logout field is filled
+                       $status = (mysqli_fetch_array(mysqli_query($con, "SELECT startshift FROM employee_details WHERE idno='{$company['idno']}'")))['startshift'] >= "03:00:00" || 
+                                 (mysqli_fetch_array(mysqli_query($con, "SELECT startshift FROM employee_details WHERE idno='{$company['idno']}'")))['startshift'] == "00:00:00" ? "work" : "nd/work";
                        if (in_array($remark, ['VL', 'SL', 'PTO', 'EO', 'BLP', 'SPL', 'SL-A', 'SL-NC', 'SL-PO', 'SL-IO', 'SL-GS']) && 
-                           ($loginam != '0' || $logoutam != '0' || $loginpm != '0' || $logoutpm != '0
-                           ')) {
-                             $sqlUpdateRemarks = mysqli_query($con, " UPDATE attendance SET remarks = 'P', status = 'nd/work' WHERE logindate = '$rundate' AND idno = '{$company['idno']}'");
+                           ($loginam != '0' || $logoutam != '0' || $loginpm != '0' || $logoutpm != '0')) {
+                             $sqlUpdateRemarks = mysqli_query($con, " UPDATE attendance SET remarks = 'P', status = '$status' WHERE logindate = '$rundate' AND idno = '{$company['idno']}'");
 
                            // Restore the leave credits based on the leave type
                            if ($remark == "VL") {

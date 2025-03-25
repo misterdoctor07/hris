@@ -66,17 +66,12 @@ if($type=="insurance"){
                   <a href="?main"><i class="fa fa-arrow-left"></i> BACK</a> |
                   <i class="fa fa-user"></i> EMPLOYEE LIST
               </div>
-              <div class="flex-item">
+              <div class="flex-item" style="margin-left: auto;">
                   <span id="filterLabel">Life Insurance Effectivity</span>
                   <span class="badge-switch">
                       <button type="button" onclick="filterData('insurance')" class="btn btn-primary">Insurance</button>
                       <button type="button" onclick="filterData('hmo')" class="btn btn-default">HMO</button>
                   </span>
-              </div>
-              <div class="flex-item" style="margin-left: auto;">
-                  <a href="?addemployee" class="btn btn-primary">
-                      <i class="fa fa-plus-circle"></i> Add Employee
-                  </a>
               </div>
               <div style="float:right;">
                     <form>

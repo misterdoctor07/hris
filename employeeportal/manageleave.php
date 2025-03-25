@@ -32,7 +32,8 @@
                       WHEN la.appstatus = 'Pending' THEN 1 
                       ELSE 2 
                   END, 
-              la.datearray DESC");
+              la.datearray DESC,
+              CAST(la.timearray AS TIME) DESC");
 
             if (mysqli_num_rows($sqlEmployee) > 0) {
                 while ($emp = mysqli_fetch_array($sqlEmployee)) {
@@ -103,7 +104,6 @@ if (isset($_GET['cancel'])) {
 
         // Now proceed to cancel the leave application
         $sqlCancel = mysqli_query($con, "UPDATE leave_application SET  appstatus = 'Cancelled' WHERE id='$id'");
-
 
         if ($sqlCancel) {
             echo "<script>";

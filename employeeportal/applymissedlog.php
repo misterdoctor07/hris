@@ -20,24 +20,22 @@
                         <th style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Reason</th>
                         <th width="15%" style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Status</th>
                         <th style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">HR Remarks</th>
-                        <th style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Monitoring Remarks</th>
-                        <th style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Approver Remarks</th>
                         <th width="5%" style="text-align: center; vertical-align: middle; background-color:#20273a; color: white;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php
-                    $x = 1;
-                    $sqlEmployee = mysqli_query($con, "
-                    SELECT * 
-                    FROM missed_log_application ml 
-                    WHERE ml.idno = '" . mysqli_real_escape_string($con, $_SESSION['idno']) . "' 
-                    ORDER BY 
+                     $x = 1;
+                     $sqlEmployee = mysqli_query($con, "SELECT * 
+                     FROM missed_log_application ml 
+                     WHERE ml.idno = '" . mysqli_real_escape_string($con, $_SESSION['idno']) . "'  
+                     ORDER BY 
                         CASE 
                             WHEN ml.applic_status = 'Pending' THEN 1 
                             ELSE 2 
                         END, 
-                    ml.time_applied DESC");
+                        ml.date_applied DESC,
+                        CAST(ml.time_applied AS TIME) DESC");
                     
                     if (mysqli_num_rows($sqlEmployee) > 0) {
                         while ($company = mysqli_fetch_array($sqlEmployee)) {
@@ -62,8 +60,6 @@
                             echo "<td>$company[reason]</td>";
                             echo "<td align='center'>$status</td>";
                             echo "<td align='center'>$company[remarks]</td>";
-                            echo "<td align='center'>$company[monitoring_remarks]</td>";
-                            echo "<td align='center'>$company[approver_remarks]</td>";
                             ?>
                             <td align="center">
                                 <?php if (strpos($company['applic_status'], 'Approved') === false && strpos($company['applic_status'], 'Disapproved') === false): ?> 

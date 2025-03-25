@@ -1,4 +1,3 @@
-
 <?php
           $id=$_SESSION['idno'];
 
@@ -460,9 +459,33 @@ $breakdown_html .= "</ul>";
                 } elseif (file_exists("../Employees/".$idno.".jpg")) {
                     $image = "../Employees/".$idno.".jpg";
                 } else {
-                    $image = "path/to/default/image.jpg"; // Default image if no profile pic exists
+                    $image = "../Employees/default_image.png"; // Default image if no profile pic exists
                 }
             }
+
+            if (isset($_POST['delete'])) {
+                $idno = $_POST['idno']; // User's ID
+                $target_dir = "../Employees/";
+            
+                // Get the file extensions to check for different formats
+                $file_exts = array("jpg", "jpeg", "png");
+            
+                foreach ($file_exts as $ext) {
+                    $file_path = $target_dir . $idno . "." . $ext;
+            
+                    // Check if the file exists, then delete it
+                    if (file_exists($file_path)) {
+                        if (unlink($file_path)) {
+                            $message = "Profile picture deleted successfully.";
+                        } else {
+                            $error = "Error deleting the file.";
+                        }
+                    }
+                }
+            
+                // Optionally, set a default image if none exists
+                $image = "../Employees/default_image.png"; // Path to the default image
+            }            
              ?>
              
              <div class="col-md-4 centered" >
@@ -479,6 +502,7 @@ $breakdown_html .= "</ul>";
             <input type="hidden" name="idno" value="<?= $idno; ?>">
             <input type="file" name="profile_pic" id="profile_pic" style="display: none;">
             <button type="submit" name="submit" style="font-size: 10px; padding: 2px 5px;">Upload</button>
+            <button name="delete" style="font-size: 10px; padding: 2px 5px;">Delete</button>
             <?php if (isset($error)) { echo "<p class='error'>$error</p>"; } ?>
         </form>
     </div>
