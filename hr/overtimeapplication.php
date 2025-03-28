@@ -190,7 +190,7 @@ if (isset($_GET['done'])) {
 
                 <!-- Date Filter Section -->
                 <div class="date-filter" style="display: flex; align-items: center; gap: 10px;">
-                    <h5 style="font-weight: bold; margin-left: 30px;">Filter Date of Missed Log Column</h5>
+                    <h5 style="font-weight: bold; margin-left: 30px;">Filter Date/Time Applied</h5>
                     <div style="display: flex; align-items: center; gap: 5px;">
                         <label for="fromDate" style="margin-bottom: 0;">From:</label>
                         <input type="date" id="fromDate" class="form-control" 
@@ -326,7 +326,7 @@ if (isset($_GET['done'])) {
                     WHEN ot.app_status = 'Cancelled' THEN 5
                     ELSE 6
                 END, 
-                STR_TO_DATE(ot.datearray, '%Y-%m-%d'),
+                STR_TO_DATE(ot.datearray, '%Y-%m-%d') DESC,
                 ot.timearray DESC");
 
         ?>

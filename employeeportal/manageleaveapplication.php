@@ -238,7 +238,15 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
 // Check if the user clicked 'Add Remarks'
 if (isset($_GET['addremarks'])) {
     $id = $_GET['id'];
-    $remarks = urldecode($_GET['approver_remarks']); // Use urldecode to handle special characters
+
+    // Fetch existing remarks
+    $query = "SELECT approver_remarks FROM leave_application WHERE id = '$id'";
+    $result = mysqli_query($con, $query);
+    $row = mysqli_fetch_assoc($result);
+    
+    // Retain existing remarks
+    $remarks = isset($row['approver_remarks']) ? $row['approver_remarks'] : '';
+
 ?>
     <!-- Remarks Form -->
     <div class="modal-overlay">
@@ -254,7 +262,7 @@ if (isset($_GET['addremarks'])) {
                 <form action="" method="POST">
                     <input type="hidden" name="id" value="<?= $id; ?>">
                     <div class="form-group">
-                        <textarea name="remarks" class="form-control" rows="5" placeholder="Add Remarks"><?= htmlspecialchars($remarks); ?></textarea>
+                        <textarea name="remarks" class="form-control" rows="5" placeholder="Add Remarks"><?= htmlspecialchars($remarks, ENT_QUOTES, 'UTF-8'); ?></textarea>
                     </div>
                     <div class="form-group">
                         <input type="submit" name="submitRemarks" class="btn btn-primary" value="Save">
@@ -270,8 +278,11 @@ if (isset($_GET['addremarks'])) {
 // Handle form submission for updating remarks
 if (isset($_POST['submitRemarks'])) {
     $id = $_POST['id'];
-    $remarks = mysqli_real_escape_string($con, $_POST['remarks']); // Sanitize input
-
+    
+    // Ensure new lines are preserved
+    $remarks = str_replace("\r\n", "\n", $_POST['remarks']);
+    $remarks = mysqli_real_escape_string($con, $remarks); // Sanitize input
+    
     // Update remarks in the database
     $sqlUpdateRemarks = "UPDATE leave_application SET approver_remarks = '$remarks' WHERE id = '$id'";
     if (mysqli_query($con, $sqlUpdateRemarks)) {

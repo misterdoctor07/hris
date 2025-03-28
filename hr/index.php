@@ -85,7 +85,7 @@ date_default_timezone_set("Asia/Manila");
         *********************************************************************************************************************************************************** -->
     <!--sidebar start-->
     <aside>
-      <div id="sidebar" class="nav-collapse ">
+      <div id="sidebar" class="nav-collapse">
         <!-- sidebar menu start-->
         <ul class="sidebar-menu" id="nav-accordion">
           <p class="centered"><i class="fa fa-user fa-4x"></i></p>
@@ -155,37 +155,34 @@ date_default_timezone_set("Asia/Manila");
               $totalCount = $leave_count + $EEO_count + $missedlog_count + $overtime_count;
               ?>
 
-
-
-
           <li class="sub-menu">
               <a href="javascript:;">
                 <i class="fa fa-file-text"></i>
                 <span>Leave & Benefits</span>
                 <?php if ($leave_count > 0) { ?>
-                    <span class="badge" style="color: white; background-color: red;"><?php echo $totalCount; ?></span>
+                    <span class="badge" style="color: white; background-color: red; margin-left: 20px;"><?php echo $totalCount; ?></span>
                   <?php } ?>
               </a>
               <ul class="sub">
                 <li><a href="?manageleave">Manage Leave Credits</a></li>
-                <li><a href="?leaveapplication">Leave Applications
+                <li><a href="?leaveapplication">Leave Requests
                   <?php if ($leave_count > 0) { ?>
-                    <span class="badge" style="color: white; background-color: red;"><?php echo $leave_count; ?></span>
+                    <span class="badge" style="color: white; background-color: red; margin-left: 33px;"><?php echo $leave_count; ?></span>
                   <?php } ?>
                 </a></li>
-                <li><a href="?missedloginapplication">Missed Log Application
+                <li><a href="?missedloginapplication">Missed Log Requests
                   <?php if ($missedlog_count > 0) { ?>
-                    <span class="badge" style="color:white; background-color:red;"><?php echo $missedlog_count; ?></span>
+                    <span class="badge" style="color:white; background-color:red; margin-left: 5px;"><?php echo $missedlog_count; ?></span>
                   <?php } ?>
                 </a></li>
-                <li><a href="?overtimeapplication">Overtime Applications
-                  <?php if ($overtime_count > 0) { ?>
-                    <span class="badge" style="color:white; background-color:red;"><?php echo $overtime_count; ?></span>
-                  <?php } ?>
-                </a></li>
-                <li><a href="?EEOapplication">EEO Applications
+                <li><a href="?EEOapplication">EEO Requests
                   <?php if ($EEO_count > 0) { ?>
-                    <span class="badge" style="color:white; background-color:red;"><?php echo $EEO_count; ?></span>
+                    <span class="badge" style="color:white; background-color:red; margin-left: 43px;"><?php echo $EEO_count; ?></span>
+                  <?php } ?>
+                </a></li>
+                <li><a href="?overtimeapplication">Overtime Requests
+                  <?php if ($overtime_count > 0) { ?>
+                    <span class="badge" style="color:white; background-color:red; margin-left: 13px;"><?php echo $overtime_count; ?></span>
                   <?php } ?>
                 </a></li>
                 <li><a href="?leaveprotocols">Leave Protocols</a></li>

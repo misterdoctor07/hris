@@ -182,6 +182,7 @@ $eeoQuery = "SELECT COUNT(*) AS total
              INNER JOIN employee_details ed ON ed.idno = ep.idno
              WHERE ($status)
              AND ($idno)
+             AND eeo.idno != '$userId'
              AND ($type)
              AND ($acknowledge)
              AND ($whereClause)";

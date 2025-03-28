@@ -410,10 +410,11 @@ function checkCredits() {
     let selectedStartDate = new Date(startDate.value);
     let startshift = "<?=$startshift;?>";
     let datenow = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+    let timenow = new Date().getHours(); 
 
     // Check if the selected leave type requires a 3-day protocol
     if (withdayprotocol.includes(selectedLeaveType) || withdayprotocol.includes(selectedEOMonth)) {
-        if((startshift == "23:00:00" || startshift == "00:00:00") && datenow == "Friday" ) {
+        if((startshift == "23:00:00" || startshift == "00:00:00") && timenow <= 9) {
             // Check if startDate has a value
             if (!startDate.value) {
                 dateWarning.style.display = 'inline';
@@ -432,7 +433,7 @@ function checkCredits() {
 
             let daysAdded = 0;
 
-            while (daysAdded < 2) { // Add 3 working days
+            while (daysAdded < 2) { // Add 2 working days
                 minStartDate.setDate(minStartDate.getDate() + 1); // Move to next day
 
                 // Skip Sundays (0) and Mondays (1)
@@ -441,7 +442,7 @@ function checkCredits() {
                 }
             }
 
-            // Validate that the start date is at least 3 working days from today
+            // Validate that the start date is at least 2 working days from today
             if (new Date(startDate.value) < minStartDate) {
                 dateWarning.style.display = 'inline';
                 startDate.style.borderColor = 'red';

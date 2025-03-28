@@ -304,7 +304,7 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                                 WHEN eeo.eeo_status LIKE '%*%' THEN 5
                                 ELSE 6
                             END,
-                            eeo.date_applied,
+                            eeo.date_applied DESC,
                             eeo.time_applied DESC");
                     
 
