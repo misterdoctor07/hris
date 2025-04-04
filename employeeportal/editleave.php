@@ -1,4 +1,12 @@
 <?php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['idno'])) {
+    die("<script>alert('Session expired. Please log in again.'); window.location='/index.php';</script>");
+}
+?><?php
 $userId = $_SESSION['idno'];
 if (isset($_GET['id']) && !empty($_GET['id'])) {
     $leaveId = $_GET['id'];
@@ -189,20 +197,31 @@ if (isset($_GET['submit']) && isset($_GET['editleave'])) {
         echo "<script>alert('Leave application already exists for the selected dates and leave type!');</script>";
     } else {
         // Add before the update query
-// if (empty($leaveId) || empty($leavetype) || empty($nofdays) || empty($startDate) || empty($endDate) || empty($reasons)) {
-//     echo "<script>alert('All fields are required!');</script>";
-//     return;
-// }
+        // if (empty($leaveId) || empty($leavetype) || empty($nofdays) || empty($startDate) || empty($endDate) || empty($reasons)) {
+        //     echo "<script>alert('All fields are required!');</script>";
+        //     return;
+        // }
 
-if (!is_numeric($nofdays) || $nofdays <= 0) {
-    echo "<script>alert('Invalid number of days!');</script>";
-    return;
-}
+        if (!is_numeric($nofdays) || $nofdays <= 0) {
+            echo "<script>alert('Invalid number of days!');</script>";
+            return;
+        }
 
-if (strtotime($endDate) < strtotime($startDate)) {
-    echo "<script>alert('End date cannot be earlier than start date!');</script>";
-    return;
-}
+        if (strtotime($endDate) < strtotime($startDate)) {
+            echo "<script>alert('End date cannot be earlier than start date!');</script>";
+            return;
+        }
+
+         // Retrieve the leave details
+        $sqlRetrieve = mysqli_query($con, "SELECT leavetype, numberofdays, idno, dayfrom FROM leave_application WHERE id='$id'");
+        if ($sqlRetrieve && mysqli_num_rows($sqlRetrieve) > 0) {
+            $leaveData = mysqli_fetch_array($sqlRetrieve);
+            $leaveType = $leaveData['leavetype'];
+            $nofdays = $leaveData['numberofdays'];
+            $startDate = $leaveData['dayfrom'];
+            $startMonth = date('n', strtotime($startDate));
+        }
+
         // Correct UPDATE query syntax
         $sqlUpdateLeave = mysqli_query($con, "UPDATE leave_application 
                                             SET idno = '$idno',

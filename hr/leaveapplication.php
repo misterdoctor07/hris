@@ -425,47 +425,47 @@ if (isset($_GET['post'])) {
                         }
                     }
 
-                    // Update leave credits based on leave type
-                    switch ($leaveType) {
-                        case 'VL':
-                            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET vlused = vlused + 1 WHERE idno = '$idno'");
-                            break;
-                        case 'SL':
-                            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET slused = slused + 1 WHERE idno = '$idno'");
-                            break;
-                        case 'PTO':
-                            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET ptoused = ptoused + 1 WHERE idno = '$idno'");
-                            break;
-                        case 'BLP':
-                            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET blp_used = blp_used + 1 WHERE idno = '$idno'");
-                            break;
-                        case 'EO':
-                            // Ensure $startMonth is an integer
-                            $startMonth = (int) $startMonth;
-                            $monthNames = [
-                                1 => "jan", 2 => "feb", 3 => "mar", 4 => "apr", 5 => "may", 6 => "jun",
-                                7 => "jul", 8 => "aug", 9 => "sep", 10 => "oct", 11 => "nov", 12 => "dec"
-                            ];
+                    // // Update leave credits based on leave type
+                    // switch ($leaveType) {
+                    //     case 'VL':
+                    //         $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET vlused = vlused + 1 WHERE idno = '$idno'");
+                    //         break;
+                    //     case 'SL':
+                    //         $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET slused = slused + 1 WHERE idno = '$idno'");
+                    //         break;
+                    //     case 'PTO':
+                    //         $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET ptoused = ptoused + 1 WHERE idno = '$idno'");
+                    //         break;
+                    //     case 'BLP':
+                    //         $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET blp_used = blp_used + 1 WHERE idno = '$idno'");
+                    //         break;
+                    //     case 'EO':
+                    //         // Ensure $startMonth is an integer
+                    //         $startMonth = (int) $startMonth;
+                    //         $monthNames = [
+                    //             1 => "jan", 2 => "feb", 3 => "mar", 4 => "apr", 5 => "may", 6 => "jun",
+                    //             7 => "jul", 8 => "aug", 9 => "sep", 10 => "oct", 11 => "nov", 12 => "dec"
+                    //         ];
                             
-                            if (isset($monthNames[$startMonth])) {
-                                $columnName = $monthNames[$startMonth] . "_eo_used";
-                                $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET $columnName = $columnName + 1 WHERE idno = '$idno'");
-                            }
-                            break;
-                        case 'SPL':
-                            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET spl_used = spl_used + 1 WHERE idno = '$idno'");
-                            break;
-                        case 'MTL':
-                        case 'LTL':
-                        case 'MDL':
-                        case 'PTL':
-                        case 'BL':
-                            // No update logic yet for these types
-                            break;
-                        default:
-                            echo "<script>alert('Leave type not recognized. No credits updated.');</script>";
-                            break;
-                    }
+                    //         if (isset($monthNames[$startMonth])) {
+                    //             $columnName = $monthNames[$startMonth] . "_eo_used";
+                    //             $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET $columnName = $columnName + 1 WHERE idno = '$idno'");
+                    //         }
+                    //         break;
+                    //     case 'SPL':
+                    //         $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET spl_used = spl_used + 1 WHERE idno = '$idno'");
+                    //         break;
+                    //     case 'MTL':
+                    //     case 'LTL':
+                    //     case 'MDL':
+                    //     case 'PTL':
+                    //     case 'BL':
+                    //         // No update logic yet for these types
+                    //         break;
+                    //     default:
+                    //         echo "<script>alert('Leave type not recognized. No credits updated.');</script>";
+                    //         break;
+                    // }
 
                     // Update attendance status to 'leave'
                     $sqlupdateStatus = mysqli_query($con, "UPDATE attendance SET status='leave' WHERE idno='$idno'");
@@ -999,4 +999,3 @@ th.sortable.desc::after {
     background-color: #181e2e;
 }
 </style>
-

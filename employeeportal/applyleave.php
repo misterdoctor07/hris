@@ -1,3 +1,12 @@
+<?php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['idno'])) {
+    die("<script>alert('Session expired. Please log in again.'); window.location='/index.php';</script>");
+}
+?>
 <script type="text/javascript">
       function SubmitDetails(){
           return confirm('Do you wish to submit details?');
@@ -151,6 +160,7 @@ if (isset($_GET['submit'])) {
     $reasons = mysqli_real_escape_string($con, $reasons); // Sanitize for SQL    
     $datenow = date('Y-m-d H:i:s'); 
     $timearray = date('H:i:s'); 
+    $startMonth = date('n', strtotime($startDate));
 
     // Check if there's already an existing record for the selected leave type within the same date range
     $sqlCheck = mysqli_query($con, "SELECT * FROM leave_application 
@@ -175,6 +185,48 @@ if (isset($_GET['submit'])) {
         }else {
                 echo "<script>alert('Failed to insert leave application. Please try again.');</script>";
          }
+    }
+
+    // Update leave credits based on leave type
+    switch ($leavetype) {
+        case 'VL':
+            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET vlused = vlused + $nofdays WHERE idno = '$idno'");
+            break;
+        case 'SL':
+            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET slused = slused + $nofdays WHERE idno = '$idno'");
+            break;
+        case 'PTO':
+            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET ptoused = ptoused + $nofdays WHERE idno = '$idno'");
+            break;
+        case 'BLP':
+            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET blp_used = blp_used + $nofdays WHERE idno = '$idno'");
+            break;
+        case 'EO':
+            // Ensure $startMonth is an integer
+            $startMonth = (int) $startMonth;
+            $monthNames = [
+                1 => "jan", 2 => "feb", 3 => "mar", 4 => "apr", 5 => "may", 6 => "jun",
+                7 => "jul", 8 => "aug", 9 => "sep", 10 => "oct", 11 => "nov", 12 => "dec"
+            ];
+            
+            if (isset($monthNames[$startMonth])) {
+                $columnName = $monthNames[$startMonth] . "_eo_used";
+                $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET $columnName = $columnName + $nofdays WHERE idno = '$idno'");
+            }
+            break;
+        case 'SPL':
+            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET spl_used = spl_used + $nofdays WHERE idno = '$idno'");
+            break;
+        case 'MTL':
+        case 'LTL':
+        case 'MDL':
+        case 'PTL':
+        case 'BL':
+            // No update logic yet for these types
+            break;
+        default:
+            echo "<script>alert('Leave type not recognized. No credits updated.');</script>";
+            break;
     }
 }
 ?>
@@ -433,7 +485,7 @@ function checkCredits() {
 
             let daysAdded = 0;
 
-            while (daysAdded < 2) { // Add 2 working days
+            while (daysAdded < 2) { // Add 3 working days
                 minStartDate.setDate(minStartDate.getDate() + 1); // Move to next day
 
                 // Skip Sundays (0) and Mondays (1)
@@ -442,7 +494,7 @@ function checkCredits() {
                 }
             }
 
-            // Validate that the start date is at least 2 working days from today
+            // Validate that the start date is at least 3 working days from today
             if (new Date(startDate.value) < minStartDate) {
                 dateWarning.style.display = 'inline';
                 startDate.style.borderColor = 'red';
@@ -646,4 +698,3 @@ function toggleEOSelection(selectedValue) {
     }
 }
 </script>
-
