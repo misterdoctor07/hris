@@ -140,7 +140,7 @@ if(mysqli_num_rows($sqlStartShift)>0){
                 <div class="form-group">
                     <label class="col-sm-4 control-label">No. of Days</label>
                     <div class="col-sm-4">
-                        <input type="number" name="nofdays" id="nofdays" class="form-control" value="<?=$numberofdays;?>" required onchange="checkCredits();">
+                        <input type="number" name="nofdays" id="nofdays" class="form-control" min="1" value="<?=$numberofdays;?>" required onchange="checkCredits();">
                     </div>
                 </div>
 
@@ -183,6 +183,7 @@ if (isset($_GET['submit']) && isset($_GET['editleave'])) {
     $reasons = $_GET['reasons'];    
     $datenow = $_GET['datearray']; 
     $editDateTime = date('Y-m-d H:i:s');
+    $startMonth = date('n', strtotime($startDate));
 
     // First check if the leave already exists
     $sqlCheck = mysqli_query($con, "SELECT * FROM leave_application 
@@ -213,13 +214,13 @@ if (isset($_GET['submit']) && isset($_GET['editleave'])) {
         }
 
          // Retrieve the leave details
-        $sqlRetrieve = mysqli_query($con, "SELECT leavetype, numberofdays, idno, dayfrom FROM leave_application WHERE id='$id'");
+        $sqlRetrieve = mysqli_query($con, "SELECT leavetype, numberofdays, idno, dayfrom FROM leave_application WHERE id='$leaveId'");
         if ($sqlRetrieve && mysqli_num_rows($sqlRetrieve) > 0) {
             $leaveData = mysqli_fetch_array($sqlRetrieve);
-            $leaveType = $leaveData['leavetype'];
-            $nofdays = $leaveData['numberofdays'];
-            $startDate = $leaveData['dayfrom'];
-            $startMonth = date('n', strtotime($startDate));
+            $prevleavetype = $leaveData['leavetype'];
+            $prevnofdays = $leaveData['numberofdays'];
+            $prevstartDate = $leaveData['dayfrom'];
+            $prevstartMonth = date('n', strtotime($startDate));
         }
 
         // Correct UPDATE query syntax
@@ -237,6 +238,92 @@ if (isset($_GET['submit']) && isset($_GET['editleave'])) {
                                             WHERE id = '$leaveId'");
 
         if ($sqlUpdateLeave) {
+            if ($prevleavetype !== $leavetype || $prevnofdays != $nofdays || $prevstartDate != $startDate) {
+                // Update prev leave credits based on leave type
+                switch ($prevleavetype) {
+                    case 'VL':
+                        $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET vlused = vlused - $prevnofdays WHERE idno = '$idno'");
+                        break;
+                    case 'SL':
+                        $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET slused = slused - $prevnofdays WHERE idno = '$idno'");
+                        break;
+                    case 'PTO':
+                        $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET ptoused = ptoused - $prevnofdays WHERE idno = '$idno'");
+                        break;
+                    case 'BLP':
+                        $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET blp_used = blp_used - $prevnofdays WHERE idno = '$idno'");
+                        break;
+                    case 'EO':
+                        // Ensure $startMonth is an integer
+                        $prevstartMonth = (int) $prevstartMonth;
+                        $monthNames = [
+                            1 => "jan", 2 => "feb", 3 => "mar", 4 => "apr", 5 => "may", 6 => "jun",
+                            7 => "jul", 8 => "aug", 9 => "sep", 10 => "oct", 11 => "nov", 12 => "dec"
+                        ];
+                        
+                        if (isset($monthNames[$prevstartMonth])) {
+                            $columnName = $monthNames[$prevstartMonth] . "_eo_used";
+                            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET $columnName = $columnName - $prevnofdays WHERE idno = '$idno'");
+                        }
+                        break;
+                    case 'SPL':
+                        $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET spl_used = spl_used - $prevnofdays WHERE idno = '$idno'");
+                        break;
+                    case 'MTL':
+                    case 'LTL':
+                    case 'MDL':
+                    case 'PTL':
+                    case 'BL':
+                        // No update logic yet for these types
+                        break;
+                    default:
+                        echo "<script>alert('Leave type not recognized. No credits updated.');</script>";
+                        break;
+                }
+
+                // Update new leave credits based on leave type
+                switch ($leavetype) {
+                    case 'VL':
+                        $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET vlused = vlused + $nofdays WHERE idno = '$idno'");
+                        break;
+                    case 'SL':
+                        $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET slused = slused + $nofdays WHERE idno = '$idno'");
+                        break;
+                    case 'PTO':
+                        $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET ptoused = ptoused + $nofdays WHERE idno = '$idno'");
+                        break;
+                    case 'BLP':
+                        $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET blp_used = blp_used + $nofdays WHERE idno = '$idno'");
+                        break;
+                    case 'EO':
+                        // Ensure $startMonth is an integer
+                        $startMonth = (int) $startMonth;
+                        $monthNames = [
+                            1 => "jan", 2 => "feb", 3 => "mar", 4 => "apr", 5 => "may", 6 => "jun",
+                            7 => "jul", 8 => "aug", 9 => "sep", 10 => "oct", 11 => "nov", 12 => "dec"
+                        ];
+                        
+                        if (isset($monthNames[$startMonth])) {
+                            $columnName = $monthNames[$startMonth] . "_eo_used";
+                            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET $columnName = $columnName + $nofdays WHERE idno = '$idno'");
+                        }
+                        break;
+                    case 'SPL':
+                        $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET spl_used = spl_used + $nofdays WHERE idno = '$idno'");
+                        break;
+                    case 'MTL':
+                    case 'LTL':
+                    case 'MDL':
+                    case 'PTL':
+                    case 'BL':
+                        // No update logic yet for these types
+                        break;
+                    default:
+                        echo "<script>alert('Leave type not recognized. No credits updated.');</script>";
+                        break;
+                }
+            }
+
             echo "<script>alert('Leave application updated successfully!');
                   window.location.href='?manageleave';</script>";
         } else {
@@ -358,6 +445,7 @@ function updateCredits(leaveType) {
     let startDate = document.getElementsByName('startDate')[0];
     let endDate = document.getElementsByName('endDate')[0];
     let reasonField = document.getElementsByName('reasons')[0];
+    let prevLeaveType = "<?= $leavetype; ?>"; // Get the previously selected leave type 
 
     // Define leave types that should not be disabled even with 0 credits
     const excludedLeaveTypes = ['MTL', 'PTL', 'BL', 'MDL', 'EEO', 'LTL'];
@@ -381,60 +469,106 @@ function updateCredits(leaveType) {
         dec_EO: <?= isset($credits['dec_EO']) ? $credits['dec_EO'] : 0; ?>
     };
 
-    if (excludedLeaveTypes.includes(leaveType)) {
-        creditInfo.textContent = ''; 
-        creditInfo.style.color = ''; 
-        
-        nofdays.disabled = false; 
-        startDate.disabled = false;
-        endDate.disabled = false; 
-        reasonField.disabled = false; 
-
-        // Reset the attributes and styles
-        nofdays.max = ''; 
-        nofdays.value = 1; 
-        nofdays.style.backgroundColor = '';
-        startDate.style.backgroundColor = '';
-        endDate.style.backgroundColor = '';
-        reasonField.style.backgroundColor = '';
-    }else if (leaveType === 'EO' && selectedEO_Month) {
-        if (credits[selectedEO_Month] > 0) {
-            creditInfo.textContent = `Remaining EO Credits for ${monthMapping[selectedEO_Month]}: ${credits[selectedEO_Month]}`;
+    if (selectedLeaveType == prevLeaveType) {
+        if (excludedLeaveTypes.includes(leaveType)) {
+            // Reset fields for excluded leave types
+            creditInfo.textContent = ''; 
+            creditInfo.style.color = ''; 
+            nofdays.disabled = false; 
+            startDate.disabled = false;
+            endDate.disabled = false; 
+            reasonField.disabled = false; 
+            nofdays.max = ''; 
+            // Reset background colors
+            nofdays.style.backgroundColor = '';
+            startDate.style.backgroundColor = '';
+            endDate.style.backgroundColor = '';
+            reasonField.style.backgroundColor = '';
+        } else if (leaveType === 'EO' && selectedEO_Month) {
+            if (credits[selectedEO_Month] > 0) {
+                creditInfo.textContent = `Remaining EO Credits for ${monthMapping[selectedEO_Month]}: ${credits[selectedEO_Month] + <?=$numberofdays;?>}`;
+                creditInfo.style.color = 'green';
+                nofdays.disabled = false;
+                startDate.disabled = false;
+                endDate.disabled = false;
+                reasonField.disabled = false;
+                nofdays.max = credits[selectedEO_Month] + <?=$numberofdays;?>;
+            } else {
+                creditInfo.textContent = `No available EO credits for ${monthMapping[selectedEO_Month]}.`;
+                creditInfo.style.color = 'red';
+                nofdays.disabled = true;
+                startDate.disabled = true;
+                endDate.disabled = true;
+                reasonField.disabled = true;
+                nofdays.max = 0;
+            }
+        } else if (credits[leaveType] !== undefined && credits[leaveType] > 0) {
+            creditInfo.textContent = `Remaining Credits: ${credits[leaveType] + <?=$numberofdays;?>}`;
             creditInfo.style.color = 'green';
             nofdays.disabled = false;
             startDate.disabled = false;
             endDate.disabled = false;
             reasonField.disabled = false;
-            nofdays.max = credits[selectedEO_Month];
-            nofdays.value = 1;
+            nofdays.max = credits[leaveType] + <?=$numberofdays;?>;
         } else {
-            creditInfo.textContent = `No available EO credits for ${monthMapping[selectedEO_Month]}.`;
+            creditInfo.textContent = 'No available credits for this leave type.';
             creditInfo.style.color = 'red';
             nofdays.disabled = true;
             startDate.disabled = true;
             endDate.disabled = true;
             reasonField.disabled = true;
             nofdays.max = 0;
-            nofdays.value = 0;
         }
-    } else if (credits[leaveType] !== undefined && credits[leaveType] > 0) {
-        creditInfo.textContent = `Remaining Credits: ${credits[leaveType]}`;
-        creditInfo.style.color = 'green';
-        nofdays.disabled = false;
-        startDate.disabled = false;
-        endDate.disabled = false;
-        reasonField.disabled = false;
-        nofdays.max = credits[leaveType];
-        nofdays.value = 1;
     } else {
-        creditInfo.textContent = 'No available credits for this leave type.';
-        creditInfo.style.color = 'red';
-        nofdays.disabled = true;
-        startDate.disabled = true;
-        endDate.disabled = true;
-        reasonField.disabled = true;
-        nofdays.max = 0;
-        nofdays.value = 0;
+        if (excludedLeaveTypes.includes(leaveType)) {
+            // Reset fields for excluded leave types
+            creditInfo.textContent = ''; 
+            creditInfo.style.color = ''; 
+            nofdays.disabled = false; 
+            startDate.disabled = false;
+            endDate.disabled = false; 
+            reasonField.disabled = false; 
+            nofdays.max = ''; 
+            // Reset background colors
+            nofdays.style.backgroundColor = '';
+            startDate.style.backgroundColor = '';
+            endDate.style.backgroundColor = '';
+            reasonField.style.backgroundColor = '';
+        } else if (leaveType === 'EO' && selectedEO_Month) {
+            if (credits[selectedEO_Month] > 0) {
+                creditInfo.textContent = `Remaining EO Credits for ${monthMapping[selectedEO_Month]}: ${credits[selectedEO_Month]}`;
+                creditInfo.style.color = 'green';
+                nofdays.disabled = false;
+                startDate.disabled = false;
+                endDate.disabled = false;
+                reasonField.disabled = false;
+                nofdays.max = credits[selectedEO_Month];
+            } else {
+                creditInfo.textContent = `No available EO credits for ${monthMapping[selectedEO_Month]}.`;
+                creditInfo.style.color = 'red';
+                nofdays.disabled = true;
+                startDate.disabled = true;
+                endDate.disabled = true;
+                reasonField.disabled = true;
+                nofdays.max = 0;
+            }
+        } else if (credits[leaveType] !== undefined && credits[leaveType] > 0) {
+            creditInfo.textContent = `Remaining Credits: ${credits[leaveType]}`;
+            creditInfo.style.color = 'green';
+            nofdays.disabled = false;
+            startDate.disabled = false;
+            endDate.disabled = false;
+            reasonField.disabled = false;
+            nofdays.max = credits[leaveType];
+        } else {
+            creditInfo.textContent = 'No available credits for this leave type.';
+            creditInfo.style.color = 'red';
+            nofdays.disabled = true;
+            startDate.disabled = true;
+            endDate.disabled = true;
+            reasonField.disabled = true;
+            nofdays.max = 0;
+        }
     }
 
     checkSubmitButton();
@@ -709,6 +843,7 @@ function toggleEOSelection(selectElement) {
 
     if (selectElement.value === "EO") {
         eoMonthGroup.style.display = 'block';
+        eoMonthSelect.setAttribute("required", "required");
 
         // Define months with corresponding formatted values
         const monthMap = {
@@ -738,6 +873,7 @@ function toggleEOSelection(selectElement) {
     } else {
         eoMonthGroup.style.display = 'none';
         eoMonthSelect.value = ""; // Reset selection
+        eoMonthSelect.removeAttribute("required");
     }
 }
 

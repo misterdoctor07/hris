@@ -627,11 +627,11 @@ function filterByDate() {
     const fromDate = document.getElementById('fromDate').value;
     const toDate = document.getElementById('toDate').value;
 
-if (fromDate && toDate) {
-        window.location.href = `?leaveapplication&fromDate=${fromDate}&toDate=${toDate}`;
-    } else {
-        alert('Please select both "From" and "To" dates.');
-}
+    if (fromDate && toDate) {
+            window.location.href = `?leaveapplication&fromDate=${fromDate}&toDate=${toDate}`;
+        } else {
+            alert('Please select both "From" and "To" dates.');
+    }
 }
 //Reset button for Date Filter
 function resetFilter() {
