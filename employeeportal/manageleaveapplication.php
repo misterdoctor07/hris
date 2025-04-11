@@ -1,4 +1,13 @@
 <?php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['idno'])) {
+    die("<script>alert('Session expired. Please log in again.'); window.location='/index.php';</script>");
+}
+?>
+<?php
 // Get the logged-in user ID
 $userId = $_SESSION['idno'];
 // Fetch user details 
@@ -119,9 +128,70 @@ if (isset($_GET['disapproved']) && isset($_GET['id'])) {
 if (isset($_GET['undo']) && isset($_GET['id'])) {
     $id = intval($_GET['id']); 
 
+    $disapproveFlag = false; // initialize the flag
+
+    // Retrieve leave application data
+    $sqlRetrieve = mysqli_query($con, "SELECT leavetype, numberofdays, idno, dayfrom, appstatus FROM leave_application WHERE id = '$id'");
+    if ($sqlRetrieve && mysqli_num_rows($sqlRetrieve) > 0) {
+        $leaveData = mysqli_fetch_array($sqlRetrieve);
+        $leaveType = $leaveData['leavetype'];
+        $idno = $leaveData['idno'];
+        $status = $leaveData['appstatus'];
+        $nofdays = $leaveData['numberofdays'];
+        $startDate = $leaveData['dayfrom'];
+        $startMonth = date('n', strtotime($startDate));
+
+        if (strpos($status, 'Disapproved') !== false) {
+            $disapproveFlag = true;
+        }
+    }
+
     $sqlUpdate = mysqli_query($con, "UPDATE leave_application SET appstatus='Pending' WHERE id='$id'");
 
     if ($sqlUpdate) {
+        if ($disapproveFlag){
+            // Update leave credits based on leave type
+            switch ($leaveType) {
+                case 'VL':
+                    $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET vlused = vlused + $nofdays WHERE idno = '$idno'");
+                    break;
+                case 'SL':
+                    $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET slused = slused + $nofdays WHERE idno = '$idno'");
+                    break;
+                case 'PTO':
+                    $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET ptoused = ptoused + $nofdays WHERE idno = '$idno'");
+                    break;
+                case 'BLP':
+                    $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET blp_used = blp_used + $nofdays WHERE idno = '$idno'");
+                    break;
+                case 'EO':
+                    $startMonth = (int) $startMonth;
+                    $monthNames = [
+                        1 => "jan", 2 => "feb", 3 => "mar", 4 => "apr", 5 => "may", 6 => "jun",
+                        7 => "jul", 8 => "aug", 9 => "sep", 10 => "oct", 11 => "nov", 12 => "dec"
+                    ];
+                    
+                    if (isset($monthNames[$startMonth])) {
+                        $columnName = $monthNames[$startMonth] . "_eo_used";
+                        $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET $columnName = $columnName + $nofdays WHERE idno = '$idno'");
+                    }
+                    break;
+                case 'SPL':
+                    $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET spl_used = spl_used + $nofdays WHERE idno = '$idno'");
+                    break;
+                case 'MTL':
+                case 'LTL':
+                case 'MDL':
+                case 'PTL':
+                case 'BL':
+                    // No update logic yet for these types
+                    break;
+                default:
+                    echo "<script>alert('Leave type not recognized. No credits updated.');</script>";
+                    break;
+            }
+        }
+
         echo "<script>alert('Action successfully undone!'); window.location='?manageleaveapplication';</script>";
     } else {
         echo "<script>alert('Action taken was not successful!'); window.location='?manageleaveapplication';</script>";

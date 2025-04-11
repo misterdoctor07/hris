@@ -165,7 +165,7 @@ if (isset($_GET['disapproved']) && isset($_GET['id'])) {
     }
 }
 
-// Handle undo action for leave application
+// Handle undo action for missed log application
 if (isset($_GET['undo']) && isset($_GET['id'])) {
     $id = intval($_GET['id']); 
 
@@ -206,7 +206,7 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                             value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>" 
                             style="width: 150px; height: 35px;">
                     </div>
-                    <button type="button" onclick="filterByDate()" class="filter-btn">Filter</button>
+                    <button id="filterButton"   type="button" onclick="filterByDate()" class="filter-btn">Filter</button>
                     <button type="button" onclick="resetFilter()" class="btn btn-default">Reset</button>
                 </div>
 
@@ -334,12 +334,12 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                     
 
             ?>
-                <!-- Search Bar -->
-                <div class="d-flex align-items-center mb-3" style="margin-bottom: 3px;">
-                    <div class="input-group" style="width: 300px;">
-                        <input type="text" class="form-control" placeholder="Search..." onkeyup="filterTable(this)">
+                    <!-- Search Bar -->
+                    <div class="d-flex align-items-center mb-3" style="margin-bottom: 3px;">
+                        <div class="input-group" style="width: 300px;">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search..." onkeyup="filterTable(this)">
+                        </div>
                     </div>
-                </div>
                     <table class="table table-bordered table-striped table-condensed">
                     <thead>
                             <tr>
@@ -570,19 +570,135 @@ $(document).ready(function() {
         });
     });
 
-    function filterTable(input) {
-        // Get the input field and table
-        const searchValue = input.value.toLowerCase();
-        const table = input.closest('.tab-pane').querySelector('table');
-        
-        // Loop through all table rows and hide those that don't match the search query
-        const rows = table.querySelectorAll('tbody tr');
-        rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            const rowText = Array.from(cells).map(cell => cell.textContent.toLowerCase()).join(' ');
-            row.style.display = rowText.includes(searchValue) ? '' : 'none';
-        });
+function storeSearchAndRedirect(anchor) {
+    const searchInput = document.querySelector('.form-control');
+    const searchValue = searchInput ? searchInput.value : '';
+
+    // Inject search value into the URL
+    const url = new URL(anchor.href, window.location.origin);
+    url.searchParams.set('search', searchValue);
+
+    // Save to sessionStorage for redundancy
+    sessionStorage.setItem('searchValue', searchValue);
+
+    // Redirect with updated URL
+    window.location.href = url.toString();
+
+    // Prevent default link behavior
+    return false;
+}
+
+function filterTable(input) {
+    const searchValue = input.value.toLowerCase();
+
+    // Find tab IDs
+    const deptPane = input.closest('.tab-pane'); // Department tab pane
+    const deptId = deptPane.id;
+
+    const companyPane = deptPane.closest('.tab-pane'); // Company tab pane
+    const companyId = companyPane.id;
+
+    // Save all in sessionStorage
+    sessionStorage.setItem('searchValue', searchValue);
+    sessionStorage.setItem('companyTabId', companyId);
+    sessionStorage.setItem('deptTabId', deptId);
+
+    // Perform filtering
+    const table = deptPane.querySelector('table');
+    const rows = table.querySelectorAll('tbody tr');
+
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const rowText = Array.from(cells).map(cell => cell.textContent.toLowerCase()).join(' ');
+        row.style.display = rowText.includes(searchValue) ? '' : 'none';
+    });
+}
+
+window.onload = function () {
+    const searchValue = sessionStorage.getItem('searchValue');
+    const companyTabId = sessionStorage.getItem('companyTabId');
+    const deptTabId = sessionStorage.getItem('deptTabId');
+
+    if (searchValue && companyTabId && deptTabId) {
+        // Activate correct company tab
+        const companyTabLink = document.querySelector(`a[href="#${companyTabId}"]`);
+        if (companyTabLink) companyTabLink.click();
+
+        // Delay to ensure company tab is active
+        setTimeout(() => {
+            // Activate department tab
+            const deptTabLink = document.querySelector(`a[href="#${deptTabId}"]`);
+            if (deptTabLink) deptTabLink.click();
+
+            // Delay again to ensure department content is loaded
+            setTimeout(() => {
+                const deptPane = document.getElementById(deptTabId);
+                const searchInput = deptPane.querySelector('input[type="text"]');
+                if (searchInput) {
+                    searchInput.value = searchValue;
+                    filterTable(searchInput);
+                }
+            }, 200);
+        }, 200);
     }
+};
+
+//Filter Button for Date Filter
+function filterByDate() {
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
+
+    if (fromDate && toDate) {
+        // Save dates in sessionStorage
+        sessionStorage.setItem('fromDate', fromDate);
+        sessionStorage.setItem('toDate', toDate);
+
+        // Redirect with query params
+        window.location.href = `?missedloginapplication&fromDate=${fromDate}&toDate=${toDate}`;
+    } else {
+        alert('Please select both "From" and "To" dates.');
+    }
+}
+
+window.onload = function () {
+    const searchValue = sessionStorage.getItem('searchValue');
+    const companyTabId = sessionStorage.getItem('companyTabId');
+    const deptTabId = sessionStorage.getItem('deptTabId');
+    const fromDate = sessionStorage.getItem('fromDate');
+    const toDate = sessionStorage.getItem('toDate');
+
+    // Restore date filters
+    if (fromDate && toDate) {
+        document.getElementById('fromDate').value = fromDate;
+        document.getElementById('toDate').value = toDate;
+    }
+
+    // Restore tab and search filters
+    if (searchValue && companyTabId && deptTabId) {
+        const companyTabLink = document.querySelector(`a[href="#${companyTabId}"]`);
+        if (companyTabLink) companyTabLink.click();
+
+        setTimeout(() => {
+            const deptTabLink = document.querySelector(`a[href="#${deptTabId}"]`);
+            if (deptTabLink) deptTabLink.click();
+
+            setTimeout(() => {
+                const deptPane = document.getElementById(deptTabId);
+                const searchInput = deptPane.querySelector('input[type="text"]');
+                if (searchInput) {
+                    searchInput.value = searchValue;
+                    filterTable(searchInput);
+                }
+            }, 200);
+        }, 200);
+    }
+};
+
+function resetFilter() {
+    window.location.href = '?missedloginapplication';
+    sessionStorage.removeItem('fromDate');
+    sessionStorage.removeItem('toDate');
+}
 
     function tablesToExcel() {
         const dataType = 'application/vnd.ms-excel';
@@ -661,19 +777,7 @@ $(document).ready(function() {
             document.body.removeChild(downloadLink);
         }
     }
-function filterByDate() {
-    const fromDate = document.getElementById('fromDate').value;
-    const toDate = document.getElementById('toDate').value;
 
-    if (fromDate && toDate) {
-            window.location.href = `?missedloginapplication&fromDate=${fromDate}&toDate=${toDate}`;
-        } else {
-            alert('Please select both "From" and "To" dates.');
-    }
-}
-function resetFilter() {
-    window.location.href = '?missedloginapplication';
-}
 //Sorting Columns
 document.addEventListener("DOMContentLoaded", function () {
     const headers = document.querySelectorAll(".sortable");
