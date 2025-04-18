@@ -1,4 +1,7 @@
-
+<?php
+    header("Content-Type: application/vnd.ms-excel");
+    header("Content-Disposition: attachment; filename=payslip.xls");
+?>
 <?php
     include('../config.php');
     $id=$_GET['id'];

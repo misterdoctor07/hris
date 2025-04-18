@@ -209,6 +209,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payslip</title>
+    <link rel="icon" type="image/x-icon" href="img/iconhris_2.png">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -244,7 +245,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: url('/hris/accounting/img/3.png') center/cover no-repeat;
+            background: url('/accounting/img/3.png') center/cover no-repeat;
             opacity: 0.1; /* Adjust transparency */
             z-index: -1;
         }
@@ -259,11 +260,11 @@
                 <table class="header-table">
                     <tr>
                         <td><strong>EMPLOYEE NAME:</strong></td>
-                        <td style="padding-left: 70px;"><?=$fullname?></td>
+                        <td style="padding-left: 70px;"><strong><?=$fullname?></strong></td>
                     </tr>
                     <tr>
                         <td><strong>TEAM:</strong></td>
-                        <td style="padding-left: 70px;"><?=$department?></td>
+                        <td style="padding-left: 70px;"><strong><?=$department?></strong></td>
                     </tr>
                 </table>
             </div>
@@ -272,15 +273,15 @@
                 <table class="header-table">
                     <tr>
                         <td><strong>BASIC MONTHLY SALARY:</strong></td>
-                        <td style="text-align: right; white-space: nowrap;"><?=$fixedSalary?></td>
+                        <td style="text-align: right; white-space: nowrap;"><strong><?=$fixedSalary?></strong></td>
                     </tr>
                     <tr>
                         <td><strong>PAY PER DAY:</strong></td>
-                        <td style="text-align: right; white-space: nowrap;"><?=$baseFixed?></td>
+                        <td style="text-align: right; white-space: nowrap;"><strong><?=$baseFixed?></strong></td>
                     </tr>
                     <tr>
                         <td><strong>Pay Period:</strong></td>
-                        <td style="text-align: right; white-space: nowrap;"><?=date('M j, Y',strtotime($payrollperiod['periodfrom']));?> to <?=date('M j, Y',strtotime($payrollperiod['periodto']));?></td>
+                        <td style="text-align: right; white-space: nowrap;"><strong><?=date('M j, Y',strtotime($payrollperiod['periodfrom']));?> to <?=date('M j, Y',strtotime($payrollperiod['periodto']));?></strong></td>
                     </tr>
                 </table>
             </div>
@@ -344,8 +345,8 @@
                             }
                         ?>
                         <tr class="highlight">
-                            <td>TOTAL GROSS EARNINGS & BENEFITS FOR THIS PAY PERIOD</td>
-                            <td style="text-align: right; white-space: nowrap; font-size:small"><?=$grossEarnings?></td>
+                            <td><strong>TOTAL GROSS EARNINGS & BENEFITS FOR THIS PAY PERIOD</strong></td>
+                            <td style="text-align: right; white-space: nowrap; font-size:15px"><strong><?=$grossEarnings?></strong></td>
                         </tr>
                     </table>
                 </div>
@@ -380,15 +381,15 @@
                             }
                         ?>
                         <tr class="highlight">
-                            <td>TOTAL TAKE HOME PAY FOR THIS PAY PERIOD</td>
-                            <td style="text-align: right; white-space: nowrap; font-size:small"><?=$takehome?></td>
+                            <td><strong>TOTAL TAKE HOME PAY FOR THIS PAY PERIOD</strong></td>
+                            <td style="text-align: right; white-space: nowrap; font-size:15px"><strong><?=$takehome?></strong></td>
                         </tr>
                     </table>
                 </div>
             </div>
         </div>
         <div>
-            <h3 style="text-align: center; background-color: #1d2437; color: white; padding: 5px">BREAKDOWN OF SALARY AND BENEFITS</h3>
+            <h4 style="text-align: center; background-color: #1d2437; color: white; padding: 5px">BREAKDOWN OF SALARY AND BENEFITS</h4>
             <div style="display: flex; justify-content: space-between;">
                 <div style="width: 49%;">
                     <table class="header-table">
@@ -448,9 +449,9 @@
                             <td style="text-align: right; white-space: nowrap;"><?=$nightDiffAmount?></td>
                         </tr>
                         <tr class="highlight">
-                            <td>TOTAL BASIC SALARY</td>
+                            <td><strong>TOTAL BASIC SALARY</strong></td>
                             <td style="text-align: center;"></td>
-                            <td style="text-align: right; white-space: nowrap; font-size:small"><?=$totalBasicSalary?></td>
+                            <td style="text-align: right; white-space: nowrap; font-size:15px"><strong><?=$totalBasicSalary?></strong></td>
                         </tr>
                     </table>
                 </div>
@@ -465,8 +466,8 @@
                             <td style="text-align: right; white-space: nowrap;"><?=$addonAmount?></td>
                         </tr>
                         <tr class="highlight">
-                            <td>TOTAL ADD ON PAY</td>
-                            <td style="text-align: right; white-space: nowrap; font-size:small"><?=$totaladdAmount?></td>
+                            <td><strong>TOTAL ADD ON PAY</strong></td>
+                            <td style="text-align: right; white-space: nowrap; font-size:15px"><?=$totaladdAmount?></td>
                         </tr>
                         <tr>
                             <td><strong>Deductions Breakdown</td>
@@ -476,8 +477,8 @@
                             <td style="text-align: right; white-space: nowrap;"><?=$deductionAmount?></td>
                         </tr>
                         <tr class="highlight">
-                            <td>TOTAL DEDUCTIONS</td>
-                            <td style="text-align: right; white-space: nowrap; font-size:small"><?=$totaldeductAmount?></td>
+                            <td><strong>TOTAL DEDUCTIONS</strong></td>
+                            <td style="text-align: right; white-space: nowrap; font-size:15px"><strong><?=$totaldeductAmount?></strong></td>
                         </tr>
                     </table>
                 </div>
@@ -507,8 +508,8 @@
                         <td style="text-align: right; white-space: nowrap;"><?=$taxAmount?></td>
                     </tr>
                     <tr class="highlight">
-                        <td>TOTAL COMPANY PAID GOVERNMENT BENEFITS</td>
-                        <td style="text-align: right; white-space: nowrap; font-size:small"><?=$CompanyPaidGovBenAmount?></td>
+                        <td><strong>TOTAL COMPANY PAID GOVERNMENT BENEFITS</strong></td>
+                        <td style="text-align: right; white-space: nowrap; font-size:15px"><strong><?=$CompanyPaidGovBenAmount?></strong></td>
                     </tr>
                 </table>
             </div>
@@ -535,8 +536,8 @@
                         <td>&nbsp;</td>
                     </tr>
                     <tr class="highlight">
-                        <td>TOTAL OTHER COMPANY PAID BENEFITS</td>
-                        <td style="text-align: right; white-space: nowrap; font-size:small"><?=$CompanyGovBenAmount?></td>
+                        <td><strong>TOTAL OTHER COMPANY PAID BENEFITS</strong></td>
+                        <td style="text-align: right; white-space: nowrap; font-size:15px"><strong><?=$CompanyGovBenAmount?></strong></td>
                     </tr>
                 </table>
             </div>
