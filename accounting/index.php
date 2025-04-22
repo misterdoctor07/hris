@@ -127,6 +127,18 @@
           </li>
           <li class="sub-menu">
             <a href="javascript:;">
+              <i class=" fa fa-user"></i>
+              <span>Employee Details</span>
+              </a>
+            <ul class="sub">
+              <li><a href="?hr_roster">HR Roster</a></li>
+              <li><a href="?leavecredits">Leave Credits</a></li>
+              <li><a href="?movement_tracker">Movement Tracker</a></li>
+              <li><a href="?companybenefits">Resigned</a></li>
+            </ul>
+          </li>
+          <li class="sub-menu">
+            <a href="javascript:;">
               <i class=" fa fa-gear"></i>
               <span>Settings</span>
               </a>
@@ -174,14 +186,16 @@
             if(isset($_GET['managedeductions'])){include('managedeductions.php');}
             if(isset($_GET['sickleave'])){include('sickleave.php');}
             if(isset($_GET['viewsickleave'])){include('viewsickleave.php');}
-
             if(isset($_GET['editinfraction'])){include('editinfraction.php');}
             if(isset($_GET['monitorinfraction'])){include('monitorinfraction.php');}
             if(isset($_GET['employeereferral'])){include('employeereferral.php');}
             if(isset($_GET['editoffense'])){include('editoffense.php');}
             if(isset($_GET['manageuser'])){include('manageuser.php');}
             if(isset($_GET['holiday'])){include('holiday.php');}
-
+            if(isset($_GET['hr_roster'])){include('hr_roster.php');}
+            if(isset($_GET['leavecredits'])){include('leavecredits.php');}
+            if(isset($_GET['movement'])){include('movement.php');}
+            if(isset($_GET['movement_tracker'])){include('movement_tracker.php');}
           ?>
           <!-- /col-lg-3 -->
         </div>
