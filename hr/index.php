@@ -190,7 +190,7 @@ date_default_timezone_set("Asia/Manila");
               </ul>
           </li>
           <li>
-            <a href="?movement">
+            <a href="?movementtracker">
               <i class="fa fa-road"></i>
               <span>Movement Tracker</span>
               </a>

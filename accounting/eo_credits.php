@@ -2,6 +2,7 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 <?php
+include ('../config.php');
 // Fetch unique companies from the employee_details table
 $sqlCompanies = mysqli_query($con, "SELECT DISTINCT company FROM employee_details ORDER BY company");
 
@@ -17,12 +18,9 @@ if (!$sqlCompanies) {
     <div class="content-panel">
         <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
             <h4 style="margin: 0;">
-                <a href="?main"><i class="fa fa-arrow-left"></i> HOME</a> |
-                <i class="fa fa-user"></i> EMPLOYEE LEAVE CREDITS
+                <a href="?leavecredits"><i class="fa fa-arrow-left"></i> BACK</a> |
+                <i class="fa fa-user"></i> EMPLOYEE EO CREDITS
             </h4>
-            <div>
-                <a href="?eo_credits" type="button" class="btn btn-primary">VIEW MONTHLY EO CREDITS</a>
-            </div>
         </div>
 
         <!-- Company Tabs -->
@@ -94,41 +92,69 @@ if (!$sqlCompanies) {
                         echo "Error fetching employees: " . mysqli_error($con);
                         continue;
                     }
-
-                    echo '<!-- Search Bar -->';
-                    echo '<div class="d-flex align-items-center mb-3" style="margin-bottom: 3px;">';
-                    echo '    <div class="input-group" style="width: 300px;">';
-                    echo '        <input type="text" class="form-control" placeholder="Search..." onkeyup="filterTable(this)">';
-                    echo '    </div>';
-                    echo '</div>';
-
-                    echo "<table class='table table-bordered table-striped table-condensed'>
+                    ?>
+                    <div class="d-flex justify-content-between align-items-center mb-3" style="margin-bottom: 3px;">
+                        <!-- Search Bar -->
+                        <div class="input-group" style="width: 300px;">
+                            <input type="text" class="form-control" placeholder="Search..." onkeyup="filterTable(this)">
+                        </div>
+                    </div>
+                    <!-- <style>
+                        .used-col {
+                            background-color: #AEC6CF;
+                        }
+                        .rem-col {
+                            background-color: #FFF4BC; 
+                        }
+                    </style> -->
+                    <table class='table table-bordered table-striped table-condensed'>
                         <thead>
                             <tr>
                                 <th rowspan='2' style = 'vertical-align:middle; text-align: center;'>No.</th>
                                 <th rowspan='2' style = 'vertical-align:middle; text-align: center;'>Emp ID</th>
                                 <th rowspan='2' style = 'vertical-align:middle; text-align: center;'>Employee Name</th>
-                                <th rowspan='2' style = 'vertical-align:middle; text-align: center;'>Eligibility</th>
-                                <th rowspan='2' style = 'vertical-align:middle; text-align: center;'>Length of Service</th>
-                                <th rowspan='2' style = 'vertical-align:middle; text-align: center;'>Period (From - Through)</th>
-                                <th colspan='3' style = 'text-align: center;'>Vacation Leave</th>
-                                <th colspan='3' style = 'text-align: center;'>Sick Leave</th>
-                                <th colspan='3' style = 'text-align: center;'>Paid Time-Off (PTO)</th>
+                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>January</th>
+                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>February</th>
+                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>March</th>
+                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>April</th>
+                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>May</th>
+                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>June</th>
+                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>July</th>
+                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>August</th>
+                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>September</th>
+                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>October</th>
+                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>November</th>
+                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>December</th>
                             </tr>
                             <tr>
-                                <th style = 'text-align: center;'>Credits</th>
-                                <th style = 'text-align: center;'>Used</th>
-                                <th style = 'text-align: center;'>Remaining</th>
-                                <th style = 'text-align: center;'>Credits</th>
-                                <th style = 'text-align: center;'>Used</th>
-                                <th style = 'text-align: center;'>Remaining</th>
-                                <th style = 'text-align: center;'>Credits</th>
-                                <th style = 'text-align: center;'>Used</th>
-                                <th style = 'text-align: center;'>Remaining</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
+                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
                             </tr>
                         </thead>
-                        <tbody>";
-
+                        <tbody>
+                    <?php
                     $x = 1;
                     while ($employee = mysqli_fetch_array($sqlEmployee)) {
 
@@ -137,15 +163,42 @@ if (!$sqlCompanies) {
                         $dateFulltime = date('M d, Y', strtotime($employee['dateoffulltime']));
                         $hireDate = new DateTime($employee['dateofhired']);
                         $thresholdDate = new DateTime('2020-07-31'); // End of July 2020
-                        $leavecredits = $employee['vacationleave'];
-                        $leaveused = $employee['vlused'];
-                        $vlrem = $leavecredits - $leaveused;
-                        $sickleaves = $employee['sickleave'];
-                        $sickused = $employee['slused'];
-                        $srem = $sickleaves - $sickused;
-                        $ptocr = $employee['pto'];
-                        $ptouseds = $employee['ptoused'];
-                        $ptos = $ptocr - $ptouseds;
+                        $jan_earlyout = $employee['jan_earlyout'];
+                        $jan_eo_used = $employee['jan_eo_used'];
+                        $janrem = $jan_earlyout - $jan_eo_used;
+                        $feb_earlyout = $employee['feb_earlyout'];
+                        $feb_eo_used = $employee['feb_eo_used'];
+                        $febrem = $feb_earlyout - $feb_eo_used;
+                        $mar_earlyout = $employee['mar_earlyout'];
+                        $mar_eo_used = $employee['mar_eo_used'];
+                        $marrem = $mar_earlyout - $mar_eo_used;
+                        $apr_earlyout = $employee['apr_earlyout'];
+                        $apr_eo_used = $employee['apr_eo_used'];
+                        $aprrem = $apr_earlyout - $apr_eo_used;
+                        $may_earlyout = $employee['may_earlyout'];
+                        $may_eo_used = $employee['may_eo_used'];
+                        $mayrem = $may_earlyout - $may_eo_used;
+                        $jun_earlyout = $employee['jun_earlyout'];
+                        $jun_eo_used = $employee['jun_eo_used'];
+                        $junrem = $jun_earlyout - $jun_eo_used;
+                        $jul_earlyout = $employee['jul_earlyout'];
+                        $jul_eo_used = $employee['jul_eo_used'];
+                        $julrem = $jul_earlyout - $jul_eo_used;
+                        $aug_earlyout = $employee['aug_earlyout'];
+                        $aug_eo_used = $employee['aug_eo_used'];
+                        $augrem = $aug_earlyout - $aug_eo_used;
+                        $sep_earlyout = $employee['sep_earlyout'];
+                        $sep_eo_used = $employee['sep_eo_used'];
+                        $seprem = $sep_earlyout - $sep_eo_used;
+                        $oct_earlyout = $employee['oct_earlyout'];
+                        $oct_eo_used = $employee['oct_eo_used'];
+                        $octrem = $oct_earlyout - $oct_eo_used;
+                        $nov_earlyout = $employee['nov_earlyout'];
+                        $nov_eo_used = $employee['nov_eo_used'];
+                        $novrem = $nov_earlyout - $nov_eo_used;
+                        $dec_earlyout = $employee['dec_earlyout'];
+                        $dec_eo_used = $employee['dec_eo_used'];
+                        $decrem = $dec_earlyout - $dec_eo_used;
 
                         if ($hireDate <= $thresholdDate) {
                             // Logic for dateofhire on or before July 2020
@@ -176,21 +229,33 @@ if (!$sqlCompanies) {
                         }
 
                         echo "<tr>
-                            <td width='1%' align='center'>{$x}.</td>
-                            <td width='4%' align='center'>{$employee['idno']}</td>
-                            <td width='19%'><strong>{$employee['lastname']}</strong>, {$employee['firstname']} {$employee['middlename']} {$employee['suffix']}</td>
-                            <td width='6%' align='center' width='6%'>{$eligibility}</td>
-                            <td width='12%' align='center' width='10%'>$years years $month months $days days</td>
-                            <td width='12%' align='center' width='10%'>$periodfrom - $periodto </td>
-                            <td align='center'>{$leavecredits}</td>
-                            <td align='center'>{$leaveused}</td>
-                            <td align='center'>{$vlrem}</td>
-                            <td align='center'>{$sickleaves}</td>
-                            <td align='center'>{$sickused}</td>
-                            <td align='center'>{$srem}</td>
-                            <td align='center'>{$ptocr}</td>
-                            <td align='center'>{$ptouseds}</td>
-                            <td align='center'>{$ptos}</td>
+                            <td align='center'>{$x}.</td>
+                            <td width='5%' align='center'>{$employee['idno']}</td>
+                            <td width='15%'><strong>{$employee['lastname']}</strong>, {$employee['firstname']} {$employee['middlename']} {$employee['suffix']}</td>
+                            <td class='text-center align-middle'>{$jan_eo_used}</td>
+                            <td class='text-center align-middle'>{$janrem}</td>
+                            <td class='text-center align-middle'>{$feb_eo_used}</td>
+                            <td class='text-center align-middle'>{$febrem}</td>
+                            <td class='text-center align-middle'>{$mar_eo_used}</td>
+                            <td class='text-center align-middle'>{$marrem}</td>
+                            <td class='text-center align-middle'>{$apr_eo_used}</td>
+                            <td class='text-center align-middle'>{$aprrem}</td>
+                            <td class='text-center align-middle'>{$may_eo_used}</td>
+                            <td class='text-center align-middle'>{$mayrem}</td>
+                            <td class='text-center align-middle'>{$jun_eo_used}</td>
+                            <td class='text-center align-middle'>{$junrem}</td>
+                            <td class='text-center align-middle'>{$jul_eo_used}</td>
+                            <td class='text-center align-middle'>{$julrem}</td>
+                            <td class='text-center align-middle'>{$aug_eo_used}</td>
+                            <td class='text-center align-middle'>{$augrem}</td>
+                            <td class='text-center align-middle'>{$sep_eo_used}</td>
+                            <td class='text-center align-middle'>{$seprem}</td>
+                            <td class='text-center align-middle'>{$oct_eo_used}</td>
+                            <td class='text-center align-middle'>{$octrem}</td>
+                            <td class='text-center align-middle'>{$nov_eo_used}</td>
+                            <td class='text-center align-middle'>{$novrem}</td>
+                            <td class='text-center align-middle'>{$dec_eo_used}</td>
+                            <td class='text-center align-middle'>{$decrem}</td>
                         </tr>";
                         $x++;
                     }

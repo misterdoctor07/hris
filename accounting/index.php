@@ -134,7 +134,7 @@
               <li><a href="?hr_roster">HR Roster</a></li>
               <li><a href="?leavecredits">Leave Credits</a></li>
               <li><a href="?movement_tracker">Movement Tracker</a></li>
-              <li><a href="?companybenefits">Resigned</a></li>
+              <li><a href="?resigned">Resigned</a></li>
             </ul>
           </li>
           <li class="sub-menu">
@@ -196,6 +196,8 @@
             if(isset($_GET['leavecredits'])){include('leavecredits.php');}
             if(isset($_GET['movement'])){include('movement.php');}
             if(isset($_GET['movement_tracker'])){include('movement_tracker.php');}
+            if(isset($_GET['resigned'])){include('resigned.php');}
+            if(isset($_GET['eo_credits'])){include('eo_credits.php');}
           ?>
           <!-- /col-lg-3 -->
         </div>
