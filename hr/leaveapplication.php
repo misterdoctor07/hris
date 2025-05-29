@@ -523,7 +523,7 @@ if (isset($_POST['submitRemarks'])) {
     $remarks = mysqli_real_escape_string($con, $_POST['remarks']); // Sanitize input
 
     // Update remarks in the database
-    $sqlUpdateRemarks = "UPDATE leave_application SET remarks = '$remarks' WHERE id = '$id'";
+    $sqlUpdateRemarks = "UPDATE leave_application SET remarks = '$remarks', remarks_view_status='Unseen' WHERE id = '$id'";
     if (mysqli_query($con, $sqlUpdateRemarks)) {
         echo "<script>alert('Remarks updated successfully.');</script>";
         echo "<script>window.location.href='?leaveapplication';</script>"; // Redirect after update

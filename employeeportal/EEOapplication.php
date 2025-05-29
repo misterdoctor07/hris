@@ -1,3 +1,12 @@
+<?php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['idno'])) {
+    die("<script>alert('Session expired. Please log in again.'); window.location='/index.php';</script>");
+}
+?>
 <style>
 /* Modal Overlay to Blur Background */
 .modal-overlay {
@@ -72,6 +81,34 @@
     padding: 4px 8px;
     font-size: 12px;
 }
+/* Sorting Columns */
+th.sortable {
+    cursor: pointer;
+    position: relative;
+}
+
+th.sortable.asc::after {
+    content: ''; /* Ascending arrow icon */
+    color: #000;
+}
+
+th.sortable.desc::after {
+    content: ''; /* Descending arrow icon */
+    color: #000;
+}
+/*Date Filter Button*/
+.filter-btn {
+    background-color: #3f4d6a;
+    color: white;
+    border: none;
+    padding: 7px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.filter-btn:hover {
+    background-color: #181e2e;
+}
 </style>
 
 <?php
@@ -130,7 +167,7 @@ if (isset($_GET['approved']) && isset($_GET['id'])) {
     $id = intval($_GET['id']); 
     $datetime = date('M j, Y - g:i A');
     $approval = "{$userDetails['lastname']} ({$userDetails['jobtitle']})";
-    $sqlUpdate = mysqli_query($con, "UPDATE emergencyearlyout SET eeo_status='Approved - $approval [$datetime]' WHERE id='$id'");
+    $sqlUpdate = mysqli_query($con, "UPDATE emergencyearlyout SET eeo_status='Approved - $approval [$datetime]', view_status='Unseen' WHERE id='$id'");
 
     if ($sqlUpdate) {
         echo "<script>alert('EEO application successfully approved!'); window.location='?EEOapplication';</script>";
@@ -143,7 +180,7 @@ if (isset($_GET['approved']) && isset($_GET['id'])) {
 if (isset($_GET['disapproved']) && isset($_GET['id'])) {
     $id = intval($_GET['id']); // Sanitize the ID
     $datetime = date('M j, Y - g:i A');
-    $sqlUpdate = mysqli_query($con, "UPDATE emergencyearlyout SET eeo_status='Disapproved - $datetime' WHERE id='$id'");
+    $sqlUpdate = mysqli_query($con, "UPDATE emergencyearlyout SET eeo_status='Disapproved - $datetime', view_status='Unseen' WHERE id='$id'");
 
     if ($sqlUpdate) {
         echo "<script>alert('EEO application successfully disapproved!'); window.location='?EEOapplication';</script>";
@@ -156,7 +193,7 @@ if (isset($_GET['disapproved']) && isset($_GET['id'])) {
 if (isset($_GET['undo']) && isset($_GET['id'])) {
     $id = intval($_GET['id']); 
 
-    $sqlUpdate = mysqli_query($con, "UPDATE emergencyearlyout SET eeo_status='Pending' WHERE id='$id'");
+    $sqlUpdate = mysqli_query($con, "UPDATE emergencyearlyout SET eeo_status='Pending', view_status='Unseen' WHERE id='$id'");
 
     if ($sqlUpdate) {
         echo "<script>alert('Action successfully undone!'); window.location='?EEOapplication';</script>";
@@ -169,28 +206,39 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
 <div class="col-lg-12">
     <div class="content-panel">
         <div class="panel-heading">
-            <h4>
-                <a href="?main"><i class="fa fa-arrow-left"></i> HOME</a> | 
-                <i class="fa fa-file-text"></i> EMERGENCY EARLY OUT APPLICATION
-                <div style="float:right; margin-bottom: 20px;">
+            <div class="flex-container" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <!-- Left Section -->
+                <div class="flex-item-left" style="display: flex; align-items: center; gap: 10px;">
+                    <h4>
+                        <a href="?main"><i class="fa fa-arrow-left"></i> HOME</a> | 
+                        <i class="fa fa-file-text"></i> EMERGENCY EARLY OUT APPLICATION
+                    </h4>
+                </div>
+
+                <!-- Date Filter Section -->
+                <div class="date-filter" style="display: flex; align-items: center; gap: 10px;">
+                    <h5 style="font-weight: bold; margin-left: 30px;">Filter Date of EEO</h5>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label for="fromDate" style="margin-bottom: 0;">From:</label>
+                        <input type="date" id="fromDate" class="form-control" 
+                            value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>" 
+                            style="width: 150px; height: 35px;">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label for="toDate" style="margin-bottom: 0;">To:</label>
+                        <input type="date" id="toDate" class="form-control" 
+                            value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>" 
+                            style="width: 150px; height: 35px;">
+                    </div>
+                    <button type="button" onclick="filterByDate()" class="filter-btn">Filter</button>
+                    <button type="button" onclick="resetFilter()" class="btn btn-default">Reset</button>
+                </div>
+
+                <!-- Export to Excel Button -->
+                <div class="export-btn" style="display: flex; align-items: center; margin-left: auto">
                     <form>
-                        <button type="button" onclick="tablesToExcel('EEO_Application_Report')" class="btn btn-success">EXPORT TO EXCEL</button>
+                        <button type="button" onclick="tablesToExcel('EEO_Applications_Report')" class="btn btn-success">EXPORT TO EXCEL</button>
                     </form>
-                </div>
-            </h4>
-            <!-- Date Filter -->
-            <div class="row" style="margin-bottom: 20px;">
-                <div class="col-md-3">
-                    <label for="fromDate">From:</label>
-                    <input type="date" id="fromDate" class="form-control" value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>">
-                </div>
-                <div class="col-md-3">
-                    <label for="toDate">To:</label>
-                    <input type="date" id="toDate" class="form-control" value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>">
-                </div>
-                <div class="col-md-2">
-                    <button type="button" onclick="filterByDate()" class="btn btn-primary" style="margin-top: 25px;">Filter</button>
-                    <button type="button" onclick="resetFilter()" class="btn btn-default" style="margin-top: 25px;">Reset</button>
                 </div>
             </div>
         </div>
@@ -306,8 +354,8 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                         ORDER BY 
                             CASE 
                                 WHEN eeo.eeo_status = 'Pending' THEN 1
-                                WHEN eeo.eeo_status LIKE 'Approved%' THEN 2
-                                WHEN eeo.eeo_status LIKE 'Disapproved%' THEN 3
+                                WHEN eeo.eeo_status LIKE '%Approved%' THEN 2
+                                WHEN eeo.eeo_status LIKE '%Disapproved%' THEN 3
                                 ELSE 4
                             END,
                             eeo.date_applied,
@@ -368,14 +416,13 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                                     <td style='text-align: justify; vertical-align: middle;'><?= $emp['reason'] ?></td>
                                     <td style='text-align: center; vertical-align: middle;'><?= date('m/d/Y', strtotime($emp['date_applied'])) . "<br>" . date('g:i:s A', strtotime($emp['time_applied'])); ?></td>
                                     <td style='text-align: center; vertical-align: middle;'><?= $emp['eeo_status'] ?></td>
-                                    <td style='text-align: justify; vertical-align: middle;'><?= $emp['approvers_remarks'] ?></td>
+                                    <td align='center' class="editable-cell" data-id="<?= $emp['eeoid']; ?>" data-column="approvers_remarks">
+                                            <?= htmlspecialchars($emp['approvers_remarks'], ENT_QUOTES); ?>
+                                        </td>
                                     <td style='text-align: center; vertical-align: middle;'><?= $emp['acknowledged'] ?></td>
                                     <td style='text-align: center; vertical-align: middle;'>
                                         <?php if (strpos($emp['eeo_status'], 'Approved') === false && strpos($emp['eeo_status'], 'Disapproved') === false): ?>
-                                            <a href="?EEOapplication&addremarks&id=<?= $emp['eeoid']; ?>&remarks=<?= $emp['approvers_remarks']; ?>" 
-                                            class="btn btn-primary btn-xs" title="Remarks">
-                                            <i class='fa fa-edit'></i>
-                                            </a>
+
                                         <?php endif; ?>
 
                                         <?php 
@@ -525,7 +572,7 @@ if (isset($_POST['submitRemarks'])) {
     $remarks = mysqli_real_escape_string($con, $_POST['remarks']); // Sanitize input
     
     // Update remarks in the database
-    $sqlUpdateRemarks = "UPDATE emergencyearlyout SET approvers_remarks = '$remarks' WHERE id = '$id'";
+    $sqlUpdateRemarks = "UPDATE emergencyearlyout SET approvers_remarks = '$remarks', remarks_view_status='Unseen' WHERE id = '$id'";
     if (mysqli_query($con, $sqlUpdateRemarks)) {
         echo "<script>alert('Remarks updated successfully.');</script>";
         echo "<script>window.location.href='?EEOapplication';</script>";
@@ -538,7 +585,117 @@ if (isset($_POST['submitRemarks'])) {
 <!-- Ensure Bootstrap JS and jQuery are included -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<script>
+   // Enable in-line editing when clicking on a cell
+document.querySelectorAll('.editable-cell').forEach(cell => {
+    cell.addEventListener('click', function (e) {
+        // Prevent double-editing
+        if (this.querySelector('textarea')) return;
 
+        const currentText = this.textContent.trim();
+        const eeoid = this.getAttribute('data-id');
+
+        // Create a textarea for editing
+        const textarea = document.createElement('textarea');
+        textarea.value = currentText;
+        textarea.classList.add('form-control');
+        this.innerHTML = '';  // Clear the cell content
+        this.appendChild(textarea);
+        textarea.focus();
+
+        // Handle Enter key to save the remark
+        textarea.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();  // Prevent default behavior (line break in textarea)
+                saveAllRemarks();  // Save all remarks
+            }
+        });
+
+        // Handle Esc key to cancel the editing
+        textarea.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                e.preventDefault();  // Prevent default behavior
+                cancelEdit(cell, currentText);  // Restore the cell to its original state
+            }
+        });
+
+        // Add event listener to close edit when clicking outside
+        document.addEventListener('click', closeEditOnClickOutside);
+
+        function closeEditOnClickOutside(event) {
+            if (!cell.contains(event.target)) {
+                cancelEdit(cell, currentText);  // Restore the cell to its original state
+                document.removeEventListener('click', closeEditOnClickOutside); // Remove listener
+            }
+        }
+    });
+});
+
+// Function to cancel editing and restore the cell's original content
+function cancelEdit(cell, originalText) {
+    cell.innerHTML = originalText;  // Restore original content in cell
+}
+
+
+    // Function to save all remarks to the database
+function saveAllRemarks() {
+    const remarksData = [];
+    let hasEmptyRemark = false;
+
+    document.querySelectorAll('.editable-cell').forEach(cell => {
+        const textarea = cell.querySelector('textarea');
+        if (textarea) {
+            const eeoid = cell.getAttribute('data-id');
+            const remarks = textarea.value.trim();
+
+            if (remarks === '') {
+                hasEmptyRemark = true;
+            }
+
+            remarksData.push({
+                eeoid: eeoid,
+                approvers_remarks: remarks
+            });
+        }
+    });
+
+    if (hasEmptyRemark) {
+        alert('Remarks cannot be empty!');
+        return;
+    }
+
+    // AJAX request to save all remarks
+    $.ajax({
+        url: 'save_remarkeeo.php',
+        method: 'POST',
+        data: {
+            remarks: JSON.stringify(remarksData) // Send remarks as a JSON array
+        },
+        success: function (response) {
+            console.log('Server Response:', response); // Debugging: Log the server response
+
+            try {
+                const res = JSON.parse(response);
+                if (res.success) {
+                    alert('Remarks saved successfully!');
+                    location.reload(); // Refresh the page
+                } else {
+                    alert('Failed to save remarks: ' + res.message);
+                }
+            } catch (error) {
+                console.error('Error parsing server response:', error); // Debugging: Log parsing errors
+                console.error('Raw Server Response:', response); // Log the raw server response
+                alert('Details are saved!');
+window.location.href = '?EEOapplication';
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error('AJAX Error:', status, error); // Debugging: Log AJAX errors
+            alert('Failed to save remarks. Please check the console for details.');
+        }
+    });
+}
+</script>
 <script>
     $(document).ready(function() {
     // Store active tab on click
@@ -704,7 +861,7 @@ $(document).ready(function() {
         }
     }
 function filterByDate() {
-    const fromDate = document.getElementById('fromDate').value;
+    const fromDate = document.getElementById('fromDate').value; 
     const toDate = document.getElementById('toDate').value;
 
     if (fromDate && toDate) {
@@ -716,4 +873,79 @@ function filterByDate() {
 function resetFilter() {
     window.location.href = '?EEOapplication';
 }
+document.addEventListener("DOMContentLoaded", function () {
+    const headers = document.querySelectorAll(".sortable");
+    
+    headers.forEach(header => {
+        header.addEventListener("click", function () {
+            const table = header.closest("table");
+            const tbody = table.querySelector("tbody");
+            const columnIndex = parseInt(header.getAttribute("data-column"));
+            const isAscending = header.classList.contains("asc");
+
+            // Clear existing sorting classes
+            headers.forEach(h => h.classList.remove("asc", "desc"));
+
+            // Toggle sorting order
+            header.classList.toggle("asc", !isAscending);
+            header.classList.toggle("desc", isAscending);
+
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+            rows.sort((a, b) => {
+                const aText = a.cells[columnIndex].innerText.trim();
+                const bText = b.cells[columnIndex].innerText.trim();
+
+                return isAscending
+                    ? compareValues(bText, aText) // Sort descending if currently ascending
+                    : compareValues(aText, bText); // Sort ascending if currently descending
+            });
+
+            // Append sorted rows back to the table body
+            rows.forEach(row => tbody.appendChild(row));
+        });
+    });
+
+    function compareValues(a, b) {
+        const dateA = parseDateTime(a);
+        const dateB = parseDateTime(b);
+
+        // Check if both values are valid dates, if so, compare as dates
+        if (dateA && dateB) return dateA - dateB;
+
+        // Otherwise, compare as case-insensitive strings (for names, text, etc.)
+        return a.localeCompare(b, undefined, { sensitivity: 'base' });
+    }
+
+    function parseDateTime(dateStr) {
+        const monthMap = {
+            "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
+            "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+        };
+
+        // Regex patterns to detect date and date-time formats
+        const dateRegex = /^([A-Za-z]+)\s(\d{1,2}),\s(\d{4})$/;  // Format: Jan 02, 2025
+        const dateTimeRegex = /^([A-Za-z]+)\s(\d{1,2}),\s(\d{4})\s(\d{1,2}):(\d{2})\s(AM|PM)$/;  // Format: Jan 02, 2025 6:42 AM
+
+        const matchDateTime = dateStr.match(dateTimeRegex);
+        if (matchDateTime) {
+            const [, month, day, year, hours, minutes, meridian] = matchDateTime;
+            let hour24 = convertTo24Hour(parseInt(hours), meridian);
+            return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), hour24, parseInt(minutes));
+        }
+
+        const matchDate = dateStr.match(dateRegex);
+        if (matchDate) {
+            const [, month, day, year] = matchDate;
+            return new Date(parseInt(year), monthMap[month.substring(0, 3)] - 1, parseInt(day), 0, 0);
+        }
+
+        return null; // If not a date, return null (so it will be sorted alphabetically)
+    }
+
+    function convertTo24Hour(hours, meridian) {
+        if (meridian === "PM" && hours !== 12) return hours + 12; // Convert PM hours
+        if (meridian === "AM" && hours === 12) return 0; // Midnight case
+        return hours; // Otherwise, return as is
+    }
+});
 </script>

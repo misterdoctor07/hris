@@ -1,4 +1,12 @@
-<script type="text/javascript">
+<?php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['idno'])) {
+    die("<script>alert('Session expired. Please log in again.'); window.location='/index.php';</script>");
+}
+?><script type="text/javascript">
   function SubmitDetails(){        
       return confirm('Do you wish to submit details?');        
   }
@@ -6,7 +14,7 @@
 
 <div class="row">
   <div class="col-lg-12">
-    <h4 style="text-indent: 10px;"><a href="?applymissedlog"><i class="fa fa-arrow-left"></i> BACK</a> | <i class="fa fa-file-book"></i> MISSED LOG APPLICATION</h4>      
+    <h4 style="text-indent: 10px;"><a href="applymissedlog.php"><i class="fa fa-arrow-left"></i> BACK</a> | <i class="fa fa-file-book"></i> MISSED LOG APPLICATION</h4>      
   </div>
 </div>
 
@@ -84,12 +92,12 @@ if(isset($_POST['submit'])) {
     // Check if the query was successful
     if($sqlAddEmployee) {
         echo "<script>";
-        echo "alert('Details successfully saved!'); window.location='?applymissedlog';";
-        echo "</script>";
+        echo "alert('Details successfully saved!'); window.location='?addmissedlog';";
+      echo "<script>window.location='manageleave.php';</script>";
     } else {
         echo "<script>";
-        echo "alert('Unable to save details!'); window.location='?applymissedlog';";
-        echo "</script>";
+        echo "alert('Unable to save details!'); window.location='?addmissedlog';";
+        echo "<script>window.location='manageleave.php';</script>";
     }
 }
 ?>

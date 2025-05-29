@@ -107,7 +107,9 @@ if($type=="insurance"){
                 // Fetch unique departments for the current company
                 $sqlDepartments = mysqli_query($con, "SELECT DISTINCT d.department FROM employee_details ed
                     INNER JOIN department d ON d.id = ed.department
-                    WHERE ed.company = '$companyCode' ORDER BY d.department");
+                    WHERE ed.company = '$companyCode' 
+                    AND ed.status NOT LIKE '%RESIGNED%'
+                    ORDER BY d.department");
 
                 if (!$sqlDepartments) {
                     echo "Error fetching departments: " . mysqli_error($con);

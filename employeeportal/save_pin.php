@@ -1,4 +1,3 @@
-<?php
 session_start();
 include '../config.php';
 
@@ -6,7 +5,7 @@ $idno = $_SESSION['idno'];
 $pin = isset($_POST['pin']) ? trim($_POST['pin']) : '';
 
 if (empty($pin)) {
-    echo "PIN cannot be empty.";
+    echo "<script>showNotification('Error', 'PIN cannot be empty.');</script>";
     exit;
 }
 
@@ -14,28 +13,20 @@ if (empty($pin)) {
 $hashedPin = password_hash($pin, PASSWORD_DEFAULT);
 
 // Check if user already has a PIN
-$stmtCheck = $con->prepare("SELECT pin FROM users WHERE idno = ?");
-$stmtCheck->bind_param("s", $idno);
-$stmtCheck->execute();
-$resultCheck = $stmtCheck->get_result();
-$row = $resultCheck->fetch_assoc();
-$stmtCheck->close();
+$sqlCheck = mysqli_query($con, "SELECT pin FROM users WHERE idno = '$idno'");
+$row = mysqli_fetch_array($sqlCheck);
 
-if ($row && !is_null($row['pin'])) {
-    echo "PIN already set. You cannot reset it here.";
+if ($row && !empty($row['pin'])) {
+    echo "<script>showNotification('Error', 'PIN already set. You cannot reset it here.');</script>";
     exit;
 }
 
 // Save the PIN
-$stmtSave = $con->prepare("UPDATE users SET pin = ? WHERE idno = ?");
-$stmtSave->bind_param("ss", $hashedPin, $idno);
+$sqlSave = mysqli_query($con, "UPDATE users SET pin = '$hashedPin' WHERE idno = '$idno'");
 
-if ($stmtSave->execute()) {
-    echo "PIN registered successfully!";
+if ($sqlSave) {
+    echo "<script>showNotification('Success', 'PIN registered successfully!');</script>";
 } else {
-    echo "Failed to register PIN.";
+    echo "<script>showNotification('Error', 'Failed to register PIN.');</script>";
 }
-
-$stmtSave->close();
-$con->close();
 ?>

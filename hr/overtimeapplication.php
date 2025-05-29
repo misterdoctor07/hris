@@ -521,7 +521,7 @@ if (isset($_POST['submitRemarks'])) {
     $remarks = mysqli_real_escape_string($con, $_POST['remarks']); // Sanitize input
 
     // Update remarks in the database
-    $sqlUpdateRemarks = "UPDATE overtime_application SET hr_remarks = '$remarks' WHERE id = '$id'";
+    $sqlUpdateRemarks = "UPDATE overtime_application SET hr_remarks = '$remarks', remarks_view_status='Unseen' WHERE id = '$id'";
     if (mysqli_query($con, $sqlUpdateRemarks)) {
         echo "<script>alert('Remarks updated successfully.');</script>";
         echo "<script>window.location.href='?overtimeapplication';</script>"; // Redirect after update

@@ -126,7 +126,7 @@ $todayHolidayStatus = checkHoliday($today, $holidays);
     
           <div class="col-lg-12">
           <div class="border-head">
-              <h3><?=$_SESSION['access'];?> DASHBOARD</h3>
+              <h3>ACCOUNTING PORTAL DASHBOARD</h3>
             </div>
             <div class="row mt">
               <!-- SERVER STATUS PANELS -->

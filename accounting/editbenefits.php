@@ -21,11 +21,13 @@ if(mysqli_num_rows($sqlChecklist)>0){
     $tax=$checklist['tax'];
     $otherbenefits=$checklist['otherbenefits'];
     $salary_type = $checklist['salary_type']; // Fetch the salary type
+    $email = $checklist['email'];
 }else{
     $sss="";
     $phic="";
     $hdmf="";
     $salary="";
+    $email="";
     $philcare="";
     $generali="";
     $fwd="";
@@ -121,6 +123,12 @@ if(mysqli_num_rows($sqlChecklist)>0){
                         </label>
                     </div>
                 </div>
+                 <div class="form-group">
+                  <label class="col-sm-4 col-sm-4 control-label">Employee Email</label>
+                  <div class="col-sm-8">
+                    <input type="text" class="form-control" name="email" style="text-align:left;" value="<?=$email;?>">
+                  </div>
+                </div>
             </div>
           </div>
           <!-- col-lg-12-->
@@ -141,14 +149,15 @@ if(mysqli_num_rows($sqlChecklist)>0){
     $otherbenefits=$_GET['otherbenefits'];
     $salary=$_GET['salary'];
     $salary_type = $_GET['salary_type']; // Capture the salary type
+    $email= $_GET['email'];
     $sqlCheck=mysqli_query($con,"SELECT * FROM employee_payroll WHERE idno='$id'");
     if(mysqli_num_rows($sqlCheck)>0){
         $table="employee_payroll";
-        $values="SET sss='$sss',phic='$phic',hdmf='$hdmf',philcare='$philcare',generali='$generali', fwd='$fwd', tax='$tax', otherbenefits='$otherbenefits',salary='$salary',salary_type='$salary_type',updatedby='$addedby',updateddatetime='$datenow' WHERE idno='$id'";
+        $values="SET sss='$sss',phic='$phic',hdmf='$hdmf',philcare='$philcare',generali='$generali', email='$email', fwd='$fwd', tax='$tax', otherbenefits='$otherbenefits',salary='$salary',salary_type='$salary_type',updatedby='$addedby',updateddatetime='$datenow' WHERE idno='$id'";
         $sqlAddEmployee=mysqli_query($con,"UPDATE $table $values");
     }else{
-        $table="employee_payroll(idno,sss,phic,hdmf,philcare,generali,fwd,tax,otherbenefits,salary,salary_type,addedby,addeddatetime)";
-        $values="VALUES('$idno','$sss','$phic','$hdmf','$philcare','$generali','$fwd','$tax','$otherbenefits','$salary','$salary_type','$addedby','$datenow')";
+        $table="employee_payroll(idno,sss,phic,hdmf,philcare,generali,fwd,tax,otherbenefits,salary,salary_type,addedby,addeddatetime,email)";
+        $values="VALUES('$idno','$sss','$phic','$hdmf','$philcare','$generali','$fwd','$tax','$otherbenefits','$email','$salary','$salary_type','$addedby','$datenow')";
         $sqlAddEmployee=mysqli_query($con,"INSERT INTO $table $values");
     }
     if($sqlAddEmployee){

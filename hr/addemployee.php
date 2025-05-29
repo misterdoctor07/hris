@@ -343,118 +343,29 @@
             </div>
           </div>
 
-          <div class="content-panel">
+        <div class="content-panel">
             <div class="panel-heading">
-            <h4><i class="fa fa-user"></i> REFERRAL
+            <h4><i class="fa fa-user"></i> REFERRAL</h4>
           </div>
           <div class="panel-body">
               <div class="form-group">
-              <label class="col-sm-4 col-sm-4 control-label">Referred By</label>
-<div class="col-sm-7">
-    <div class="custom-dropdown">
-        <input type="text" id="searchEmployee" class="form-control" value="N/A" onfocus="showDropdown()" autocomplete="off" required>
-        <select name="referredby" class="form-control" id="referredby-select" required style="display: none;">
-            <option value="N/A">N/A</option>
-            <?php
-            $sqlEmployee = mysqli_query($con, "
-                SELECT ep.idno, ep.lastname, ep.firstname 
-                FROM employee_profile ep 
-                LEFT JOIN employee_details ed ON ed.idno = ep.idno 
-                WHERE ed.status != 'RESIGNED' AND ep.idno != '$idno' 
-                ORDER BY ep.lastname ASC
-            ");
-            if (mysqli_num_rows($sqlEmployee) > 0) {
-                while ($employee = mysqli_fetch_assoc($sqlEmployee)) {
-                    echo "<option value='{$employee['idno']}'>{$employee['lastname']}, {$employee['firstname']}</option>";
-                }
-            }
-            ?>
-        </select>
-        <div id="dropdown-options" class="dropdown-options" style="display: none;">
-            <div class='dropdown-item' data-value="N/A">N/A</div>
-            <?php
-            // Reset the result pointer to the beginning
-            mysqli_data_seek($sqlEmployee, 0); // Move pointer to the first row
-            if (mysqli_num_rows($sqlEmployee) > 0) {
-                while ($employee = mysqli_fetch_assoc($sqlEmployee)) {
-                    echo "<div class='dropdown-item' data-value='{$employee['idno']}'>{$employee['lastname']}, {$employee['firstname']}</div>";
-                }
-            }
-            ?>
-        </div>
-    </div>
-</div>
-
-<script>
-    const searchInput = document.getElementById('searchEmployee');
-    const dropdownOptions = document.getElementById('dropdown-options');
-    const selectElement = document.getElementById('referredby-select');
-
-    function showDropdown() {
-        dropdownOptions.style.display = 'block';
-        filterOptions(searchInput.value.toLowerCase());
-    }
-
-    searchInput.addEventListener('focus', function() {
-        showDropdown();
-    });
-
-    searchInput.addEventListener('input', function() {
-        filterOptions(this.value.toLowerCase());
-        if (this.value === '') {
-            // Show all options when the input is cleared
-            showDropdown();
-        }
-    });
-
-    function filterOptions(filter) {
-        const items = dropdownOptions.querySelectorAll('.dropdown-item');
-        items.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            item.style.display = text.includes(filter) ? '' : 'none';
-        });
-    }
-
-    dropdownOptions.addEventListener('click', function(e) {
-        if (e.target.classList.contains('dropdown-item')) {
-            searchInput.value = e.target.textContent; // Set the input to the selected value
-            selectElement.value = e.target.getAttribute('data-value'); // Set the select value
-            dropdownOptions.style.display = 'none'; // Hide options after selection
-        }
-    });
-
-    // Hide dropdown if clicked outside
-    document.addEventListener('click', function(event) {
-        if (!event.target.closest('.custom-dropdown')) {
-            dropdownOptions.style.display = 'none';
-        }
-    });
-</script>
-
-<style>
-    .custom-dropdown {
-        position: relative;
-        display: inline-block;
-    }
-    .dropdown-options {
-        position: absolute;
-        background: white;
-        border: 1px solid #ccc;
-        z-index: 10;
-        width: 100%;
-        max-height: 200px;
-        overflow-y: auto;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    .dropdown-item {
-        padding: 10px;
-        cursor: pointer;
-    }
-    .dropdown-item:hover {
-        background: #f1f1f1;
-    }
-</style>
-
+                <label class="col-sm-4 col-sm-4 control-label">Referred By</label>
+                <div class="col-sm-7">
+<!--                <select name="referredby" class="form-control" required>-->
+                    <input type="text" list="refer" class="form-control" name="referredby" value="">
+                    <datalist id="refer">
+                        <option value="N/A">N/A</option>
+                        <?php
+                        $sqlEmployee=mysqli_query($con,"SELECT ep.*,ed.* FROM employee_profile ep LEFT JOIN employee_details ed ON ed.idno=ep.idno WHERE ed.status NOT LIKE '%RESIGNED%' AND ep.idno <> '$idno' ORDER BY ep.lastname ASC");
+                        if(mysqli_num_rows($sqlEmployee)>0){
+                            while($employee=mysqli_fetch_array($sqlEmployee)){
+                                echo "<option value='$employee[lastname], $employee[firstname]_$employee[idno]'>";
+                            }
+                        }
+                        ?>
+                    </datalist>
+                </div>
+              </div>
               </div>
               <div class="form-group">
                 <label class="col-sm-4 col-sm-4 control-label">Effectivity</label>

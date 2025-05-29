@@ -1,4 +1,12 @@
-<script>
+<?php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['idno'])) {
+    die("<script>alert('Session expired. Please log in again.'); window.location='/index.php';</script>");
+}
+?><script>
   function validateForm(event) {
     const selectedEEO = document.querySelector('input[name="eeo_type"]:checked');
     
@@ -95,11 +103,11 @@ if (isset($_POST['submit'])) {
     // Check if the query was successful
     if ($sqlAddEmployee) {
         echo "<script>";
-        echo "alert('Details successfully saved!'); window.location='?emergencyearlyout';";
+        echo "alert('Details successfully saved!'); window.location='emergencyearlyout.php';";
         echo "</script>";
     } else {
         echo "<script>";
-        echo "alert('Unable to save details!'); window.location='?addeeo';";
+        echo "alert('Unable to save details!'); window.location='dashboard.php?addeeo';";
         echo "</script>";
     }
 }

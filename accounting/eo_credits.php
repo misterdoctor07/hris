@@ -1,6 +1,3 @@
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 <?php
 include ('../config.php');
 // Fetch unique companies from the employee_details table
@@ -99,61 +96,37 @@ if (!$sqlCompanies) {
                             <input type="text" class="form-control" placeholder="Search..." onkeyup="filterTable(this)">
                         </div>
                     </div>
-                    <!-- <style>
-                        .used-col {
-                            background-color: #AEC6CF;
-                        }
-                        .rem-col {
-                            background-color: #FFF4BC; 
-                        }
-                    </style> -->
+                    <?php
+                        $currentMonth = date('n'); // 1 = January, 2 = February, ..., 12 = December
+
+                        // Define an array of months (for looping if you want later)
+                        $months = [
+                            1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
+                            5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
+                            9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
+                        ];
+                        $highlightStyle = "background-color: #ADD8E6;"; 
+                    ?>
                     <table class='table table-bordered table-striped table-condensed'>
-                        <thead>
-                            <tr>
-                                <th rowspan='2' style = 'vertical-align:middle; text-align: center;'>No.</th>
-                                <th rowspan='2' style = 'vertical-align:middle; text-align: center;'>Emp ID</th>
-                                <th rowspan='2' style = 'vertical-align:middle; text-align: center;'>Employee Name</th>
-                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>January</th>
-                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>February</th>
-                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>March</th>
-                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>April</th>
-                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>May</th>
-                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>June</th>
-                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>July</th>
-                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>August</th>
-                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>September</th>
-                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>October</th>
-                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>November</th>
-                                <th colspan='2' style = 'vertical-align:middle; text-align: center;'>December</th>
-                            </tr>
-                            <tr>
-                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Used</th>
-                                <th style = 'vertical-align:middle; text-align: center;'>Rem</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                    <thead>
+                        <tr>
+                            <th rowspan='2' style='vertical-align:middle; text-align: center;'>No.</th>
+                            <th rowspan='2' style='vertical-align:middle; text-align: center;'>Emp ID</th>
+                            <th rowspan='2' style='vertical-align:middle; text-align: center;'>Employee Name</th>
+                            <?php foreach ($months as $num => $monthName): ?>
+                                <th colspan='2' style='vertical-align:middle; text-align: center; <?php echo ($num == $currentMonth) ? $highlightStyle : ''; ?>'>
+                                    <?php echo $monthName; ?>
+                                </th>
+                            <?php endforeach; ?>
+                        </tr>
+                        <tr>
+                            <?php for ($i = 1; $i <= 12; $i++): ?>
+                                <th style='vertical-align:middle; text-align: center; <?php echo ($i == $currentMonth) ? $highlightStyle : ''; ?>'>Used</th>
+                                <th style='vertical-align:middle; text-align: center; <?php echo ($i == $currentMonth) ? $highlightStyle : ''; ?>'>Rem</th>
+                            <?php endfor; ?>
+                        </tr>
+                    </thead>
+                    <tbody>
                     <?php
                     $x = 1;
                     while ($employee = mysqli_fetch_array($sqlEmployee)) {
@@ -227,35 +200,46 @@ if (!$sqlCompanies) {
                             $currentMonth = date('n'); // get the current month (1-12)
                             $currentDay = date('j'); // get the current day (1-31)
                         }
-
+                        $jancolor = ($janrem == 0) ? '#f8d7da' : '#d4edda';
+                        $febcolor = ($febrem == 0) ? '#f8d7da' : '#d4edda';
+                        $marcolor = ($marrem == 0) ? '#f8d7da' : '#d4edda';
+                        $aprcolor = ($aprrem == 0) ? '#f8d7da' : '#d4edda';
+                        $maycolor = ($mayrem == 0) ? '#f8d7da' : '#d4edda';
+                        $juncolor = ($junrem == 0) ? '#f8d7da' : '#d4edda';
+                        $julcolor = ($julrem == 0) ? '#f8d7da' : '#d4edda';
+                        $augcolor = ($augrem == 0) ? '#f8d7da' : '#d4edda';
+                        $sepcolor = ($seprem == 0) ? '#f8d7da' : '#d4edda';
+                        $octcolor = ($octrem == 0) ? '#f8d7da' : '#d4edda';
+                        $novcolor = ($novrem == 0) ? '#f8d7da' : '#d4edda';
+                        $deccolor = ($decrem == 0) ? '#f8d7da' : '#d4edda';
                         echo "<tr>
                             <td align='center'>{$x}.</td>
                             <td width='5%' align='center'>{$employee['idno']}</td>
-                            <td width='15%'><strong>{$employee['lastname']}</strong>, {$employee['firstname']} {$employee['middlename']} {$employee['suffix']}</td>
-                            <td class='text-center align-middle'>{$jan_eo_used}</td>
-                            <td class='text-center align-middle'>{$janrem}</td>
-                            <td class='text-center align-middle'>{$feb_eo_used}</td>
-                            <td class='text-center align-middle'>{$febrem}</td>
-                            <td class='text-center align-middle'>{$mar_eo_used}</td>
-                            <td class='text-center align-middle'>{$marrem}</td>
-                            <td class='text-center align-middle'>{$apr_eo_used}</td>
-                            <td class='text-center align-middle'>{$aprrem}</td>
-                            <td class='text-center align-middle'>{$may_eo_used}</td>
-                            <td class='text-center align-middle'>{$mayrem}</td>
-                            <td class='text-center align-middle'>{$jun_eo_used}</td>
-                            <td class='text-center align-middle'>{$junrem}</td>
-                            <td class='text-center align-middle'>{$jul_eo_used}</td>
-                            <td class='text-center align-middle'>{$julrem}</td>
-                            <td class='text-center align-middle'>{$aug_eo_used}</td>
-                            <td class='text-center align-middle'>{$augrem}</td>
-                            <td class='text-center align-middle'>{$sep_eo_used}</td>
-                            <td class='text-center align-middle'>{$seprem}</td>
-                            <td class='text-center align-middle'>{$oct_eo_used}</td>
-                            <td class='text-center align-middle'>{$octrem}</td>
-                            <td class='text-center align-middle'>{$nov_eo_used}</td>
-                            <td class='text-center align-middle'>{$novrem}</td>
-                            <td class='text-center align-middle'>{$dec_eo_used}</td>
-                            <td class='text-center align-middle'>{$decrem}</td>
+                            <td width='17%'><strong>{$employee['lastname']}</strong>, {$employee['firstname']} {$employee['middlename']} {$employee['suffix']}</td>
+                            <td class='text-center align-middle' style='background-color: #FFFACD'>{$jan_eo_used}</td>
+                            <td class='text-center align-middle' style='background-color: $jancolor;'>{$janrem}</td>
+                            <td class='text-center align-middle' style='background-color: #FFFACD'>{$feb_eo_used}</td>
+                            <td class='text-center align-middle' style='background-color: $febcolor;'>{$febrem}</td>
+                            <td class='text-center align-middle' style='background-color: #FFFACD'>{$mar_eo_used}</td>
+                            <td class='text-center align-middle' style='background-color: $marcolor;'>{$marrem}</td>
+                            <td class='text-center align-middle' style='background-color: #FFFACD'>{$apr_eo_used}</td>
+                            <td class='text-center align-middle' style='background-color: $aprcolor;'>{$aprrem}</td>
+                            <td class='text-center align-middle' style='background-color: #FFFACD'>{$may_eo_used}</td>
+                            <td class='text-center align-middle' style='background-color: $maycolor;'>{$mayrem}</td>
+                            <td class='text-center align-middle' style='background-color: #FFFACD'>{$jun_eo_used}</td>
+                            <td class='text-center align-middle' style='background-color: $juncolor;'>{$junrem}</td>
+                            <td class='text-center align-middle' style='background-color: #FFFACD'>{$jul_eo_used}</td>
+                            <td class='text-center align-middle' style='background-color: $julcolor;'>{$julrem}</td>
+                            <td class='text-center align-middle' style='background-color: #FFFACD'>{$aug_eo_used}</td>
+                            <td class='text-center align-middle' style='background-color: $augcolor;'>{$augrem}</td>
+                            <td class='text-center align-middle' style='background-color: #FFFACD'>{$sep_eo_used}</td>
+                            <td class='text-center align-middle' style='background-color: $sepcolor;'>{$seprem}</td>
+                            <td class='text-center align-middle' style='background-color: #FFFACD'>{$oct_eo_used}</td>
+                            <td class='text-center align-middle' style='background-color: $octcolor;'>{$octrem}</td>
+                            <td class='text-center align-middle' style='background-color: #FFFACD'>{$nov_eo_used}</td>
+                            <td class='text-center align-middle' style='background-color: $novcolor;'>{$novrem}</td>
+                            <td class='text-center align-middle' style='background-color: #FFFACD'>{$dec_eo_used}</td>
+                            <td class='text-center align-middle' style='background-color: $deccolor;'>{$decrem}</td>
                         </tr>";
                         $x++;
                     }

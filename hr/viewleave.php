@@ -403,11 +403,11 @@ $checklist = mysqli_fetch_array($result);
         }
       if($sqlAddEmployee){
         echo "<script>";
-          echo "alert('Details successfully saved!');window.location='?viewleave&id=$id';";
+          echo "alert('Details successfully saved!');window.location='?manageleave';";
         echo "</script>";
       }else{
         echo "<script>";
-          echo "alert('Unable to saved details!');window.location='?viewleave&id=$id';";
+          echo "alert('Unable to saved details!');window.location='?manageleave';";
         echo "</script>";
       }
     }

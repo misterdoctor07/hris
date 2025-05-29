@@ -1,4 +1,12 @@
 <?php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['idno'])) {
+    die("<script>alert('Session expired. Please log in again.'); window.location='/index.php';</script>");
+}
+?><?php
 $id=$_GET["id"];
 $sqlMissedlog=mysqli_query($con,"SELECT * FROM missed_log_application WHERE id='$id'");
 $missedlog=mysqli_fetch_array($sqlMissedlog);
@@ -31,7 +39,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
     </script>
     <div class="row">
       <div class="col-lg-12">
-      <h4 style="text-indent: 10px;"><a href="?applymissedlog"><i class="fa fa-arrow-left"></i> BACK</a> | <i class="fa fa-file-book"></i> UPDATE MISSED LOG APPLICATION</h4>      
+      <h4 style="text-indent: 10px;"><a href="applymissedlog.php"><i class="fa fa-arrow-left"></i> BACK</a> | <i class="fa fa-file-book"></i> UPDATE MISSED LOG APPLICATION</h4>      
     </div>
     </div>
     <form class="form-horizontal style-form" method="POST" onSubmit="return SubmitDetails();">
@@ -109,7 +117,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
 
         if ($sqlUpdateMissedLog) {
             echo "<script>alert('Missed Log application updated successfully!');
-                  window.location.href='?applymissedlog';</script>";
+                  window.location.href='applymissedlog.php';</script>";
         } else {
             echo "<script>alert('Error updating missed log application: " . mysqli_error($con) . "');</script>";
         }

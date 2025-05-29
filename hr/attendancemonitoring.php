@@ -79,78 +79,85 @@ $companyname=mysqli_fetch_array($sqlName);
             <?php
             }
             ?>
-         <?php
+           <?php
          if (isset($_GET['submitInfraction'])) {
-          $comp = $_GET['company'];
-          $startdate = $_GET['startdate'];
-          $enddate = $_GET['enddate'];
-          $idno = $_GET['idno'];
-          $logindate = $_GET['logindate'];
-          $offense = $_GET['offense'];
-      
-          // Fetch offense details
-          $sqlOffense = mysqli_query($con, "SELECT * FROM offense WHERE id='$offense'");
-          $off = mysqli_fetch_array($sqlOffense);
-      
-          $code = str_replace('Attendance Infraction ', '', $off['title']);
-          $penalty = $off['fpoints']; // Penalty points
-          $frequency = $off['frequency'] - 1; // Frequency threshold
-          $points = $off['points']; // Default points for the offense
-      
-          // Calculate the frequency of the offense in the current year
-          $yearStart = date('Y') . "-01-01"; // Start of the current year
-          $yearEnd = date('Y') . "-12-31";   // End of the current year
-          $freq = 0;
-      
-          $sqlCheckInstance = mysqli_query($con, "SELECT * FROM offense WHERE category='$off[category]'");
-          if (mysqli_num_rows($sqlCheckInstance) > 0) {
-              while ($ins = mysqli_fetch_array($sqlCheckInstance)) {
-                  $sqlInstance = mysqli_query($con, "SELECT * 
-                      FROM points 
-                      WHERE logindate BETWEEN '$yearStart' AND '$yearEnd' 
-                        AND offense = '$ins[id]' 
-                        AND idno = '$idno'
-                  ");
-                  $freq += mysqli_num_rows($sqlInstance);
-              }
-          }
-      
-          // Adjust points if frequency exceeds the threshold
-          if ($freq >= $frequency) {
-              $points += $penalty;
-          }
-      
-          // Insert a new record for the infraction
-          $sqlInsert = mysqli_query($con, "INSERT INTO points (idno, logindate, points, offense) VALUES ('$idno', '$logindate', '$points', '$offense')");
-      
-          
-      if ($sqlInsert) {
-        // Retrieve the current remarks
-        $sqlRemarks = mysqli_query($con, "SELECT remarks FROM attendance WHERE logindate='$logindate' AND idno='$idno'");
-        $existingRemarks = mysqli_fetch_array($sqlRemarks);
-        
-        // Store existing remarks in $previousRemarks
-        $previousRemarks = $existingRemarks['remarks'];
-    
-        // Update remarks by appending the new offense
-        $newRemarks = $code; // Start with the new code
-        if (!empty($previousRemarks)) {
-            $newRemarks = $code; // Append if there are existing remarks
+    $comp = $_GET['company'];
+    $startdate = $_GET['startdate'];
+    $enddate = $_GET['enddate'];
+    $idno = $_GET['idno'];
+    $logindate = $_GET['logindate'];
+    $offense = $_GET['offense'];
+
+    // Fetch offense details
+    $sqlOffense = mysqli_query($con, "SELECT * FROM offense WHERE id='$offense'");
+    $off = mysqli_fetch_array($sqlOffense);
+
+    $code = str_replace('Attendance Infraction ', '', $off['title']);
+    $penalty = $off['fpoints']; // Penalty points
+    $frequency = $off['frequency'] - 1; // Frequency threshold
+    $points = $off['points']; // Default points for the offense
+
+    // Calculate the frequency of the offense in the current year
+    $yearStart = date('Y') . "-01-01"; // Start of the current year
+    $yearEnd = date('Y') . "-12-31";   // End of the current year
+    $freq = 0;
+
+    $sqlCheckInstance = mysqli_query($con, "SELECT * FROM offense WHERE category='$off[category]'");
+    if (mysqli_num_rows($sqlCheckInstance) > 0) {
+        while ($ins = mysqli_fetch_array($sqlCheckInstance)) {
+            $sqlInstance = mysqli_query($con, "SELECT * 
+                FROM points 
+                WHERE logindate BETWEEN '$yearStart' AND '$yearEnd' 
+                  AND offense = '$ins[id]' 
+                  AND idno = '$idno'
+            ");
+            $freq += mysqli_num_rows($sqlInstance);
         }
-    
-        // Update the attendance table with new remarks
-        $sqlUpdateRemarks = mysqli_query($con, "UPDATE attendance SET remarks='$newRemarks', previousRemarks='$previousRemarks' WHERE logindate='$logindate' AND idno='$idno'");
-    
+    }
+
+    // Adjust points if frequency exceeds the threshold
+    if ($freq >= $frequency) {
+        $points += $penalty;
+    }
+
+    // Insert a new record for the infraction
+    $sqlInsert = mysqli_query($con, "INSERT INTO points (idno, logindate, points, offense) VALUES ('$idno', '$logindate', '$points', '$offense')");
+
+    if ($sqlInsert) {
+        // Retrieve the current remarks and remarks1
+        $sqlRemarks = mysqli_query($con, "SELECT remarks, remarks1 FROM attendance WHERE logindate='$logindate' AND idno='$idno'");
+        $existingRemarks = mysqli_fetch_array($sqlRemarks);
+
+        // Store existing remarks and remarks1
+        $previousRemarks = $existingRemarks['remarks'];
+        $previousRemarks1 = $existingRemarks['remarks1'];
+
+        // Define special codes
+        $specialCodes = ['Code B-', 'Code I-', 'Code L', 'Code N', 'Code M'];
+
+        // Check if the code is a special code
+        if (in_array($code, $specialCodes)) {
+            // Save the code in remarks1 and leave remarks unchanged
+            $newRemarks1 = $code;
+            $newRemarks = $previousRemarks; // Keep existing remarks
+        } else {
+            // Save the code in remarks and leave remarks1 unchanged
+            $newRemarks = $code;
+            $newRemarks1 = $previousRemarks1; // Keep existing remarks1
+        }
+
+        // Update the attendance table with new remarks and remarks1
+        $sqlUpdateRemarks = mysqli_query($con, "UPDATE attendance SET remarks='$newRemarks', remarks1='$newRemarks1', previousRemarks='$previousRemarks' WHERE logindate='$logindate' AND idno='$idno'");
+
         if ($sqlUpdateRemarks) {
-          echo "<script>alert('Remarks Updated!');window.history.back();</script>";
+            echo "<script>alert('Remarks Updated!');window.history.back();</script>";
         } else {
             echo "<script>alert('Unable to update remarks!');window.history.back();</script>";
         }
     } else {
         echo "<script>alert('Unable to insert infraction!');window.history.back();</script>";
     }
-    
-                }
+}
       
 
             if(isset($_GET['deletetime'])){

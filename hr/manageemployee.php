@@ -6,8 +6,12 @@ if (!$sqlCompanies) {
     echo "Query error: " . mysqli_error($con);
     exit;
 }
-?>
 
+
+?>
+<head>
+<meta charset="utf-8">
+</head>
 <div class="col-lg-12">
     <div class="content-panel">
         <div class="panel-heading">
@@ -105,12 +109,13 @@ if (!$sqlCompanies) {
                                 <th style = 'text-align: center;'>Employee Name</th>
                                 <th style = 'text-align: center;'>Date of Birth</th>
                                 <th style = 'text-align: center;'>Job Title</th>
-                                <th style = 'text-align: center;'>Department</th>
-                                <th style = 'text-align: center;'>Company</th>
                                 <th style = 'text-align: center;'>Status</th>
                                 <th style = 'text-align: center;'>Date Hired</th>
+                                <th style = 'text-align: center;'>Date of Regularization</th>
+                                <th style = 'text-align: center;'>Date of Fulltime</th>
                                 <th style = 'text-align: center;'>Shift</th>
-                                <th style = 'text-align: center;'>Work Area</th>
+                                <th style = 'text-align: center;'>Work Setup</th>
+                                <th style = 'text-align: center;'>Location</th>
                                 <th style = 'text-align: center;'>Action</th>
                             </tr>
                         </thead>
@@ -121,28 +126,37 @@ if (!$sqlCompanies) {
                         $status = $employee['status'] === "REGULAR"
                             ? "<span class='label label-success label-mini'>{$employee['status']}</span>"
                             : "<span class='label label-warning label-mini'>{$employee['status']}</span>";
-
+                        $location = $employee['location'] === "OS"
+                            ? "<span class='label label-primary label-sm'>{$employee['location']}</span>"
+                            : "<span class='label label-warning label-sm'>{$employee['location']}</span>";    
+                        $startTime = date('h:i A', strtotime($employee['startshift']));
+                        $nightShifts = ['12:00 AM', '01:00 AM', '09:00 PM', '11:00 PM'];
+                        $bgColor = in_array($startTime, $nightShifts) ? '#e0e0e0' : '#add8e6';
+                        
                         $shift = date('h:i A', strtotime($employee['startshift'])) . " - " . date('h:i A', strtotime($employee['endshift']));
-                        $dateHired = date('m/d/Y', strtotime($employee['dateofhired']));
+                        $dateHired = date('M d, Y', strtotime($employee['dateofhired']));
+                        $dateRegular = date('M d, Y', strtotime($employee['dateofregular']));
+                        $dateFulltime = date('M d, Y', strtotime($employee['dateoffulltime']));
                         $jobTitle = htmlspecialchars($employee['jobtitle']); 
 
                         echo "<tr>
                             <td align='center'>{$x}.</td>
                             <td align='center'>{$employee['idno']}</td>
-                            <td align='center'>{$employee['lastname']}, {$employee['firstname']} {$employee['middlename']} {$employee['suffix']}</td>
-                            <td align='center'>" . date('M-d-Y', strtotime($employee['birthdate'])) . "</td>
+                            <td><strong>{$employee['lastname']}</strong>, {$employee['firstname']} {$employee['middlename']} {$employee['suffix']}</td>
+                            <td align='center'>" . date('M d, Y', strtotime($employee['birthdate'])) . "</td>
                             <td align='center'>{$jobTitle}</td>
-                            <td align='center'>{$employee['department']}</td>
-                            <td align='center'>{$employee['company']}</td>
                             <td align='center'>{$status}</td>
                             <td align='center'>{$dateHired}</td>
-                            <td align='center'>{$shift}</td>
-                            <td align='center'>{$employee['location']}</td>
+                            <td align='center'>{$dateRegular}</td>
+                            <td align='center'>{$dateFulltime}</td>
+                            <td align='center' style='background-color: $bgColor;'>$shift</td>
+                            <td align='center'>{$location}</td>
+                            <td align='center'>{$employee['work_area']}</td>
                             <td align='center'>
                                 <a href='?viewemployee&id={$employee['id']}' class='btn btn-success btn-xs' title='View Employee Details'><i class='fa fa-eye'></i></a>
                                 <a href='?editemployee&id={$employee['id']}' class='btn btn-primary btn-xs' title='Edit Employee'><i class='fa fa-pencil'></i></a>
                                 <a href='?employeemovement&idno={$employee['idno']}' class='btn btn-default btn-xs' title='Move Employee'><i class='fa fa-mail-forward'></i></a>
-                                <a href='?applyleaveforemp&idno={$employee['idno']}' class='btn btn-warning btn-xs' title='File Leave for Employee'><i class='fa fa-clipboard'></i></a>
+                                <a href='?applyleaveforemp&idno={$employee['idno']}' class='btn btn-warning btn-xs' title='File Leave for Employee'><i class='fa fa-file-text'></i></a>
                                 <a href='?applyEEOforemp&idno={$employee['idno']}' class='btn btn-danger btn-xs' title='File EEO for Employee'><i class='fa fa-file-text'></i></a>
                             </td>
                         </tr>";

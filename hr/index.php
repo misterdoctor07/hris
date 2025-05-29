@@ -35,7 +35,7 @@ date_default_timezone_set("Asia/Manila");
   <!-- Favicons -->
   <!-- <link href="img/favicon.png" rel="icon">
   <link href="img/apple-touch-icon.png" rel="apple-touch-icon"> -->
-  <link rel="icon" type="image/x-icon" href="img/nesi.jpg">
+  <link rel="icon" type="image/x-icon" href="iconhris_2.png">
 
   <!-- Bootstrap core CSS -->
   <link href="lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -64,7 +64,7 @@ date_default_timezone_set("Asia/Manila");
     <!--header start-->
     <header class="header black-bg">
       <div class="sidebar-toggle-box">
-        <div class="fa fa-bars tooltips" data-placement="right" data-original-title="Toggle Navigation"></div>
+        <div class="fa fa-bars" style="color: white; padding-top: 3px; padding-left: 3px;" data-placement="right" data-original-title="Toggle Navigation"></div>
       </div>
       <!--logo start-->
       <a href="index.html" class="logo"><b>Integrated Human Resource Information System</b></a>
@@ -78,6 +78,11 @@ date_default_timezone_set("Asia/Manila");
           <li><a class="logout" href="../logout.php" onclick="return confirm('Do you wish to logout?');return false;">Logout</a></li>
         </ul>
       </div>
+       <div class="top-menu">
+        <ul class="nav pull-right top-menu">
+          <li><a class="logout" href="/hris/employeeportal/dashboard.php?main" >Back to Portal</a></li>
+        </ul>
+      </div>
     </header>
     <!--header end-->
     <!-- **********************************************************************************************************************************************************
@@ -85,7 +90,7 @@ date_default_timezone_set("Asia/Manila");
         *********************************************************************************************************************************************************** -->
     <!--sidebar start-->
     <aside>
-      <div id="sidebar" class="nav-collapse">
+      <div id="sidebar" class="nav-collapse ">
         <!-- sidebar menu start-->
         <ul class="sidebar-menu" id="nav-accordion">
           <p class="centered"><i class="fa fa-user fa-4x"></i></p>
@@ -152,15 +157,18 @@ date_default_timezone_set("Asia/Manila");
               $row = mysqli_fetch_assoc($result);
               $EEO_count = $row['total'];
 
-              $totalCount = $leave_count + $EEO_count + $missedlog_count + $overtime_count;
+              $totalCount = $leave_count + $EEO_count + $missedlog_count;
               ?>
+
+
+
 
           <li class="sub-menu">
               <a href="javascript:;">
                 <i class="fa fa-file-text"></i>
                 <span>Leave & Benefits</span>
                 <?php if ($leave_count > 0) { ?>
-                    <span class="badge" style="color: white; background-color: red; margin-left: 20px;"><?php echo $totalCount; ?></span>
+                    <span class="badge" style="color: white; background-color: red; margin-left: 20px;""><?php echo $totalCount; ?></span>
                   <?php } ?>
               </a>
               <ul class="sub">
@@ -181,9 +189,9 @@ date_default_timezone_set("Asia/Manila");
                   <?php } ?>
                 </a></li>
                 <li><a href="?overtimeapplication">Overtime Requests
-                  <?php if ($overtime_count > 0) { ?>
-                    <span class="badge" style="color:white; background-color:red; margin-left: 13px;"><?php echo $overtime_count; ?></span>
-                  <?php } ?>
+                  <!--<?php if ($overtime_count > 0) { ?>-->
+                  <!--  <span class="badge" style="color:white; background-color:red; margin-left: 13px;"><?php echo $overtime_count; ?></span>-->
+                  <!--<?php } ?>-->
                 </a></li>
                 <li><a href="?leaveprotocols">Leave Protocols</a></li>
                 <li><a href="?insurance">HMO & Insurance</a></li>
@@ -205,6 +213,9 @@ date_default_timezone_set("Asia/Manila");
             </ul>
             <ul class="sub">
               <li><a href="?managememo">Manage Memo</a></li>
+            </ul>
+             <ul class="sub">
+              <li><a href="?breakdownpoints">Points Tracker</a></li>
             </ul>
           </li>
           <li>
@@ -279,6 +290,8 @@ date_default_timezone_set("Asia/Manila");
             if(isset($_GET['fetch_employees'])){include('fetch_employees.php');}
             if(isset($_GET['EEOapplication'])){include('EEOapplication.php');}
             if(isset($_GET['applyEEOforemp'])){include('applyEEOforemp.php');}
+            if(isset($_GET['breakdownpoints'])){include('breakdownpoints.php');}
+            if(isset($_GET['view_eo_credits'])){include('view_eo_credits.php');}
           ?>
           <!-- /col-lg-3 -->
         </div>
@@ -445,19 +458,7 @@ date_default_timezone_set("Asia/Manila");
       console.log('nav ' + nav + ' to: ' + to.month + '/' + to.year);
     }
   </script>
-  <script type="text/javascript">
-var tableToExcel = (function() {
-  var uri = 'data:application/vnd.ms-excel;base64,'
-    , template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><meta http-equiv="content-type" content="text/plain; charset=UTF-8"/></head><body><table>{table}</table></body></html>'
-    , base64 = function(s) { return window.btoa(unescape(encodeURIComponent(s))) }
-    , format = function(s, c) { return s.replace(/{(\w+)}/g, function(m, p) { return c[p]; }) }
-  return function(table, name) {
-    if (!table.nodeType) table = document.getElementById(table)
-    var ctx = {worksheet: name || 'Worksheet', table: table.innerHTML}
-    window.location.href = uri + base64(format(template, ctx))
-  }
-})()
-</script>
+ 
 </body>
 
 </html>

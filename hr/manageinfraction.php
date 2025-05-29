@@ -15,6 +15,40 @@ if($type=="pending"){
 ?>
 
 <style>
+    /* Add to existing style section */
+.checkbox-cell {
+    width: 20px;
+    text-align: center;
+}
+
+.bulk-actions {
+    margin-bottom: 10px;
+    display: none;
+    padding: 5px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.context-menu {
+    display: none;
+    position: fixed; /* Changed from absolute to fixed */
+    z-index: 10000; /* Increased z-index */
+    background-color: white;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    padding: 5px 0;
+    min-width: 150px;
+    border-radius: 4px;
+}
+
+.context-menu-item {
+    padding: 8px 15px;
+    cursor: pointer;
+}
+
+.context-menu-item:hover {
+    background-color: #f5f5f5;
+}
 .badge-switch {
     display: inline-block;
     margin-top: 5px;
@@ -156,6 +190,7 @@ th.sortable.desc::after {
                 // Fetch unique departments for the current company
                 $sqlDepartments = mysqli_query($con, "SELECT DISTINCT d.department FROM employee_details ed
                     INNER JOIN department d ON d.id = ed.department
+                    AND ed.status NOT LIKE '%RESIGNED%'
                     WHERE ed.company = '$companyCode' ORDER BY d.department");
 
                 if (!$sqlDepartments) {
@@ -184,7 +219,7 @@ th.sortable.desc::after {
                     // Fetch employees for the company and department
                     $fromDate = isset($_GET['fromDate']) ? $_GET['fromDate'] : null;
                     $toDate = isset($_GET['toDate']) ? $_GET['toDate'] : null;
-                    $sqlEmployee = mysqli_query($con, "SELECT ep.*, ed.*, ep.*,i.id,i.dateserved,i.dateissued,i.typeofoffense,i.typeofmemo,i.points,i.memonumber,i.dateofsuspension, i.dateofincident, i.status, d.department, ed.designation, jt.jobtitle 
+                    $sqlEmployee = mysqli_query($con, "SELECT ep.*, ed.*, ep.*,i.id,i.dateserved,i.dateissued,i.updatedby,i.addedby,i.typeofoffense,i.typeofmemo,i.points,i.memonumber,i.dateofsuspension, i.dateofincident, i.status, d.department, ed.designation, jt.jobtitle 
                         FROM infraction i
                         INNER JOIN employee_details ed ON ed.idno = i.idno
                         INNER JOIN employee_profile ep ON ep.idno=ed.idno
@@ -213,28 +248,44 @@ th.sortable.desc::after {
                             <input type="text" class="form-control" placeholder="Search..." onkeyup="filterTable(this)">
                         </div>
                     </div>
+                        <!-- Bulk Actions Section -->
+                        <div class="bulk-actions" id="bulkActions-<?= $sanitizedId ?>-<?= $deptId ?>">
+                        <button class="btn btn-success btn-sm" onclick="bulkAction('serve', '<?= $sanitizedId ?>-<?= $deptId ?>')">
+                            <i class="fa fa-check"></i> Serve Selected
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="bulkAction('void', '<?= $sanitizedId ?>-<?= $deptId ?>')">
+                            <i class="fa fa-trash"></i> Void Selected
+                        </button>
+                        <button class="btn btn-info btn-sm" onclick="bulkAction('restore', '<?= $sanitizedId ?>-<?= $deptId ?>')">
+                            <i class="fa fa-undo"></i> Restore Selected
+                        </button>
+                        <span class="badge" id="selectedCount-<?= $sanitizedId ?>-<?= $deptId ?>">0 selected</span>
+                    </div>
 
                     <table class='table table-bordered table-striped table-condensed'>
                         <thead>
                             <tr>
-                              <th class='sortable' data-column='0' style='text-align: center;'>No.</th>
-                              <th class='sortable' data-column='1' style='text-align: center;'>Emp ID</th>
-                              <th class='sortable' data-column='2' style='text-align: center;'>Employee Name</th>
-                              <th class='sortable' data-column='3' style='text-align: center;'>Job Title</th>
-                              <th class='sortable' data-column='4' style='text-align: center;'>Team</th>
-                              <th class='sortable' data-column='5' style='text-align: center;'>Company</th>
-                              <th class='sortable' data-column='6' width="6%"  style='text-align: center;'>Date Issued</th>
-                              <th class='sortable' data-column='7' width="6%"  style='text-align: center;'>Date Served</th>
-                              <th class='sortable' data-column='8' style='text-align: center;'>Type of Memo</th>
-                              <th class='sortable' data-column='9' style='text-align: center;'>Type of Offense</th>
-                              <th class='sortable' data-column='10' style='text-align: center;'>Points</th>
-                              <th class='sortable' data-column='11' style='text-align: center;'>Memo No.</th>
-                              <th class='sortable' data-column='12' width="6%" style='text-align: center;'>Date of Incident</th>
-                              <th class='sortable' data-column='13' style='text-align: center;'>Suspension Dates</th>
-                              <th class='sortable' data-column='14' style='text-align: center;'>Status</th>
-                              <th class='sortable' data-column='15' style='text-align: center;'>Added by</th>
-                              <th class='sortable' data-column='16' style='text-align: center;'>Updated By</th>
-                              <th style='text-align: center;'>Action</th>
+                                <th class="checkbox-cell">
+                                    <input type="checkbox" id="selectAll-<?= $sanitizedId ?>-<?= $deptId ?>" 
+                                        onclick="toggleSelectAll('<?= $sanitizedId ?>-<?= $deptId ?>')">
+                                </th>
+                                <th class='sortable' data-column='0' style='text-align: center;'>No.</th>
+                                <th class='sortable' data-column='1' style='text-align: center;'>Emp ID</th>
+                                <th class='sortable' data-column='2' style='text-align: center;'>Employee Name</th>
+                                <th class='sortable' data-column='3' style='text-align: center;'>Job Title</th>
+                                <th class='sortable' data-column='4' style='text-align: center;'>Team</th>
+                                <th class='sortable' data-column='5' style='text-align: center;'>Company</th>
+                                <th class='sortable' data-column='6' width="6%"  style='text-align: center;'>Date Issued</th>
+                                <th class='sortable' data-column='7' width="6%"  style='text-align: center;'>Date Served</th>
+                                <th class='sortable' data-column='8' style='text-align: center;'>Type of Memo</th>
+                                <th class='sortable' data-column='9' style='text-align: center;'>Type of Offense</th>
+                                <th class='sortable' data-column='10' style='text-align: center;'>Points</th>
+                                <th class='sortable' data-column='11' style='text-align: center;'>Memo No.</th>
+                                <th class='sortable' data-column='12' width="6%" style='text-align: center;'>Date of Incident</th>
+                                <th class='sortable' data-column='13' style='text-align: center;'>Suspension Dates</th>
+                                <th class='sortable' data-column='14' style='text-align: center;'>Status</th>
+                                <th class='sortable' data-column='15' style='text-align: center;'>Added by</th>
+                                <th class='sortable' data-column='16' style='text-align: center;'>Updated By</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -272,10 +323,16 @@ th.sortable.desc::after {
                           $style="class='success'";
                         }
                         ?>
-                        <tr  <?= $style ?>>
-                         <td align='center'><?=$x;?>.</td>
-                         <td align='center'><?=$idno?></td>
-                         <td><?=$lastname?>, <?=$firstname?> <?=$middlename?> <?=$suffix?></td>
+                 <tr <?= $style ?>>
+                 <td align="center" class="checkbox-cell">
+                    <input type="checkbox" class="row-checkbox" 
+                        data-id="<?= $company['id'] ?>" 
+                        data-status="<?= $status ?>"
+                        data-tab="<?= $sanitizedId ?>-<?= $deptId ?>"
+                        onchange="updateSelection('<?= $sanitizedId ?>-<?= $deptId ?>')"></td>
+                        <td align='center'><?=$x;?>.</td>
+                        <td align='center'><?=$idno?></td>
+                        <td><?=$lastname?>, <?=$firstname?> <?=$middlename?> <?=$suffix?></td>
                          <td><?=$jobtitle?></td>
                          <td align='center'><?=$dept['department']?></td>
                          <td align='center'><?=$comp['company']?></td> 
@@ -292,33 +349,13 @@ th.sortable.desc::after {
                          <td align='center'><?=$status?></td>    
                          <td align='center'><?=$addedby?></td>   
                          <td align='center'><?=$updatedby?></td> 
-                          
-                          <td align="center">
-                          <?php
-                            if($status=="pending"){
-                            ?>                              
-                            <a href="?manageinfraction&id=<?=$company['id'];?>&serve" class="btn btn-success btn-xs" title="Serve Infraction" onclick="return confirm('Do you wish to serve this infraction?'); return false;"><i class='fa fa-check'></i></a>
-                            <a href="?editinfraction&id=<?=$company['id'];?>" class="btn btn-primary btn-xs" title="Edit Infraction"><i class='fa fa-pencil'></i></a>
-                            <?php
-                            }                              
-                            if($status=="pending"){
-                            ?>
-                            <a href="?manageinfraction&id=<?=$company['id'];?>&delete" class="btn btn-danger btn-xs" title="Void Infraction" onclick="return confirm('Do you wish to void this infraction?'); return false;"><i class='fa fa-trash'></i></a>
-                            <?php
-                            }else{
-                              ?>
-                              <a href="?manageinfraction&id=<?=$company['id'];?>&undo" class="btn btn-info btn-xs" title="Restore Infraction" onclick="return confirm('Do you wish to restore this infraction?'); return false;"><i class='fa fa-undo'></i></a>
-                              <?php
-                            }
-                            ?>
-                          </td>
                           <?php
                             echo "</tr>";
                             $x++;
                       }
                     }
                     if ($x === 1) {
-                        echo "<tr><td colspan='12' align='center'>No records found!</td></tr>";
+                        echo "<tr><td colspan='18' align='center'>No records found!</td></tr>";
                     }
 
                     echo "</tbody></table></div>"; // End department content
@@ -329,41 +366,87 @@ th.sortable.desc::after {
                 $active = ''; // Remove active class for subsequent companies
             }
             ?>
+
         </div>
     </div>
+        <div id="contextMenu" class="context-menu">
+            <div class="context-menu-item" onclick="editSelectedRow()">
+                <i class="fa fa-pencil"></i> Edit
+            </div>
+            <!--<div class="context-menu-item" onclick="viewSelectedRow()">-->
+            <!--    <i class="fa fa-eye"></i> View Details-->
+            <!--</div>-->
+            <div class="context-menu-item" onclick="serveSelectedRow()">
+                <i class="fa fa-check"></i> Serve
+            </div>
+            <div class="context-menu-item" onclick="voidSelectedRow()">
+                <i class="fa fa-trash"></i> Void
+            </div>
+        </div>
 </div>
 
 <?php
-    if(isset($_GET['delete'])){
-      $id=$_GET['id'];
-      $datenow=date('Y-m-d H:i:s');
-      $sqlDelete=mysqli_query($con,"UPDATE infraction SET `status`='Void',updatedby='$fullname',updateddatetime='$datenow' WHERE id='$id'");
-      if($sqlDelete){
-        echo "<script>alert('Infraction successfully void!');window.location='?manageinfraction';</script>";
-      }else{
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
+    $bulkAction = $_POST['bulk_action'];
+    $bulkIds = $_POST['bulk_ids'] ?? [];
+    $datenow = date('Y-m-d H:i:s');
+    
+    if (!empty($bulkIds)) {
+        $ids = implode(',', array_map('intval', $bulkIds));
+        
+        if ($bulkAction === 'serve') {
+            $sql = "UPDATE infraction SET status='Served', dateserved='$datenow', updatedby='$fullname', updateddatetime='$datenow' WHERE id IN ($ids)";
+        } elseif ($bulkAction === 'void') {
+            $sql = "UPDATE infraction SET status='Void', dateserved='0000-00-00', points_served='0.0',,points_max='0.0',points_min='0.0', updatedby='$fullname', updateddatetime='$datenow' WHERE id IN ($ids)";
+        } elseif ($bulkAction === 'restore') {
+            $sql = "UPDATE infraction SET status='pending', dateserved='0000-00-00', updatedby='$fullname', updateddatetime='$datenow' WHERE id IN ($ids)";
+        }
+        
+        if (isset($sql)) {
+            $result = mysqli_query($con, $sql);
+            if ($result) {
+                $count = mysqli_affected_rows($con);
+                echo "<script>alert('Successfully processed $count infraction(s)'); window.location='?manageinfraction';</script>";
+            } else {
+                echo "<script>alert('Error processing bulk action: " . mysqli_error($con) . "');</script>";
+            }
+        }
+    }
+}
+
+
+   if(isset($_GET['delete'])){
+    $id = $_GET['id'];
+    $datenow = date('Y-m-d H:i:s');
+    $sqlDelete = mysqli_query($con, "UPDATE infraction SET `status`='Void', dateserved='0000-00-00',points_served='0.0',points_max='0.0',points_min='0.0', updatedby='$fullname', updateddatetime='$datenow' WHERE id='$id'");
+    if($sqlDelete){
+        echo "<script>alert('Infraction successfully voided!');window.location='?manageinfraction';</script>";
+    } else {
         echo "<script>alert('Unable to void infraction!');window.location='?manageinfraction';</script>";
-      }
     }
-    if(isset($_GET['undo'])){
-      $id=$_GET['id'];
-      $datenow=date('Y-m-d H:i:s');
-      $sqlDelete=mysqli_query($con,"UPDATE infraction SET `status`='pending', viewstatus='new', updatedby='$fullname',updateddatetime='$datenow' WHERE id='$id'");
-      if($sqlDelete){
+}
+
+// For restoring (clear serve date)
+if(isset($_GET['undo'])){
+    $id = $_GET['id'];
+    $datenow = date('Y-m-d H:i:s');
+    $sqlDelete = mysqli_query($con, "UPDATE infraction SET `status`='pending', dateserved='0000-00-00', updatedby='$fullname', updateddatetime='$datenow' WHERE id='$id'");
+    if($sqlDelete){
         echo "<script>alert('Infraction successfully restored!');window.location='?manageinfraction';</script>";
-      }else{
+    } else {
         echo "<script>alert('Unable to restore infraction!');window.location='?manageinfraction';</script>";
-      }
     }
-    if(isset($_GET['serve'])){
-      $id=$_GET['id'];              
-      $datenow=date('Y-m-d H:i:s');
-      $sqlDelete=mysqli_query($con,"UPDATE infraction SET `status`='Served', viewstatus='new', updatedby='$fullname',updateddatetime='$datenow' WHERE id='$id'");
-      if($sqlDelete){
+}
+   if(isset($_GET['serve'])){
+    $id = $_GET['id'];              
+    $datenow = date('Y-m-d H:i:s');
+    $sqlDelete = mysqli_query($con, "UPDATE infraction SET `status`='Served', dateserved='$datenow', updatedby='$fullname', updateddatetime='$datenow' WHERE id='$id'");
+    if($sqlDelete){
         echo "<script>alert('Infraction successfully served!');window.location='?manageinfraction';</script>";
-      }else{
+    } else {
         echo "<script>alert('Unable to serve infraction!');window.location='?manageinfraction';</script>";
-      }
     }
+}
 ?>
 
 <!-- Ensure Bootstrap JS and jQuery are included -->
@@ -372,6 +455,196 @@ th.sortable.desc::after {
 
 
 <script>
+
+    // Context menu handling
+// Context menu handling
+// Context Menu Handling
+let lastRightClickedRow = null;
+
+// Function to add menu items
+function addContextMenuItem(label, icon, onClick) {
+    const menu = document.getElementById('contextMenu');
+    const item = document.createElement('div');
+    item.className = 'context-menu-item';
+    item.innerHTML = `<i class="fa ${icon}"></i> ${label}`;
+    item.setAttribute('onclick', onClick);
+    menu.appendChild(item);
+}
+
+// Function to show context menu
+function showContextMenu(e, row) {
+    e.preventDefault();
+    lastRightClickedRow = row;
+    const status = row.querySelector('.row-checkbox').dataset.status;
+    const contextMenu = document.getElementById('contextMenu');
+    
+    // Clear previous menu items
+    contextMenu.innerHTML = '';
+    
+    // Add menu items based on status
+    addContextMenuItem('Edit', 'fa-pencil', 'editSelectedRow()');
+    
+    if (status === 'pending') {
+        addContextMenuItem('Serve', 'fa-check', 'serveSelectedRow()');
+        addContextMenuItem('Void', 'fa-trash', 'voidSelectedRow()');
+    } else if (status === 'Served') {
+        addContextMenuItem('Void', 'fa-trash', 'voidSelectedRow()');
+        addContextMenuItem('Restore', 'fa-undo', 'restoreSelectedRow()');
+    } else if (status === 'Void') {
+        addContextMenuItem('Restore', 'fa-undo', 'restoreSelectedRow()');
+    }
+    
+    // Position the menu near cursor
+    const x = Math.min(e.clientX + 5, window.innerWidth - contextMenu.offsetWidth - 5);
+    const y = Math.min(e.clientY + 5, window.innerHeight - contextMenu.offsetHeight - 5);
+    
+    contextMenu.style.left = `${x}px`;
+    contextMenu.style.top = `${y}px`;
+    contextMenu.style.display = 'block';
+}
+
+// Function to hide context menu
+function hideContextMenu() {
+    document.getElementById('contextMenu').style.display = 'none';
+}
+
+// Set up event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Right-click handler for table rows
+    document.addEventListener('contextmenu', function(e) {
+        if (e.target.closest('tr')) {
+            showContextMenu(e, e.target.closest('tr'));
+        }
+    });
+
+    // Click handler to hide menu
+    document.addEventListener('click', hideContextMenu);
+    
+    // Prevent context menu from hiding when clicking on it
+    document.getElementById('contextMenu').addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+});
+
+
+function addContextMenuItem(label, icon, onClick) {
+    const menu = document.getElementById('contextMenu');
+    const item = document.createElement('div');
+    item.className = 'context-menu-item';
+    item.innerHTML = `<i class="fa ${icon}"></i> ${label}`;
+    item.setAttribute('onclick', onClick);
+    menu.appendChild(item);
+}
+
+function hideContextMenu() {
+    document.getElementById('contextMenu').style.display = 'none';
+}
+
+function editSelectedRow() {
+    if (lastRightClickedRow) {
+        const id = lastRightClickedRow.querySelector('.row-checkbox').dataset.id;
+        window.location.href = `?editinfraction&id=${id}`;
+    }
+}
+
+function serveSelectedRow() {
+    if (lastRightClickedRow) {
+        const id = lastRightClickedRow.querySelector('.row-checkbox').dataset.id;
+        if (confirm('Are you sure you want to serve this infraction?')) {
+            window.location.href = `?manageinfraction&id=${id}&serve`;
+        }
+    }
+}
+
+function voidSelectedRow() {
+    if (lastRightClickedRow) {
+        const id = lastRightClickedRow.querySelector('.row-checkbox').dataset.id;
+        if (confirm('Are you sure you want to void this infraction?')) {
+            window.location.href = `?manageinfraction&id=${id}&delete`;
+        }
+    }
+}
+
+function restoreSelectedRow() {
+    if (lastRightClickedRow) {
+        const id = lastRightClickedRow.querySelector('.row-checkbox').dataset.id;
+        if (confirm('Are you sure you want to restore this infraction?')) {
+            window.location.href = `?manageinfraction&id=${id}&undo`;
+        }
+    }
+}
+
+// Bulk selection functions
+function toggleSelectAll(tabId) {
+    const selectAll = document.getElementById(`selectAll-${tabId}`);
+    const checkboxes = document.querySelectorAll(`#dept-${tabId} .row-checkbox`);
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateSelection(tabId);
+}
+
+function updateSelection(tabId) {
+    const checkboxes = document.querySelectorAll(`#dept-${tabId} .row-checkbox:checked`);
+    const selectedCount = checkboxes.length;
+    const bulkActions = document.getElementById(`bulkActions-${tabId}`);
+    const selectAll = document.getElementById(`selectAll-${tabId}`);
+    
+    document.getElementById(`selectedCount-${tabId}`).textContent = `${selectedCount} selected`;
+    
+    if (selectedCount > 0) {
+        bulkActions.style.display = 'block';
+        selectAll.checked = selectedCount === document.querySelectorAll(`#dept-${tabId} .row-checkbox`).length;
+    } else {
+        bulkActions.style.display = 'none';
+        selectAll.checked = false;
+    }
+}
+
+function bulkAction(action, tabId) {
+    const checkboxes = document.querySelectorAll(`#dept-${tabId} .row-checkbox:checked`);
+    const ids = Array.from(checkboxes).map(checkbox => checkbox.dataset.id);
+    
+    if (ids.length === 0) {
+        alert('Please select at least one record');
+        return;
+    }
+    
+    let actionText = '';
+    switch(action) {
+        case 'serve': actionText = 'serve'; break;
+        case 'void': actionText = 'void'; break;
+        case 'restore': actionText = 'restore to pending'; break;
+    }
+    
+    const confirmation = confirm(`Are you sure you want to ${actionText} ${ids.length} selected infraction(s)?`);
+    if (!confirmation) return;
+    
+    // Process bulk action
+    const form = document.createElement('form');
+    form.method = 'post';
+    form.action = '';
+    
+    const actionInput = document.createElement('input');
+    actionInput.type = 'hidden';
+    actionInput.name = 'bulk_action';
+    actionInput.value = action;
+    form.appendChild(actionInput);
+    
+    ids.forEach(id => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'bulk_ids[]';
+        input.value = id;
+        form.appendChild(input);
+    });
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
     $(document).ready(function() {
     // Store active tab on click
     $('.nav-tabs a').on('click', function() {

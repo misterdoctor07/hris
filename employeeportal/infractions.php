@@ -1,4 +1,12 @@
-<div class="col-lg-12">
+<?php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['idno'])) {
+    die("<script>alert('Session expired. Please log in again.'); window.location='/index.php';</script>");
+}
+?><div class="col-lg-12">
             <div class="content-panel">
               <div class="panel-heading">
               <h4><a href="?main"><i class="fa fa-arrow-left"></i> HOME</a> | <i class="fa fa-user"></i> INFRACTION LIST<div style="float:right;"></div></h4>              

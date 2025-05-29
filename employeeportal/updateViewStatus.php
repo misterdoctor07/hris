@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($tableMapping[$type])) {
         $tableName = $tableMapping[$type];
 
-        $updateQuery = "UPDATE $tableName SET view_status = 'Seen' WHERE idno = ? AND view_status = 'Unseen'";
+        $updateQuery = "UPDATE $tableName SET view_status = 'Seen', remarks_view_status = 'Seen' WHERE idno = ? AND (view_status = 'Unseen' OR remarks_view_status = 'Unseen')";
         $stmt = $con->prepare($updateQuery);
         $stmt->bind_param("i", $userId);
 

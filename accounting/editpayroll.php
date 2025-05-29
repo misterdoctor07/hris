@@ -18,6 +18,7 @@ if(mysqli_num_rows($sqlPayroll)>0){
   $resPayroll=mysqli_fetch_array($sqlPayroll);
   $periodstart=$resPayroll['periodfrom'];
   $periodend=$resPayroll['periodto'];
+  $workdays = $resPayroll['days'];
 }else{
   $periodstart="";
   $periodend="";
@@ -118,7 +119,7 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                       <th style="text-align: center; vertical-align: middle;">Time Out</th>
                       <th style="text-align: center; vertical-align: middle;">Total Hrs</th>
                       <th style="text-align: center; vertical-align: middle;">Reg Hrs</th>
-                      <!-- <th style="text-align: center; vertical-align: middle;" width="5%">Hrs Not Work</th> -->
+                      <th style="text-align: center; vertical-align: middle;" width="5%">Hrs Not Work</th>
                       <th style="text-align: center; vertical-align: middle;">OT</th>
                       <th style="text-align: center; vertical-align: middle;">ND</th>
                       <th style="text-align: center; vertical-align: middle;">Rate/Day</th>
@@ -198,7 +199,7 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                                                          AND idno = '$idno' 
                                                          GROUP BY id 
                                                          ORDER BY logindate ASC");
-                    
+                    $ab_count = $ab_total = $pto_count = $pto_total = $mtl_count = $mtl_total = $mdl_count = $mdl_total = $ltl_count = $ltl_total = $suspended_count = $suspended_total = 0;
                     if (mysqli_num_rows($sqlAttendance) > 0) {
                         while ($attendance = mysqli_fetch_array($sqlAttendance)) {
                             $attendid = $attendance['id'];
@@ -217,8 +218,19 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                             $loginpm = ( $attendance['loginpm'] === "0") ? "0" : date('h:i:s A', strtotime($attendance['loginpm']));
                             $logoutpm = ($attendance['logoutpm'] === "0") ? "0" : date('h:i:s A', strtotime($attendance['logoutpm']));
                             $status = $attendance['status'];
+                            $ab_count = substr_count($status, "ab");
+                            $ab_total += substr_count($status, "ab");
                             $remarks = $attendance['remarks'];
-                    
+                            $pto_count = substr_count($remarks, "PTO");
+                            $pto_total += substr_count($remarks, "PTO");
+                            $mtl_count = substr_count($remarks, "MTL");
+                            $mtl_total += substr_count($remarks, "MTL");
+                            $mdl_count = substr_count($remarks, "MDL");
+                            $mdl_total += substr_count($remarks, "MDL");
+                            $ltl_count = substr_count($remarks, "LTL");
+                            $ltl_total += substr_count($remarks, "LTL");
+                            $suspended_count = substr_count($remarks, "SUS");
+                            $suspended_total += substr_count($remarks, "SUS");
                             // Adjust the displayed logindate for night shifts
                             if ($isNightShift) {
                                 $displayLogindate = date('m/d/Y', strtotime($logindate . ' +1 day'));
@@ -247,7 +259,7 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                             }
                             
                             // Calculate total working hours
-                            $totalwo = (round(abs($time2pm - $time1am) / 3600, 2)-.5);
+                            $totalwo = (round(abs($time2pm - $time1am) / 3600, 2)-1);
                             
                             // Subtract break time (if applicable)
                             $totalhrs = $totalwo;
@@ -276,6 +288,7 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                         $hrsnotworked=0;
                         $regdaysot=0;
                         $snwh=0;
+                        $salary=0;
                         $spholiday=0;
                         $spholidayot=0;
                         $regholiday=0;
@@ -322,17 +335,13 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                           }
                         }
 
-                        if($leave > 0){//On Leave
-                          $empsalary = 0;
-                        $totalwo=0;
-                        }
                         if($sus > 0){//On Leave
                           $empsalary = 0;
-                        $totalwo=0;
+                          $totalwo=0;
                         }
                         if($ab > 0){//On Leave
                           $empsalary = 0;
-                        $totalwo=0;
+                          $totalwo=0;
                         }
                       
                         
@@ -489,7 +498,7 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                         }
                         if($work>0 && $snwh>0){//Special Non Working holiday without ND overtime rate
                             $thours=$difference_am+$difference_pm;
-                            $spholiday=(($empsalary/8)*1.3)*$thours;
+                            $spholiday=(($empsalary/8)*2)*$thours;
                             $spholidayhours2 +=$thours;
                             $spholidayamount2 +=$spholiday;
                             $spholidayhours1 +=0;
@@ -499,7 +508,7 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                         }
                         if(($work>0 || $leave>0) && $rh>0){//Regular holiday without Night Differential overtime rate
                             $thours=$difference_am+$difference_pm;
-                            $regholiday=(($empsalary/8)*2)*$thours;
+                            $regholiday=(($empsalary/8)*1.3)*$thours;
                             $regholidaywork2 +=$thours;
                             $regholidayworkamount2 +=$regholiday;
                             $regholidaywork1 +=0;
@@ -525,6 +534,14 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                           if($remarks=="BLP"){
                             $bdayleavehrs +=$tothours;
                             $bdayleaveamount +=$leaveamount;
+                          }
+                          if($remarks=="PTL"){
+                            $paidVLhrs +=$tothours;
+                            $paidVLamount +=$leaveamount;
+                          }
+                          if($remarks=="SPL"){
+                            $paidVLhrs +=$tothours;
+                            $paidVLamount +=$leaveamount;
                           }
                         }
                         if($ot > 0 && ($nd>0 || $work>0) && $snwh>0){ // Special Non working holiday overtime rate
@@ -562,7 +579,6 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                         if($employeedetails['startshift']=="00:00:00"){
                           $empsalary=($empsalary/8)*$reghrs;
                         }
-                        $totalpay=$empsalary+$regdaysot+$ndrate+$spholiday+$spholidayot+$regholiday+$regholidayot;
                         
                             $startshift = strtotime($employeedetails['startshift']); // Example shift start time
                             $endshift = strtotime($employeedetails['endshift']); // Example shift end time
@@ -603,6 +619,29 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                                 }
                             }
                             
+                        $sqlPayrollDetails=mysqli_query($con,"SELECT * FROM employee_payroll WHERE idno='$idno'");
+                        $payrolldetails=mysqli_fetch_array($sqlPayrollDetails);
+                        $salary = $payrolldetails['salary'];
+                       if($salary_type == "Rated"){
+                            $totalpay = $empsalary + $regdaysot + $ndrate + $spholiday + $spholidayot + $regholiday + $regholidayot;
+                        }else if ($salary_type == "Fixed") {
+                            // Calculate deduction based on number of absences and unpaid leaves
+                            $deduction_per_absence = $salary;
+                        
+                            // Sum up all unpaid leave and absence counts
+                            $total_deductions_count = $ab_count + $pto_count + $mtl_count + $mdl_count + $ltl_count + $suspended_count;
+                        
+                            // Calculate total deduction
+                            $total_deduction = $deduction_per_absence * $total_deductions_count;
+                        
+                            // Compute total pay after deductions
+                            $totalpay = $salary - $total_deduction;
+                        
+                            // For clarity (though it's just $salary)
+                            $empsalary = $salary;
+                        }
+                        
+                            
                         echo "<tr>";
                           echo "<td align='center'>" . date('m/d/Y',strtotime($displayLogindate))."</td>";
                           echo "<td align='center'>" . date('h:i A', $loginam_adjusted) . "</td>";
@@ -611,7 +650,7 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                           echo "<td align='center'>" . date('h:i A', $logoutpm_adjusted) . "</td>";
                           echo "<td align='center'>$totalwo</td>";
                           echo "<td align='center'>$reghrs</td>";
-                          // echo "<td align='center'>$hrsnotworked</td>";
+                          echo "<td align='center'>$hrsnotworked</td>";
                           echo "<td align='center' data-id='$attendid'>$overtime</td>";
                           echo "<td align='center'>$ndhrs</td>";
                           echo "<td align='right'>".number_format($empsalary,2)."</td>";
@@ -624,93 +663,6 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                           echo "<td align='right'>".number_format($totalpay,2)."</td>";
                           echo "<td align='center'><a href='?edittime&idno=$idno&period=$period&id=$attendid&company=$company' title='Edit Time'><i class='fa fa-edit'></i></a> | ";
                         ?>
-                    <script>
-    // Enable in-line editing when clicking on a cell
-    document.querySelectorAll('.editable-cell').forEach(cell => {
-        cell.addEventListener('click', function (e) {
-            const currentText = this.textContent.trim();
-            const attendid = this.getAttribute('data-id');
-
-            // If the cell is already being edited, return
-            if (this.querySelector('textarea')) return;
-
-            // Create a textarea for editing
-            const textarea = document.createElement('textarea');
-            textarea.value = currentText;
-            textarea.classList.add('form-control');
-            this.innerHTML = '';  // Clear the cell content
-            this.appendChild(textarea);
-            textarea.focus(); // Ensure the textarea is focused
-
-            // Handle Enter key to save the overtime value
-            textarea.addEventListener('keydown', function (e) {
-                console.log('Key pressed:', e.key); // Debugging
-                if (e.key === 'Enter') {
-                    e.preventDefault();  // Prevent default behavior (line break in textarea)
-                    console.log('Enter key pressed'); // Debugging
-                    saveOvertime(attendid, textarea.value);
-                }
-            });
-
-            // Handle Esc key to cancel the editing
-            textarea.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') {
-                    e.preventDefault();  // Prevent default behavior
-                    this.value = currentText;  // Restore original text
-                    this.blur();  // Remove focus
-                    cancelEdit();  // Restore the cell to its original state
-                }
-            });
-
-            // Handle clicking outside the editable cell to cancel the editing
-            function cancelEdit() {
-                document.removeEventListener('click', closeEditOnClickOutside);
-                this.innerHTML = currentText;  // Restore original content in cell
-            }
-
-            function closeEditOnClickOutside(event) {
-                // Close editing if the click is outside the cell
-                if (!cell.contains(event.target)) {
-                    cancelEdit();
-                }
-            }
-
-            document.addEventListener('click', closeEditOnClickOutside);
-        });
-    });
-
-    // Function to save overtime to the database
-    function saveOvertime(attendid, value) {
-        value = value.trim();
-
-        if (value === '$overtime') {
-            alert('Overtime cannot be empty!');
-            return;
-        }
-
-        // Make an AJAX request to save the overtime
-        $.ajax({
-            url: 'save_overtime.php', // Update this URL to your PHP script for saving overtime
-            method: 'POST',
-            data: {
-                attendid: attendid,
-                overtime: value
-            },
-            success: function (response) {
-                const res = JSON.parse(response);
-                if (res.success) {
-                    alert('Overtime saved successfully!');
-                    location.reload(); // Refresh the page to show updated overtime
-                } else {
-                    alert('Failed to save overtime: ' + res.message);
-                }
-            },
-            error: function () {
-                alert('Failed to save overtime. Please try again.');
-            }
-        });
-    }
-</script>
                         <a href='?editpayroll&idno=<?=$idno;?>&period=<?=$period;?>&id=<?=$attendid;?>&deletetime&company=<?=$company;?>' title='Delete Time' onclick="return confirm('Do you wish to remove this attendance?'); return false;"><i class='fa fa-trash'></i></a></td>
                         <?php
                         echo "</tr>";
@@ -730,25 +682,65 @@ if (mysqli_num_rows($sqlPayrollInfo) > 0) {
                         $totalspholidayot +=$spholidayot;
                         $totalregholiday +=$regholiday;
                         $totalregholidayot +=$regholidayot;
-                        $grandtotal +=$totalpay;
+                        
+                        if($salary_type == "Rated"){
+                            $grandtotal +=$totalpay;
+                        }else if ($salary_type == "Fixed") {
+                            // Combine all unpaid leave types and absences
+                            $total_deductions = $ab_total + $pto_total + $mtl_total + $mdl_total + $ltl_total + $suspended_total;
+                        
+                            if ($workdays <= 10) {
+                                $grandtotal = ($salary * 10) - ($salary * $total_deductions);
+                            } else { // $workdays >= 11
+                                $working_days_present = $workdays - $total_deductions;
+                        
+                                if ($working_days_present >= 10) {
+                                    $grandtotal = $salary * 10;
+                                } else {
+                                    $deducted_absences = 10 - $working_days_present;
+                                    $grandtotal = ($salary * 10) - ($salary * $deducted_absences);
+                                }
+                            }
+                        }
                       }
+                    } else {
+                        $sqlPayrollDetails=mysqli_query($con,"SELECT * FROM employee_payroll WHERE idno='$idno'");
+                        $payrolldetails=mysqli_fetch_array($sqlPayrollDetails);
+                        $salary = $payrolldetails['salary'];
+                        if ($salary_type == "Fixed") {
+                            // Combine all unpaid leave types and absences
+                            $total_deductions = $ab_total + $pto_total + $mtl_total + $mdl_total + $ltl_total + $suspended_total;
+                        
+                            if ($workdays <= 10) {
+                                $grandtotal = ($salary * 10) - ($salary * $total_deductions);
+                            } else { // $workdays >= 11
+                                $working_days_present = $workdays - $total_deductions;
+                        
+                                if ($working_days_present >= 10) {
+                                    $grandtotal = $salary * 10;
+                                } else {
+                                    $deducted_absences = 10 - $working_days_present;
+                                    $grandtotal = ($salary * 10) - ($salary * $deducted_absences);
+                                }
+                            }
+                        }
                     }
                     ?>
                     <tr>
-                      <td colspan="5" align='right'>TOTAL</td>
-                      <td align='center'><?=number_format($totalhours,2);?></td>
-                      <td align='center'><?=number_format($regularhours,2);?></td>
-                      <td align='center'><?=number_format($totalhoursnotworked,2);?></td>
-                      <td align='center'><?=number_format($totalovertime,2);?></td>
-                      <td align='center'><?=number_format($totalndhrs,2);?></td>
-                      <td align='right'><?=number_format($totalbasesalary,2);?></td>
-                      <td align='right'><?=number_format($totalregdaysot,2);?></td>
-                      <td align='right'><?=number_format($totalndrate,2);?></td>
-                      <td align='right'><?=number_format($totalspholiday,2);?></td>
-                      <td align='right'><?=number_format($totalspholidayot,2);?></td>
-                      <td align='right'><?=number_format($totalregholidayot,2);?></td>
-                      <td align='right'><?=number_format($totalregholiday,2);?></td>
-                      <td align='right'><?=number_format($grandtotal,2);?></td>
+                      <td colspan="5" align='right' style="font-size: 1.3rem"><strong>TOTAL</strong></td>
+                      <td align='center' style="font-size: 1.3rem"><strong><?=number_format($totalhours,2);?></strong></td>
+                      <td align='center' style="font-size: 1.3rem"><strong><?=number_format($regularhours,2);?></strong></td>
+                      <td align='center' style="font-size: 1.3rem"><strong><?=number_format($totalhoursnotworked,2);?></strong></td>
+                      <td align='center' style="font-size: 1.3rem"><strong><?=number_format($totalovertime,2);?></strong></td>
+                      <td align='center' style="font-size: 1.3rem"><strong><?=number_format($totalndhrs,2);?></strong></td>
+                      <td align='right' style="font-size: 1.3rem"><strong><?=number_format($totalbasesalary,2);?></strong></td>
+                      <td align='right' style="font-size: 1.3rem"><strong><?=number_format($totalregdaysot,2);?></strong></td>
+                      <td align='right' style="font-size: 1.3rem"><strong><?=number_format($totalndrate,2);?></strong></td>
+                      <td align='right' style="font-size: 1.3rem"><strong><?=number_format($totalspholiday,2);?></strong></td>
+                      <td align='right' style="font-size: 1.3rem"><strong><?=number_format($totalspholidayot,2);?></strong></td>
+                      <td align='right' style="font-size: 1.3rem"><strong><?=number_format($totalregholidayot,2);?></strong></td>
+                      <td align='right' style="font-size: 1.3rem"><strong><?=number_format($totalregholiday,2);?></strong></td>
+                      <td align='right' style="font-size: 1.3rem"><strong><?=number_format($grandtotal,2);?></strong></td>
                     </tr>
                   </tbody>
                 </table>

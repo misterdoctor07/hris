@@ -92,15 +92,15 @@ while ($details = mysqli_fetch_array($sqlDetails)) {
                         <table class="table table-bordered table-striped table-condensed">
                             <thead>
                                 <tr>
-                                    <th>No.</th>
-                                    <th>Emp ID</th>
-                                    <th>Employee Name</th>
-                                    <th>Company</th>
-                                    <th>Addons</th>
-                                    <th>Total Gross</th>
-                                    <th>Total Deductions</th>
-                                    <th>Net Pay</th>
-                                    <th>Action</th>
+                                    <th style="text-align: center;">No.</th>
+                                    <th style="text-align: center;">Emp ID</th>
+                                    <th style="text-align: center;">Employee Name</th>
+                                    <th style="text-align: center;">Company</th>
+                                    <th style="text-align: center;">Addons</th>
+                                    <th style="text-align: center;">Total Gross</th>
+                                    <th style="text-align: center;">Total Deductions</th>
+                                    <th style="text-align: center;">Net Pay</th>
+                                    <th style="text-align: center;">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -136,22 +136,58 @@ while ($details = mysqli_fetch_array($sqlDetails)) {
                                         // Fetch Payroll Addons
                                         $sqlAddons = mysqli_query($con, "SELECT SUM(amount) as amount FROM payroll_addons WHERE idno='$idno' AND payrollperiod='$id' GROUP BY idno");
                                         $addons = mysqli_fetch_array($sqlAddons)['amount'] ?? 0;
-
+                                        
+                                        //Identify salary type
+                                        $salary = 0;
+                                        $sqlSalaryType = mysqli_query($con, "SELECT * FROM employee_payroll WHERE idno='$idno'");
+                                         if (mysqli_num_rows($sqlSalaryType) > 0) {
+                                             $type = mysqli_fetch_array($sqlSalaryType);
+                                             $salary = $type['salary'];
+                                             $salary_type = $type['salary_type'];
+                                         }
+                                        
                                         // Compute Net Pay
                                         $netpay = number_format(($totalpay + $addons) - $deductions, 2);
                                         ?>
+                                        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+                                        <script>
+                                        function exportToExcel() {
+                                            var wb = XLSX.utils.book_new();
+                                        
+                                            // Create virtual tables for each logical section
+                                            var sections = [
+                                                { id: "payslip-employee-info", name: "Employee Info" },
+                                                { id: "payslip-gross-earnings", name: "Gross Earnings" },
+                                                { id: "payslip-take-home", name: "Take Home Pay" },
+                                                { id: "payslip-breakdown", name: "Breakdown" },
+                                                { id: "payslip-gov-benefits", name: "Gov Benefits" },
+                                                { id: "payslip-company-benefits", name: "Company Benefits" }
+                                            ];
+                                        
+                                            sections.forEach(section => {
+                                                var table = document.getElementById(section.id);
+                                                if (table) {
+                                                    var ws = XLSX.utils.table_to_sheet(table, {raw:true});
+                                                    XLSX.utils.book_append_sheet(wb, ws, section.name);
+                                                }
+                                            });
+                                        
+                                            XLSX.writeFile(wb, "Payslip.xlsx");
+                                        }
+                                        </script>
+
                                         <tr>
-                                            <td><?= $x; ?>.</td>
-                                            <td><?= $idno; ?></td>
-                                            <td><?= "$lastname, $firstname $middlename $suffix"; ?></td>
-                                            <td><?= $comp; ?></td>
+                                            <td align="center"><?= $x; ?>.</td>
+                                            <td align="center"><?= $idno; ?></td>
+                                            <td><?= "<strong>$lastname</strong>, $firstname $middlename $suffix"; ?></td>
+                                            <td align="center"><?= $comp; ?></td>
                                             <td align="right"><?= number_format($addons, 2); ?></td>
                                             <td align="right"><?= number_format($totalpay, 2); ?></td>
                                             <td align="right"><?= number_format($deductions, 2); ?></td>
                                             <td align="right"><?= $netpay; ?></td>
                                             <td align="center">
                                                 <a href="?editpayroll&idno=<?= $idno ?>&period=<?= $id; ?>&company=<?= $comp; ?>" 
-                                                   class="btn btn-primary btn-xs">
+                                                   class="btn btn-primary btn-xs"   title="Edit Payroll">
                                                     <i class='fa fa-pencil'></i>
                                                 </a>
                                                 <?php 
@@ -163,8 +199,16 @@ while ($details = mysqli_fetch_array($sqlDetails)) {
                                                 if ($payroll_id) { ?>
                                                     <?php if ($empSalaryType == 'Rated') { ?>
                                                         <a href="payslipRated.php?id=<?=$payroll_id;?>" class="btn btn-warning btn-xs" title="Print Payslip" target="_blank"><i class='fa fa-print'></i></a>
+                                                        <a href="exporttopdfRated.php?id=<?=$payroll_id?>&idno=<?=$idno?>&period=<?=$id?>&company=<?=$comp?>" 
+                                                           class="btn btn-success btn-xs"   title="Export Payslip">
+                                                            <i class='fa fa-download'></i>
+                                                        </a>
                                                     <?php } else if ($empSalaryType == 'Fixed') { ?>  
                                                         <a href="payslip.php?id=<?=$payroll_id;?>" class="btn btn-warning btn-xs" title="Print Payslip" target="_blank"><i class='fa fa-print'></i></a>
+                                                        <a href="export_payslip.php?id=<?=$payroll_id?>&idno=<?=$idno?>&period=<?=$id?>&company=<?=$comp?>" 
+                                                           class="btn btn-success btn-xs"   title="Export Payslip">
+                                                            <i class='fa fa-download'></i>
+                                                        </a>
                                                     <?php } ?>
                                                 <?php } ?>
                                             </td>

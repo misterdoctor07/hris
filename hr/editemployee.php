@@ -218,7 +218,7 @@ if(mysqli_num_rows($sqlChecklist)>0){
                 <div class="form-group">
                   <label class="col-sm-3 col-sm-3 control-label">Employee No.</label>
                   <div class="col-sm-5">
-                    <input type="text" class="form-control" name="idno" required value="<?=$idno;?>">
+                    <input type="text" class="form-control" name="idno" required value="<?=$idno;?>" readonly>
                   </div>
                 </div>
                 <div class="form-group">
@@ -446,12 +446,14 @@ if(mysqli_num_rows($sqlChecklist)>0){
                           echo "Kidapawan City";
                         } elseif($work_area=="Panabo"){
                           echo "Panabo City";
-                        } else{
+                        } elseif($work_area=="Digos"){
                           echo "Digos City";
+                        } else{
+                          echo "";
                         }
                         ?>
                        <option value="Davao">Davao City</option>
-                      <option value="Iloilo">Ilo-ilo City</option>
+                      <option value="Iloilo">Iloilo City</option>
                       <option value="Kidapawan">Kidapawan City</option>
                       <option value="Panabo">Panabo City</option>
                       <option value="Digos">Digos City</option>
@@ -732,11 +734,11 @@ if(mysqli_num_rows($sqlChecklist)>0){
         }
       if($sqlAddEmployee){
         echo "<script>";
-          echo "alert('Details successfully saved!');window.location='?editemployee&id=$id';";
+          echo "alert('Details successfully saved!');window.location='?manageemployee';";
         echo "</script>";
       }else{
         echo "<script>";
-          echo "alert('Unable to saved details!');window.location='?editemployee&id=$id';";
+          echo "alert('Unable to saved details!');window.location='?manageemployee';";
         echo "</script>";
       }
     }

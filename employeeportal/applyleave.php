@@ -10,6 +10,7 @@ if (!isset($_SESSION['idno'])) {
 <script type="text/javascript">
       function SubmitDetails(){
           return confirm('Do you wish to submit details?');
+          
       }
 </script>
 <?php 
@@ -55,7 +56,7 @@ if(mysqli_num_rows($sqlStartShift)>0){
 <div class="row">
     <div class="col-lg-12">
         <h4 style="text-indent: 10px;">
-            <a href="?manageleave"><i class="fa fa-arrow-left"></i> BACK</a> | 
+            <a href="manageleave.php"><i class="fa fa-arrow-left"></i> BACK</a> | 
             <i class="fa fa-file-text"></i> LEAVE APPLICATION
         </h4>      
     </div>
@@ -119,7 +120,7 @@ if(mysqli_num_rows($sqlStartShift)>0){
                       <input type="number" name="nofdays" id="nofdays" class="form-control" value="0" min="1" required onchange="checkCredits(); checkSubmitButton();">
                   </div>
                 </div>
-
+    
                 <div class="form-group">
                     <label class="col-sm-4 control-label">Start Date</label>
                     <div class="col-sm-8">
@@ -181,52 +182,54 @@ if (isset($_GET['submit'])) {
 
         // Check if the leave application was successfully inserted
         if ($sqlInsertLeave) {
+            // Update leave credits based on leave type
+            switch ($leavetype) {
+                case 'VL':
+                    $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET vlused = vlused + $nofdays WHERE idno = '$idno'");
+                    break;
+                case 'SL':
+                    $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET slused = slused + $nofdays WHERE idno = '$idno'");
+                    break;
+                case 'PTO':
+                    $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET ptoused = ptoused + $nofdays WHERE idno = '$idno'");
+                    break;
+                case 'BLP':
+                    $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET blp_used = blp_used + $nofdays WHERE idno = '$idno'");
+                    break;
+                case 'EO':
+                    // Ensure $startMonth is an integer
+                    $startMonth = (int) $startMonth;
+                    $monthNames = [
+                        1 => "jan", 2 => "feb", 3 => "mar", 4 => "apr", 5 => "may", 6 => "jun",
+                        7 => "jul", 8 => "aug", 9 => "sep", 10 => "oct", 11 => "nov", 12 => "dec"
+                    ];
+                    
+                    if (isset($monthNames[$startMonth])) {
+                        $columnName = $monthNames[$startMonth] . "_eo_used";
+                        $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET $columnName = $columnName + $nofdays WHERE idno = '$idno'");
+                    }
+                    break;
+                case 'SPL':
+                    $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET spl_used = spl_used + $nofdays WHERE idno = '$idno'");
+                    break;
+                case 'MTL':
+                case 'LTL':
+                case 'MDL':
+                case 'PTL':
+                case 'BL':
+                    // No update logic yet for these types
+                    break;
+                default:
+                    echo "<script>alert('Leave type not recognized. No credits updated.');</script>";
+                    break;
+            }
+            
                 echo "<script>alert('Leave application submitted successfully!');</script>";
+                echo "<script>window.location='manageleave.php';</script>";
         }else {
                 echo "<script>alert('Failed to insert leave application. Please try again.');</script>";
+                echo "<script>window.location='manageleave.php';</script>";
          }
-    }
-
-    // Update leave credits based on leave type
-    switch ($leavetype) {
-        case 'VL':
-            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET vlused = vlused + $nofdays WHERE idno = '$idno'");
-            break;
-        case 'SL':
-            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET slused = slused + $nofdays WHERE idno = '$idno'");
-            break;
-        case 'PTO':
-            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET ptoused = ptoused + $nofdays WHERE idno = '$idno'");
-            break;
-        case 'BLP':
-            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET blp_used = blp_used + $nofdays WHERE idno = '$idno'");
-            break;
-        case 'EO':
-            // Ensure $startMonth is an integer
-            $startMonth = (int) $startMonth;
-            $monthNames = [
-                1 => "jan", 2 => "feb", 3 => "mar", 4 => "apr", 5 => "may", 6 => "jun",
-                7 => "jul", 8 => "aug", 9 => "sep", 10 => "oct", 11 => "nov", 12 => "dec"
-            ];
-            
-            if (isset($monthNames[$startMonth])) {
-                $columnName = $monthNames[$startMonth] . "_eo_used";
-                $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET $columnName = $columnName + $nofdays WHERE idno = '$idno'");
-            }
-            break;
-        case 'SPL':
-            $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET spl_used = spl_used + $nofdays WHERE idno = '$idno'");
-            break;
-        case 'MTL':
-        case 'LTL':
-        case 'MDL':
-        case 'PTL':
-        case 'BL':
-            // No update logic yet for these types
-            break;
-        default:
-            echo "<script>alert('Leave type not recognized. No credits updated.');</script>";
-            break;
     }
 }
 ?>
@@ -466,7 +469,7 @@ function checkCredits() {
 
     // Check if the selected leave type requires a 3-day protocol
     if (withdayprotocol.includes(selectedLeaveType) || withdayprotocol.includes(selectedEOMonth)) {
-        if((startshift == "23:00:00" || startshift == "00:00:00") && timenow <= 9) {
+        if((startshift == "23:00:00" || startshift == "00:00:00") && timenow <= 11) {
             // Check if startDate has a value
             if (!startDate.value) {
                 dateWarning.style.display = 'inline';

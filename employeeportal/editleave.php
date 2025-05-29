@@ -23,12 +23,12 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
         $datearray = $leaveDetails['datearray'];
     } else {
         echo "<script>alert('Leave application not found!');</script>";
-        echo "<script>window.location='?manageleave';</script>";
+        echo "<script>window.location='manageleave.php';</script>";
         return;
     }
 } else {
     echo "<script>alert('Leave ID not provided!');</script>";
-    echo "<script>window.location='?manageleave';</script>";
+    echo "<script>window.location='manageleave.php';</script>";
     return;
 }
 
@@ -73,7 +73,7 @@ if(mysqli_num_rows($sqlStartShift)>0){
 <div class="row">
     <div class="col-lg-12">
         <h4 style="text-indent: 10px;">
-            <a href="?manageleave"><i class="fa fa-arrow-left"></i> BACK</a> | 
+            <a href="manageleave.php"><i class="fa fa-arrow-left"></i> BACK</a> | 
             <i class="fa fa-file-text"></i> LEAVE APPLICATION
         </h4>      
     </div>
@@ -180,7 +180,8 @@ if (isset($_GET['submit']) && isset($_GET['editleave'])) {
     $nofdays = $_GET['nofdays'];
     $startDate = $_GET['startDate'];
     $endDate = $_GET['endDate'] ?? '';   
-    $reasons = $_GET['reasons'];    
+    $reasons = isset($_GET['reasons']) ? urldecode($_GET['reasons']) : ''; // Decode the input
+    $reasons = mysqli_real_escape_string($con, $reasons); // Sanitize for SQL      
     $datenow = $_GET['datearray']; 
     $editDateTime = date('Y-m-d H:i:s');
     $startMonth = date('n', strtotime($startDate));
@@ -325,7 +326,7 @@ if (isset($_GET['submit']) && isset($_GET['editleave'])) {
             }
 
             echo "<script>alert('Leave application updated successfully!');
-                  window.location.href='?manageleave';</script>";
+                  window.location.href='manageleave.php';</script>";
         } else {
             echo "<script>alert('Error updating leave application: " . mysqli_error($con) . "');</script>";
         }

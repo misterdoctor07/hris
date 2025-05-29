@@ -3,7 +3,7 @@ include('../config.php'); // Include your database connection file
 
 // Get the logged-in user ID and check if the session exists
 if (!isset($_SESSION['idno'])) {
-    echo "<script>alert('Session expired. Please log in again.');window.location='login.php';</script>";
+    echo "<script>alert('Session expired. Please log in again.');window.location='/index.php';</script>";
     exit();
 }
 
@@ -16,7 +16,7 @@ $userDetailsQuery = mysqli_query($con, "SELECT d.department FROM department d LE
 $dept = mysqli_fetch_array($userDetailsQuery);
 
 if (!$userDetails) {
-    echo "<script>alert('User details not found.');window.location='login.php';</script>";
+    echo "<script>alert('User details not found.');window.location='/index.php';</script>";
     exit();
 }
 
@@ -77,6 +77,20 @@ if ($userId == '103417'){
             INNER JOIN employee_details ed ON ed.idno = ep.idno
             WHERE ed.department = '16'
             OR ed.company = 'NEWIND'
+            ORDER BY 
+                i.dateissued ASC";
+} else if($userId == '102981'){
+    $query = "SELECT 
+                ep.*, 
+                i.id, i.dateserved, i.dateissued, i.typecat, i.typeofoffense, 
+                i.dateofincident, i.typeofmemo, i.points, i.memonumber, 
+                i.dateofsuspension, i.status,
+                ed.department, ed.company 
+            FROM employee_profile ep
+            INNER JOIN infraction i ON i.idno = ep.idno
+            INNER JOIN employee_details ed ON ed.idno = ep.idno
+            WHERE ed.department = '23'
+            OR ed.department = '24'
             ORDER BY 
                 i.dateissued ASC";
 } else if ($designation == 50 || $designation == 89) { //OS || OM
@@ -191,12 +205,16 @@ $sqlEmployee = mysqli_query($con, $query);
                             $dateissued = date('M-d-Y', strtotime($company['dateissued']));
                             $dateserved = date('M-d-Y', strtotime($company['dateserved']));
                             $dateofincident = date('M-d-Y', strtotime($company['dateofincident']));
-                            $style = match ($status) {
-                                "Void" => "class='danger'",
-                                "pending" => "class='warning'",
-                                default => "class='success'",
-                            };
-
+                            switch ($status) {
+            case "Void":
+                $style = "class='danger'";
+                break;
+            case "pending":
+                $style = "class='warning'";
+                break;
+            default:
+                $style = "class='success'";
+        }
                             // Translate department ID to name
                             $departmentName = $departments[$company['department']] ?? "Unknown Department";
 

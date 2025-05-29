@@ -125,7 +125,7 @@ if (!$sqlCompanies) {
 
                 <!-- Date Filter Section -->
                 <div class="date-filter" style="display: flex; align-items: center; gap: 10px;">
-                    <h5 style="font-weight: bold; margin-left: 30px;">Filter Date of Missed Log Column</h5>
+                    <h5 style="font-weight: bold; margin-left: 30px;">Filter Date of Missed Log</h5>
                     <div style="display: flex; align-items: center; gap: 5px;">
                         <label for="fromDate" style="margin-bottom: 0;">From:</label>
                         <input type="date" id="fromDate" class="form-control" 

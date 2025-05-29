@@ -155,7 +155,7 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
 
 <div class="col-lg-12">
     <div class="content-panel">
-    <div class="panel-heading">
+        <div class="panel-heading">
             <div class="flex-container" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                 <!-- Left Section -->
                 <div class="flex-item-left" style="display: flex; align-items: center; gap: 10px;">
@@ -167,7 +167,7 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
 
                 <!-- Date Filter Section -->
                 <div class="date-filter" style="display: flex; align-items: center; gap: 10px;">
-                    <h5 style="font-weight: bold; margin-left: 30px;">Filter Date of EEO Column</h5>
+                    <h5 style="font-weight: bold; margin-left: 30px;">Filter Date of EEO</h5>
                     <div style="display: flex; align-items: center; gap: 5px;">
                         <label for="fromDate" style="margin-bottom: 0;">From:</label>
                         <input type="date" id="fromDate" class="form-control" 
@@ -480,7 +480,7 @@ if (isset($_POST['submitRemarks'])) {
     $remarks = mysqli_real_escape_string($con, $_POST['remarks']); // Sanitize input
     
     // Update remarks in the database
-    $sqlUpdateRemarks = "UPDATE emergencyearlyout SET approvers_remarks = '$remarks' WHERE id = '$id'";
+    $sqlUpdateRemarks = "UPDATE emergencyearlyout SET approvers_remarks = '$remarks', remarks_view_status='Unseen' WHERE id = '$id'";
     if (mysqli_query($con, $sqlUpdateRemarks)) {
         echo "<script>alert('Remarks updated successfully.');</script>";
         echo "<script>window.location.href='?EEOapplication';</script>";

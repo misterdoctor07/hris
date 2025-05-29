@@ -12,7 +12,7 @@ Website: http://Alvarez.is/
 */
 
 /* Import fonts */
-@import url(http://fonts.googleapis.com/css?family=Ruda:400,700,900);
+
 
 /* BASIC THEME CONFIGURATION */
 body {
@@ -2021,11 +2021,11 @@ ul li {
 
 /* PROFILE PAGE CONF */
 .profile-pic img {
-	width: 130px;
-	height: 130px;
+	width: 180px;
+	height: 180px;
 	border-radius: 50%;
 	-webkit-border-radius: 50%;
-	border: 10px solid #48cfad;
+	border: 10px solid #20283a;
 	margin-top: 20px;
 }
 
@@ -2037,11 +2037,11 @@ ul li {
 
 .profile-text h3 {
 	font-weight: 700;
-	color: #48cfad;
+	color: #20283a;
 }
 
 .profile-text h4 {
-	color: #48cfad;
+	color: #20283a;
 }
 
 profile-text p {
@@ -2080,7 +2080,7 @@ profile-text p {
 	text-transform: uppercase;
 	border-bottom: 1px solid #e2e2e2;
 	font-weight: 700;
-	color: #48cfad;
+	color: #20283a;
 }
 
 ul.my-friends {

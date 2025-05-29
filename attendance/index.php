@@ -513,11 +513,8 @@ if ($logintype === 'loginam') {
           $attendanceRecord = mysqli_fetch_array(
               mysqli_query($con, "SELECT * FROM attendance WHERE idno='$empid' AND logindate='$logindateAdjusted'")
           );
-
-          $leaveTypes = ['VL', 'SL', 'PTO', 'EO', 'BLP', 'SPL']; 
-          if ($attendanceRecord && in_array($attendanceRecord['remarks'], $leaveTypes)) {
+          
               $leaveType = $attendanceRecord['remarks']; // Save leave type to restore credit later
-  
               // Restore leave credits
               $leaveColumn = '';
               switch ($leaveType) {
@@ -525,7 +522,7 @@ if ($logintype === 'loginam') {
                   case 'SL': $leaveColumn = 'slused'; break;
                   case 'PTO': $leaveColumn = 'ptoused'; break;
                   case 'EO': 
-                    $startMonth = date('n'); // Get current month as integer
+                    $startMonth = date('n', strtotime($logindateAdjusted));
                     // Ensure $startMonth is an integer
                     $startMonth = (int) $startMonth;
                     $monthNames = [
@@ -551,7 +548,7 @@ if ($logintype === 'loginam') {
               $status = (mysqli_fetch_array(mysqli_query($con, "SELECT startshift FROM employee_details WHERE idno='$empid'")))['startshift'] >= "03:00:00" || 
                   (mysqli_fetch_array(mysqli_query($con, "SELECT startshift FROM employee_details WHERE idno='$empid'")))['startshift'] == "00:00:00" ? "work" : "nd/work";
               mysqli_query($con, "UPDATE attendance SET status = '$status' WHERE  idno='$empid' AND logindate='$datenow'");
-          }
+          
 
 
           $sqlCheckStatus = mysqli_query($con, "SELECT status FROM employee_details WHERE idno='$empid'");

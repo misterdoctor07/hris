@@ -1,6 +1,3 @@
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 <?php
 // Fetch unique companies from the employee_details table
 $sqlCompanies = mysqli_query($con, "SELECT DISTINCT company FROM employee_details ORDER BY company");
@@ -142,10 +139,10 @@ if (!$sqlCompanies) {
                         $vlrem = $leavecredits - $leaveused;
                         $sickleaves = $employee['sickleave'];
                         $sickused = $employee['slused'];
-                        $srem = $sickleaves - $sickused;
-                        $ptocr = $employee['pto'];
-                        $ptouseds = $employee['ptoused'];
-                        $ptos = $ptocr - $ptouseds;
+                        $slrem = $sickleaves - $sickused;
+                        $ptocredits = $employee['pto'];
+                        $ptoused = $employee['ptoused'];
+                        $ptorem = $ptocredits - $ptoused;
 
                         if ($hireDate <= $thresholdDate) {
                             // Logic for dateofhire on or before July 2020
@@ -174,23 +171,25 @@ if (!$sqlCompanies) {
                             $currentMonth = date('n'); // get the current month (1-12)
                             $currentDay = date('j'); // get the current day (1-31)
                         }
-
+                        $vlcolor = ($vlrem == 0) ? '#f8d7da' : '#d4edda';
+                        $slcolor = ($slrem == 0) ? '#f8d7da' : '#d4edda';
+                        $ptocolor = ($ptorem == 0) ? '#f8d7da' : '#d4edda';
                         echo "<tr>
                             <td width='1%' align='center'>{$x}.</td>
                             <td width='4%' align='center'>{$employee['idno']}</td>
-                            <td width='19%'><strong>{$employee['lastname']}</strong>, {$employee['firstname']} {$employee['middlename']} {$employee['suffix']}</td>
+                            <td width='17%'><strong>{$employee['lastname']}</strong>, {$employee['firstname']} {$employee['middlename']} {$employee['suffix']}</td>
                             <td width='6%' align='center' width='6%'>{$eligibility}</td>
                             <td width='12%' align='center' width='10%'>$years years $month months $days days</td>
                             <td width='12%' align='center' width='10%'>$periodfrom - $periodto </td>
-                            <td align='center'>{$leavecredits}</td>
+                            <td align='center'  style='background-color: #FFFACD'>{$leavecredits}</td>
                             <td align='center'>{$leaveused}</td>
-                            <td align='center'>{$vlrem}</td>
-                            <td align='center'>{$sickleaves}</td>
+                            <td align='center' style='background-color: $vlcolor;'>{$vlrem}</td>
+                            <td align='center'  style='background-color: #FFFACD'>{$sickleaves}</td>
                             <td align='center'>{$sickused}</td>
-                            <td align='center'>{$srem}</td>
-                            <td align='center'>{$ptocr}</td>
-                            <td align='center'>{$ptouseds}</td>
-                            <td align='center'>{$ptos}</td>
+                            <td align='center' style='background-color: $slcolor;'>{$slrem}</td>
+                            <td align='center'  style='background-color: #FFFACD'>{$ptocredits}</td>
+                            <td align='center'>{$ptoused}</td>
+                            <td align='center' style='background-color: $ptocolor;'>{$ptorem}</td>
                         </tr>";
                         $x++;
                     }

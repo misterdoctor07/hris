@@ -1,104 +1,88 @@
 <?php
-    include '../config.php';
+include '../config.php';
 
-   
-    $idno = $_GET['idno'];
-    $id = $_GET['id'];
-    $comp = $_GET['company'];
-    // $startdate = $_GET['startdate'];
-    // $enddate = $_GET['enddate'];
+$idno = $_GET['idno'];
+$id = $_GET['id'];
+$comp = $_GET['company'];
+ // Ensure this is properly formatted (YYYY-MM-DD)
+
+// Fetch employee's work area
+$employeeWorkArea = "";
+$employeeQuery = mysqli_query($con, "SELECT work_area FROM employee_details WHERE idno = '$idno'");
+if ($row = mysqli_fetch_assoc($employeeQuery)) {
+    $employeeWorkArea = $row['work_area'];
+}
+
+// Fetch attendance status (if record exists)
+$status = "";
+$sqlAttendance = mysqli_query($con, "SELECT * FROM attendance WHERE id='$id'");
+if (mysqli_num_rows($sqlAttendance) > 0) {
+    $attend = mysqli_fetch_array($sqlAttendance);
+    $logindate = $attend['logindate'];
+    $status = $attend['status'];
+    $remarks = $attend['remarks'];
+    $loginam = $attend['loginam'] ? date('H:i', strtotime($attend['loginam'])) : '';
+    $logoutam = $attend['logoutam'] ? date('H:i', strtotime($attend['logoutam'])) : '';
+    $loginpm = $attend['loginpm'] ? date('H:i', strtotime($attend['loginpm'])) : '';
+    $logoutpm = $attend['logoutpm'] ? date('H:i', strtotime($attend['logoutpm'])) : '';
+} else {
+    $loginam = $logoutam = $loginpm = $logoutpm = $remarks = "";
+}
+
+
+// Check for holidays (only if we have a logindate)
+$rh_auto = $snwh_auto = false;
+if (!empty($logindate)) {
+    $holidayQuery = mysqli_query($con, "
+        SELECT `date`, `type` 
+        FROM holidays 
+        WHERE (`location` = 'allbranch' OR `location` = '$employeeWorkArea') 
+        AND `date` = '$logindate'
+    ");
     
-    $sqlCredits = mysqli_query($con, "SELECT * FROM leave_credits WHERE idno='$idno'");
-    $credits = []; 
-    if (mysqli_num_rows($sqlCredits) > 0) {
-        $credit = mysqli_fetch_array($sqlCredits);
-        $credits['VL'] = $credit['vacationleave'] - $credit['vlused'];
-        $credits['SL'] = $credit['sickleave'] - $credit['slused'];
-        $credits['PTO'] = $credit['pto'] - $credit['ptoused'];
-        $credits['BLP'] = $credit['bdayleave'] - $credit['blp_used'];
-        $credits['jan_EO'] = $credit['jan_earlyout'] - $credit['jan_eo_used'];
-        $credits['feb_EO'] = $credit['feb_earlyout'] - $credit['feb_eo_used'];
-        $credits['mar_EO'] = $credit['mar_earlyout'] - $credit['mar_eo_used'];
-        $credits['apr_EO'] = $credit['apr_earlyout'] - $credit['apr_eo_used'];
-        $credits['may_EO'] = $credit['may_earlyout'] - $credit['may_eo_used'];
-        $credits['jun_EO'] = $credit['jun_earlyout'] - $credit['jun_eo_used'];
-        $credits['jul_EO'] = $credit['jul_earlyout'] - $credit['jul_eo_used'];
-        $credits['aug_EO'] = $credit['aug_earlyout'] - $credit['aug_eo_used'];
-        $credits['sep_EO'] = $credit['sep_earlyout'] - $credit['sep_eo_used'];
-        $credits['oct_EO'] = $credit['oct_earlyout'] - $credit['oct_eo_used'];
-        $credits['nov_EO'] = $credit['nov_earlyout'] - $credit['nov_eo_used'];
-        $credits['dec_EO'] = $credit['dec_earlyout'] - $credit['dec_eo_used'];
-        $credits['SPL'] = $credit['spl'] - $credit['spl_used'];
-    }
-    $sqlAttendance = mysqli_query($con, "SELECT * FROM attendance WHERE id='$id'");
-    if (mysqli_num_rows($sqlAttendance) > 0) {
-        $attend = mysqli_fetch_array($sqlAttendance);
-        $loginam = $attend['loginam'] ? date('H:i', strtotime($attend['loginam'])) : '';
-        $logoutam = $attend['logoutam'] ? date('H:i', strtotime($attend['logoutam'])) : '';
-        $loginpm = $attend['loginpm'] ? date('H:i', strtotime($attend['loginpm'])) : '';
-        $logoutpm = $attend['logoutpm'] ? date('H:i', strtotime($attend['logoutpm'])) : '';
-        $logindate = $attend['logindate'];
-        $status = $attend['status'];
-        $remarks = $attend['remarks'];
-    } else {
-        $loginam = "";
-        $logoutam = "";
-        $loginpm = "";
-        $logoutpm = "";
-        $logindate = $_GET['logindate'];
-        $status = "";
-        $remarks = "";
-    }
-            $work="";
-            $rh="";
-            $snwh="";
-            $nd="";
-            $leave="";
-            $ot="";
-            $pt="";
-            $ab="";
-            $sus="";
-    //if(sizeof($status)>0){
-        $stat=explode('/',$status);
-        for($i=0;$i<sizeof($stat);$i++){
-            if($stat[$i]=="work"){
-                $work="checked";
-            }
-            if($stat[$i]=="rh"){
-                $rh="checked";
-            }
-            if($stat[$i]=="snwh"){
-                $snwh="checked";
-            }
-            if($stat[$i]=="nd"){
-                $nd="checked";
-            }
-            if($stat[$i]=="leave"){
-                $leave="checked";
-            }
-            if($stat[$i]=="ot"){
-                $ot="checked";
-            }
-            if($stat[$i]=="pt"){
-                $pt="checked";
-            }
-            if($stat[$i]=="ab"){
-                $ab="checked";
-            }
-            if($stat[$i]=="sus"){
-                $sus="checked";
-            }
+    if ($holidayQuery && mysqli_num_rows($holidayQuery) > 0) {
+        $holiday = mysqli_fetch_assoc($holidayQuery);
+        if ($holiday['type'] == 'rh') {
+            $rh_auto = true;
+        } elseif ($holiday['type'] == 'snwh') {
+            $snwh_auto = true;
         }
-    // }else{
-    //         $work="";
-    //         $rh="";
-    //         $snwh="";
-    //         $nd="";
-    //         $leave="";
-    //         $ot="";
-    //         $pt="";
-    // }
-    ?>
+    }
+}
+
+// Initialize all status checkboxes
+$work = $nd = $leave = $ot = $pt = $ab = $sus = "";
+
+// Handle holiday checkboxes separately to prevent override
+$rh = $snwh = "";
+
+// Apply automatic holiday check FIRST
+if ($rh_auto) {
+    $rh = "checked";
+}
+if ($snwh_auto) {
+    $snwh = "checked";
+}
+
+// Then apply manual status (if set) which may override holidays
+if (!empty($status)) {
+    $stat = explode('/', $status);
+    foreach ($stat as $s) {
+        switch ($s) {
+            case 'work': $work = "checked"; break;
+            case 'rh': $rh = "checked"; break; // Overrides auto-check
+            case 'snwh': $snwh = "checked"; break; // Overrides auto-check
+            case 'nd': $nd = "checked"; break;
+            case 'leave': $leave = "checked"; break;
+            case 'ot': $ot = "checked"; break;
+            case 'pt': $pt = "checked"; break;
+            case 'ab': $ab = "checked"; break;
+            case 'sus': $sus = "checked"; break;
+        }
+    }
+}
+
+?>
     <script type="text/javascript">
       function SubmitDetails(){
           return confirm('Do you wish to submit details?');
@@ -181,7 +165,7 @@
                     <input type="checkbox" name="status[]" value="nd" <?=$nd;?>> Night Differential<br>
                     <input type="checkbox" name="status[]" value="leave" <?=$leave;?>> Leave<br>
                     <input type="checkbox" name="status[]" value="ot" <?=$ot;?>> OT after 8 hours worked<br>
-                    <input type="checkbox" name="status[]" value="pt" <?=$pt;?>> OT after 8 hours worked<br>
+                    <input type="checkbox" name="status[]" value="pt" <?=$pt;?>> OT before 8 hours worked<br>
                     <input type="checkbox" name="status[]" value="ab" <?=$ab;?>> Absent<br>
                     <input type="checkbox" name="status[]" value="sus" <?=$sus;?>> Infraction<br>
                   </div>

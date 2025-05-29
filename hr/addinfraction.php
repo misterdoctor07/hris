@@ -180,7 +180,9 @@ function SubmitDetails() {
         </div>                
         </form>
         <?php
-// Fetch the latest memonumber and increment it
+// Handling form submission
+if (isset($_GET['submit'])) {
+    // Fetch the latest memonumber and increment it
 $sqlMemo = mysqli_query($con, "SELECT memonumber FROM infraction ORDER BY id DESC LIMIT 1");
 $lastMemo = mysqli_fetch_assoc($sqlMemo);
 $lastMemoNumber = $lastMemo ? $lastMemo['memonumber'] : '25-0000';
@@ -190,44 +192,50 @@ $lastNumber = (int)substr($lastMemoNumber, 3); // Remove the '24-' part and conv
 $nextNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT); // Increment and pad with leading zeros
 $newMemoNumber = '25-' . $nextNumber;
 
-// Handling form submission
-if (isset($_GET['submit'])) {
-    $idno = $_GET['idno'];
-    $addedby = $_GET['addedby'];
-    $datenow = date('Y-m-d H:i:s');
-    $dateissued = $_GET['dateissued'];
-    $dateserved = $_GET['dateserved'];
-    $memotype = $_GET['memotype'];
-    $memo = $newMemoNumber;  // Use the generated memonumber
-    $typeofoffense = $_GET['typeofoffense'];
-    $typecat = $_GET['typecat'];
-    $points = $_GET['points'];
-    $dateofincident = $_GET['dateofincident'];
-    $dateofsuspension = $_GET['dateofsuspension'];
-    
-    
+  $idno = $_GET['idno'];
+  $addedby = $_GET['addedby'];
+  $datenow = date('Y-m-d H:i:s');
+  $dateissued = $_GET['dateissued'];
+  $dateserved = $_GET['dateserved'];
+  $memotype = $_GET['memotype'];
+  $memo = $newMemoNumber;  // Use the generated memonumber
+  $typeofoffense = $_GET['typeofoffense'];
+  $typecat = $_GET['typecat'];
+  $points = $_GET['points'];
+  $dateofincident = $_GET['dateofincident'];
+  $dateofsuspension = $_GET['dateofsuspension'];
+  
+  // NEW: Get points served and range values from modal
+  $points_served = isset($_GET['points_served']) ? floatval($_GET['points_served']) : 0;
+  $points_min = isset($_GET['range_min']) ? floatval($_GET['range_min']) : 0;
+  $points_max = isset($_GET['range_max']) ? floatval($_GET['range_max']) : 0;
 
-    // Check if the memonumber already exists
-    $sqlCheck = mysqli_query($con, "SELECT * FROM infraction WHERE memonumber='$memo'");
-    if (mysqli_num_rows($sqlCheck) > 0) {
-        echo "<script>";
-        echo "alert('Memo number already in use!');window.history.back();";
-        echo "</script>";
-    } else {
-        // Insert the new record into the database
-        $table = "infraction(idno,dateissued,dateserved,typeofmemo,dateofincident,typecat,typeofoffense,points,memonumber,dateofsuspension,status,addedby,addeddatetime, viewstatus)";
-        $values = "VALUES('$idno','$dateissued','$dateserved','$memotype','$dateofincident','$typecat','$typeofoffense','$points','$memo','$dateofsuspension','pending','$addedby','$datenow', 'new')";
-        $sqlAddEmployee = mysqli_query($con, "INSERT INTO $table $values");
+  // Check if the memonumber already exists
+  $sqlCheck = mysqli_query($con, "SELECT * FROM infraction WHERE memonumber='$memo'");
+  if (mysqli_num_rows($sqlCheck) > 0) {
+      echo "<script>";
+      echo "alert('Memo number already in use!');window.history.back();";
+      echo "</script>";
+  } else {
+      // Insert the new record into the database with additional points fields
+      $table = "infraction(idno, dateissued, dateserved, typeofmemo, dateofincident, typecat, typeofoffense, points, memonumber, dateofsuspension, status, addedby, addeddatetime, viewstatus, points_served, points_min, points_max)";
+      $values = "VALUES('$idno', '$dateissued', '$dateserved', '$memotype', '$dateofincident', '$typecat', '$typeofoffense', '$points', '$memo', '$dateofsuspension', 'pending', '$addedby', '$datenow', 'new', '$points_served', '$points_min', '$points_max')";
+      
+      $sqlAddEmployee = mysqli_query($con, "INSERT INTO $table $values");
 
-        if ($sqlAddEmployee) {
-            echo "<script>";
-            echo "alert('Details successfully saved!');window.location='?addinfraction';";
-            echo "</script>";
-        } else {
-            echo "<script>";
-            echo "alert('Unable to save details!');window.location='?addinfraction';";
-            echo "</script>";
-        }
-    }
+      if ($sqlAddEmployee) {
+          echo "<script>";
+          echo "alert('Details successfully saved!');";
+          
+          // Redirect to the points breakdown page instead of addinfraction
+          echo "window.location='?manageinfraction';";
+          echo "</script>";
+      } else {
+          echo "<script>";
+          echo "alert('Unable to save details! Error: " . addslashes(mysqli_error($con)) . "');";
+          echo "window.history.back();";
+          echo "</script>";
+      }
+  }
 }
 ?>

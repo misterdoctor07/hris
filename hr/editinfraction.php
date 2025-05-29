@@ -1,6 +1,6 @@
 <?php
 $id=$_GET['id'];
-    $sqlMemo=mysqli_query($con,"SELECT * FROM infractions WHERE id='$id'");
+    $sqlMemo=mysqli_query($con,"SELECT * FROM infraction WHERE id='$id'");
     if(mysqli_num_rows($sqlMemo)>0){
       $mem=mysqli_fetch_array($sqlMemo);      
     }
@@ -132,13 +132,13 @@ $id=$_GET['id'];
         $points=$_GET['points'];   
         $dateofincident=$_GET['dateofincident'];
         $datesuspension=$_GET['datesuspension'];     
-        $sqlCheck=mysqli_query($con,"SELECT * FROM infractions WHERE memonumber='$memo' AND id <> '$id'");
+        $sqlCheck=mysqli_query($con,"SELECT * FROM infraction WHERE memonumber='$memo' AND id <> '$id'");
         if(mysqli_num_rows($sqlCheck)>0){
           echo "<script>";
           echo "alert('Memo number already in used!');window.history.back();";
         echo "</script>";
         }else{
-            $table="infractions";
+            $table="infraction";
             $values="SET idno='$idno', dateissued='$dateissued', dateserved='$dateserved', typeofmemo='$memotype', typeofoffense='$offense', dateofincident='$dateofincident', points='$points', memonumber='$memo', dateofsuspension='$datesuspension', updatedby='$addedby', updateddatetime='$datenow' WHERE id='$id'";
             $sqlAddEmployee=mysqli_query($con,"UPDATE $table $values");
 

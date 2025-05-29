@@ -252,10 +252,10 @@
           // Format points to 1 decimal place
           $points = number_format((float)$points, 1, '.', '');
           ?>
-        <div class="col-lg-12">
-            <a href="?manageemployee"><h4><i class="fa fa-arrow-left"></i> Back</h4></a>
-        </div>
           <div class="col-lg-12 mt">
+            <div class="col-lg-12">
+                <a href="?manageemployee"><h4><i class="fa fa-arrow-left"></i> Back</h4></a>
+            </div>
             <div class="row content-panel">
               <div class="col-md-4 profile-text mt mb centered">
                 <div class="right-divider hidden-sm hidden-xs">
@@ -270,7 +270,7 @@
               <!-- /col-md-4 -->
               <div class="col-md-4 profile-text">
                 <h3><?=$empname;?></h3>
-                <h6><?=$designation;?></h6>
+                <h6><?=$designation;?> (<?=$department;?>)</h6>
                 <p><?=$companyname;?></p>
                 <br>
                 <?php
@@ -291,19 +291,22 @@ $translations = [
     "16" => "Late 16 minutes and up with called-in",
     "17" => "Late 16 minutes and up without called-in",
     "22" => "Forgot to clock in (first shift) and failed to submit form",
-    "19" => "Over - Break (2 minutes and up)",
+    "19" => "Over-Break (lunch)",
     "63" => "Forgot to clock in/out (Lunch) w/ non-work related reason",
-    "62" => "Absence Without Leave",
+    "62" => "Absent w/ CI w/in 30mins prior shift & 15 mins after",
     "66" => "Forgot to clock in (first shift) and failed to submit form and Missed Out/In (Lunch)",
     "78" => "Sick leave w/o supporting documents",
     "72" => "Government Sanction",
-    "67" => "Internet Outrage",
+    "67" => "Internet Outage",
     "68" => "Natural Calamity",
     "77" => "PC Problem",
     "64" => "Power Outage",
     "73" => "Transportation Issue",
     "79" => "SL with proper CI, invalid reason",
-    "80" => "SL w/ CI w/in 30 mins prior shift & 15 mins"
+    "83" => "Server Down/HRIS unreachable",
+    "80" => "SL w/ CI w/in 30 mins prior shift & 15 mins",
+    "84" => "Required Duty"
+    
 ];
 
 // Query to fetch points breakdown for the current year
@@ -412,54 +415,54 @@ $breakdown_html .= "</ul>";
               <?php
             
             // Check if the form is submitted
+             
+             if (isset($_POST['submit'])) {
+                $idno = $_POST['idno']; // User's ID
+                $target_dir = "../Employees/";
             
-            if (isset($_POST['submit'])) {
-               $idno = $_POST['idno']; // User's ID
-               $target_dir = "../Employees/";
-           
-               // Handle file upload
-               if (!empty($_FILES['profile_pic']['name'])) {
-                   $file_ext = strtolower(pathinfo($_FILES['profile_pic']['name'], PATHINFO_EXTENSION));
-                   $target_file = $target_dir . $idno . "." . $file_ext;
-           
-                   // Check if it's a valid image file (you can extend this)
-                   $valid_extensions = array("jpg", "png", "jpeg");
-                   if (in_array($file_ext, $valid_extensions)) {
-                       // Check if temporary file exists and is readable
-                       if (file_exists($_FILES['profile_pic']['tmp_name']) && is_readable($_FILES['profile_pic']['tmp_name'])) {
-                           // Delete existing profile picture
-                           $existing_files = glob($target_dir . $idno . ".*");
-                           foreach ($existing_files as $existing_file) {
-                               unlink($existing_file);
-                           }
-           
-                           // Upload the new file
-                           if (move_uploaded_file($_FILES["profile_pic"]["tmp_name"], $target_file)) {
-                               $image = $target_file;
-                           } else {
-                               $error = "Error uploading file.";
-                               error_log("Failed to move uploaded file: " . $_FILES['profile_pic']['tmp_name']);
-                           }
-                       } else {
-                           $error = "Temporary file not found or not readable.";
-                           error_log("Temporary file issue: " . $_FILES['profile_pic']['tmp_name']);
-                       }
-                   } else {
-                       $error = "Invalid file format. Only JPG, JPEG, and PNG allowed.";
-                   }
-               } else {
-                   $error = "No file selected.";
-               }
-           } else {
-               // Default image if no file is uploaded
-               if (file_exists("../Employees/".$idno.".png")) {
-                   $image = "../Employees/".$idno.".png";
-               } elseif (file_exists("../Employees/".$idno.".jpg")) {
-                   $image = "../Employees/".$idno.".jpg";
-               } else {
-                   $image = "path/to/default/image.jpg"; // Default image if no profile pic exists
-               }
-           }
+                // Handle file upload
+                if (!empty($_FILES['profile_pic']['name'])) {
+                    $file_ext = strtolower(pathinfo($_FILES['profile_pic']['name'], PATHINFO_EXTENSION));
+                    $target_file = $target_dir . $idno . "." . $file_ext;
+            
+                    // Check if it's a valid image file (you can extend this)
+                    $valid_extensions = array("jpg", "png", "jpeg");
+                    if (in_array($file_ext, $valid_extensions)) {
+                        // Check if temporary file exists and is readable
+                        if (file_exists($_FILES['profile_pic']['tmp_name']) && is_readable($_FILES['profile_pic']['tmp_name'])) {
+                            // Delete existing profile picture
+                            $existing_files = glob($target_dir . $idno . ".*");
+                            foreach ($existing_files as $existing_file) {
+                                unlink($existing_file);
+                            }
+            
+                            // Upload the new file
+                            if (move_uploaded_file($_FILES["profile_pic"]["tmp_name"], $target_file)) {
+                                $image = $target_file;
+                            } else {
+                                $error = "Error uploading file.";
+                                error_log("Failed to move uploaded file: " . $_FILES['profile_pic']['tmp_name']);
+                            }
+                        } else {
+                            $error = "Temporary file not found or not readable.";
+                            error_log("Temporary file issue: " . $_FILES['profile_pic']['tmp_name']);
+                        }
+                    } else {
+                        $error = "Invalid file format. Only JPG, JPEG, and PNG allowed.";
+                    }
+                } else {
+                    $error = "No file selected.";
+                }
+            } else {
+                // Default image if no file is uploaded
+                if (file_exists("../hris/Employees/".$idno.".png")) {
+                    $image = "../hris/Employees/".$idno.".png";
+                } elseif (file_exists("../hris/Employees/".$idno.".jpg")) {
+                    $image = "../Employees/".$idno.".jpg";
+                } else {
+                    $image = "../hris/Employees/default_image.png"; // Default image if no profile pic exists
+                }
+            }
             ?>
               <div class="col-md-4 centered">
                 <div class="profile-pic">
@@ -529,6 +532,7 @@ $breakdown_html .= "</ul>";
                         </div>
                         </div>
                         <div class="detailed">
+                        <br>&nbsp;</br>
                         <h4>Employment Information</h4>
                         <div class="col-lg-12">
                             <table width="100%">
@@ -552,6 +556,7 @@ $breakdown_html .= "</ul>";
                         </div>
                         </div>
                         <div class="detailed">
+                        <br>&nbsp;</br>
                         <h4>Employee Benefits Information</h4>
                         <div class="col-lg-12">
                             <table width="100%">
@@ -587,6 +592,7 @@ $breakdown_html .= "</ul>";
                         </div>
                         </div>
                         <div class="detailed">
+                        <br>&nbsp;</br>
                         <h4>Employee Checklist</h4>
                         <div class="col-lg-12">
                             <table width="100%">
@@ -610,6 +616,7 @@ $breakdown_html .= "</ul>";
                         </div>
                         </div>
                         <div class="detailed">
+                        <br>&nbsp;</br>
                         <h4>Employee Contract Status</h4>
                         <div class="col-lg-12">
                             <table width="100%">
@@ -621,6 +628,7 @@ $breakdown_html .= "</ul>";
                         </div>
                         </div>
                         <div class="detailed">
+                        <br>&nbsp;</br>
                         <h4>Referral Information</h4>
                         <div class="col-lg-12">
                             <table width="100%">
@@ -640,6 +648,7 @@ $breakdown_html .= "</ul>";
                       <!-- /col-md-6 -->
                       <div class="col-md-6 detailed">
                         <h4>Leave Credits</h4>
+                        <br>&nbsp;</br>
                         <div class="col-lg-12">
                             <table width="100%">
                                 <tr>
@@ -665,7 +674,8 @@ $breakdown_html .= "</ul>";
                             </table>
                         </div>
                         <div class="col-md-4 detailed">
-                        <h4>Vacation Leave Credits</h4>
+                        <br>&nbsp;</br>
+                        <h4>Vacation Leave</h4>
                         <div class="col-lg-12">
                             <table width="100%">
                                 <tr>
@@ -684,6 +694,7 @@ $breakdown_html .= "</ul>";
                         </div>
                       </div>
                       <div class="col-md-4 detailed">
+                        <br>&nbsp;</br>
                         <h4>Sick Leave Credits</h4>
                         <div class="col-lg-12">
                             <table width="100%">
@@ -703,6 +714,7 @@ $breakdown_html .= "</ul>";
                         </div>
                       </div>
                       <div class="col-md-4 detailed">
+                        <br>&nbsp;</br>
                         <h4>PTO Credits</h4>
                         <div class="col-lg-12">
                             <table width="100%">
@@ -725,6 +737,7 @@ $breakdown_html .= "</ul>";
                       
                       
                       <div class="col-md-4 detailed" style="margin-top:10px">
+                        <br>&nbsp;</br>
                         <h4>BLP Credits</h4>
                         <div class="col-lg-12">
                             <table width="100%">
@@ -749,10 +762,11 @@ $breakdown_html .= "</ul>";
                       ?>
   
                       <div class="col-md-4 detailed" style="margin-top:10px">
+                          <br>&nbsp;</br>
                           <h4 style="display: inline-block; margin-right: 10px;">EO Credits</h4>
           
                           <!-- Dropdown for Month Selection -->
-                          <select id="monthSelect" class="form-control" style="display: inline-block; height: auto; width: auto; color: #68c3ab; padding: 0; margin: 0 auto;" onchange="updateEOCredits()">
+                          <select id="monthSelect" class="form-control" style="display: inline-block; height: auto; width: auto; color: #20283a; padding: 0; margin: 0 auto;" onchange="updateEOCredits()">
                               <option value="jan" <?= ($currentMonth == "jan") ? "selected" : ""; ?>>January</option>
                               <option value="feb" <?= ($currentMonth == "feb") ? "selected" : ""; ?>>February</option>
                               <option value="mar" <?= ($currentMonth == "mar") ? "selected" : ""; ?>>March</option>
@@ -784,25 +798,28 @@ $breakdown_html .= "</ul>";
                               </table>
                           </div>
                       </div>
-                      <div class="col-md-4 detailed" style="margin-top:10px">
-                        <h4>SPL CREDITS</h4>
-                        <div class="col-lg-12">
-                            <table width="100%">
-                                <tr>
-                                    <td width="50%">Credits: </td>
-                                    <td><?=$spl;?></td>
-                                </tr>
-                                <tr>
-                                    <td width="30%">Used: </td>
-                                    <td><?=$splused;?></td>
-                                </tr>
-                                <tr>
-                                    <td width="30%">Remaining: </td>
-                                    <td><?=$splrem;?></td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
+                      <?php if($spl != 0){ ?>
+                          <div class="col-md-4 detailed" style="margin-top:10px">
+                            <br>&nbsp;</br>
+                            <h4>SPL CREDITS</h4>
+                            <div class="col-lg-12">
+                                <table width="100%">
+                                    <tr>
+                                        <td width="50%">Credits: </td>
+                                        <td><?=$spl;?></td>
+                                    </tr>
+                                    <tr>
+                                        <td width="30%">Used: </td>
+                                        <td><?=$splused;?></td>
+                                    </tr>
+                                    <tr>
+                                        <td width="30%">Remaining: </td>
+                                        <td><?=$splrem;?></td>
+                                    </tr>
+                                </table>
+                            </div>
+                          </div>
+                      <?php } ?>
                       </div>
 
 

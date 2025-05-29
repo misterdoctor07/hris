@@ -1,29 +1,61 @@
+<?php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['idno'])) {
+    die("<script>alert('Session expired. Please log in again.'); window.location='/index.php';</script>");
+}
+?>
 <style>
-/* Ensure proper alignment */
-.checkbox-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+  /* Hide the checkbox */
+  .toggle {
+    display: none;
+  }
 
-.checkbox-group {
-  display: flex;
-  gap: 20px;
-}
+  /* Toggle container with proper alignment */
+  .slot {
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+    background: #ddd;
+    border-radius: 30px;
+    position: relative;
+    cursor: pointer;
+    vertical-align: middle;
+    transition: background-color 0.3s;
+  }
 
-.checkbox-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
+  /* Circle inside the toggle */
+  .slot::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: all 0.3s ease;
+  }
 
-/* Ensure label stays aligned with the radio button */
-.checkbox-label {
-  font-size: 14px;
-  color: #555;
-  cursor: pointer;
-  margin-top: 2px; /* Ensures it aligns properly */
-}
+  /* Checked state styles */
+  input.toggle:checked + .slot {
+    background: #1e90ff;
+  }
+
+  input.toggle:checked + .slot::before {
+    left: 28px;
+  }
+
+  /* Label styles */
+  .label-text {
+    font-size: 14px;
+    color: #555;
+    margin-left: 12px;
+    vertical-align: middle;
+    display: inline-block;
+  }
 </style>
 
 <?php
@@ -73,19 +105,25 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
               <h4><i class="fa fa-file-book"></i> UPDATE EEO DETAILS</h4>            
             </div>
             <div class="panel-body">   
-            <div class="form-group">
-                <label class="col-sm-4 col-sm-4 control-label">Type of EEO</label>
-                <div class="col-sm-8">
-                    <label style="font-size: 14px;">
-                        <input type="radio" name="eeo_type" value="Medical" <?= ($type_EEO == 'Medical') ? 'checked' : ''; ?> required>
-                        Medical
-                    </label>
-                    <label style="margin-left: 15px; font-size: 14px;">
-                        <input type="radio" name="eeo_type" value="Non-medical" <?= ($type_EEO == 'Non-medical') ? 'checked' : ''; ?> required>
-                        Non-medical
-                    </label>
-                </div>
-            </div>                                  
+                <div class="form-group">
+                    <label class="col-sm-4 col-sm-4 control-label">Type of EEO</label>
+                    <div class="col-sm-8">
+                        <!-- Hidden input to handle unchecked state -->
+                        <input type="hidden" name="eeo_type" value="Non-medical">
+                        
+                        <input id="toggle" 
+                            class="toggle" 
+                            type="checkbox" 
+                            name="eeo_type" 
+                            value="Medical" 
+                            <?= ($type_EEO == 'Medical') ? 'checked' : ''; ?> 
+                            onchange="updateLabelText(this)">
+                        <label for="toggle" class="slot"></label>
+                        <span id="label-text" class="label-text">
+                        <?= ($type_EEO == 'Medical') ? 'Medical' : 'Non-medical'; ?>
+                        </span>
+                    </div>
+                </div>                                        
                 <div class="form-group">
                     <label class="col-sm-4 col-sm-4 control-label">Date of EEO</label>
                     <div class="col-sm-8">
@@ -140,29 +178,19 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
         // Check if the query was successful
         if($sqlUpdateEEO) {
             echo "<script>";
-            echo "alert('Details successfully saved!'); window.location='?emergencyearlyout';";
+            echo "alert('Details successfully saved!'); window.location='emergencyearlyout.php';";
             echo "</script>";
         } else {
             echo "<script>";
-            echo "alert('Unable to save details!'); window.location='?emergencyearlyout';";
+            echo "alert('Unable to save details!'); window.location='emergencyearlyout.php';";
             echo "</script>";
         }
     }
 ?>
 
 <script>
-  function validateForm(event) {
-    const selectedEEO = document.querySelector('input[name="eeo_type"]:checked');
-    
-    if (!selectedEEO) {
-      alert("Please select a Type of EEO before submitting.");
-      event.preventDefault(); // Prevents form submission
-      return false;
-    }
+  function updateLabelText(toggle) {
+    const labelText = document.getElementById("label-text");
+    labelText.textContent = toggle.checked ? "Medical" : "Non-medical";
   }
-
-  // Attach event listener when the DOM loads
-  document.addEventListener("DOMContentLoaded", function () {
-    document.querySelector("form").addEventListener("submit", validateForm);
-  });
 </script>

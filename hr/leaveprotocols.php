@@ -37,7 +37,7 @@
                       if (mysqli_num_rows($sqlEmployee) > 0) {
                           while ($row = mysqli_fetch_array($sqlEmployee)) {
                             $approvingofficer = '<span style="font-weight: bold; font-size: 15px">' 
-                            . strtoupper($row['lastname']) 
+                            . mb_strtoupper($row['lastname'], 'UTF-8')
                             . '</span>, ' . $row['firstname'] 
                             . '<br>[' . $row['jobtitle'] . ']';
        

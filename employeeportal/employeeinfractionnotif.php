@@ -7,6 +7,7 @@ $userId = $_SESSION['idno'];
 
 $empinfractionNotif = 0;
 
+// Count new approved leave applications
 $empinfractionQuery = "SELECT COUNT(*) AS total 
     FROM infraction 
     WHERE idno = ? 

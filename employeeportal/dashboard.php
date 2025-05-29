@@ -4,10 +4,18 @@ date_default_timezone_set("Asia/Manila");
 <?php
   session_start();
   include('../config.php');
+  
+// Restrict access if not logged in
+
+// Get user's access level
+$fullname = $_SESSION['fullname'];
+$access = $_SESSION['access'];
+
+
   $idno=$_SESSION['idno'];
-  if(!isset($_SESSION['idno'])){
-    echo "<script>window.location='../employeeportal/';</script>";
-  }
+//   if(!isset($_SESSION['idno'])){
+//     echo "<script>window.location='/hris/employeeportal/dashboard.?emp_dev';</script>";
+//   }
     $sqlEmployee=mysqli_query($con,"SELECT lastname,firstname FROM employee_profile WHERE idno='$_SESSION[idno]'");
     
     if(mysqli_num_rows($sqlEmployee)>0){
@@ -59,6 +67,8 @@ date_default_timezone_set("Asia/Manila");
             $approvers[] = $row['approvingofficer'];
         }
     }
+ 
+    
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -74,7 +84,7 @@ date_default_timezone_set("Asia/Manila");
   <!-- Favicons -->
   <!-- <link href="img/favicon.png" rel="icon">
   <link href="img/apple-touch-icon.png" rel="apple-touch-icon"> -->
-  <link rel="icon" type="image/x-icon" href="img/icon.png">
+  <link rel="icon" type="image/x-icon" href="img/iconhris_2.png">
 
   <!-- Bootstrap core CSS -->
   <link href="lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -103,11 +113,273 @@ date_default_timezone_set("Asia/Manila");
     <!--header start-->
     <header class="header black-bg">
       <div class="sidebar-toggle-box">
-        <div class="fa fa-bars tooltips" data-placement="right" data-original-title="Toggle Navigation"></div>
+        <i class="fa fa-bars" style="color: white !important; padding-top: 3px; padding-left: 3px;" data-placement="right" data-original-title="Toggle Navigation"></i>
       </div>
       <!--logo start-->
       <a href="?main" class="logo"><b>EMPLOYEE PORTAL</b></a>
       <!--logo end-->
+   <?php
+// Get user's department and designation
+$user_id = $_SESSION['idno'];
+$user_dept = null;
+$user_desig = null;
+
+$userQuery = mysqli_query($con, "SELECT department, designation FROM employee_details WHERE idno = '$user_id'");
+if(mysqli_num_rows($userQuery) > 0) {
+    $userData = mysqli_fetch_assoc($userQuery);
+    $user_dept = $userData['department'];
+    $user_desig = $userData['designation'];
+}
+
+// Get today's date
+$today = date('Y-m-d');
+
+// Fetch all announcements for today (both read and unread)
+$sqlWidgets = mysqli_query($con, "
+    SELECT w.*, ar.id as read_status 
+    FROM widgets w
+    LEFT JOIN announcement_reads ar ON w.id = ar.announcement_id AND ar.user_id = '$user_id'
+    WHERE w.type='Announcement' 
+    AND DATE(w.datearray) = '$today'
+    ORDER BY w.datearray DESC, w.timearray DESC
+");
+
+$allAnnouncements = [];
+$unreadAnnouncements = [];
+while ($emp = mysqli_fetch_array($sqlWidgets)) {
+    $targets = json_decode($emp['targets'], true);
+    
+    // Check if announcement is for this user
+    $isForUser = false;
+    
+    // If targets all employees
+    if(empty($targets['departments']) && empty($targets['designations'])) {
+        $isForUser = true;
+    }
+    // Check department
+    elseif(in_array($user_dept, $targets['departments'])) {
+        $isForUser = true;
+    }
+    // Check designation
+    elseif(in_array($user_desig, $targets['designations'])) {
+        $isForUser = true;
+    }
+    
+    if($isForUser) {
+        $allAnnouncements[] = [
+            'id' => $emp['id'],
+            'title' => $emp['title'],
+            'details' => $emp['details'],
+            'is_read' => !empty($emp['read_status'])
+        ];
+        
+        if(empty($emp['read_status'])) {
+            $unreadAnnouncements[] = $emp['id'];
+        }
+    }
+}
+
+$isDetails = !empty($allAnnouncements);
+$unreadCount = count($unreadAnnouncements);
+$showPopup = ($unreadCount > 0);
+?>
+
+<!-- Notification sound element -->
+<audio id="notificationSound" src="sound/notification.mp3" preload="auto"></audio>
+
+<!-- Bell Icon with Notification Badge -->
+<div style="position: absolute; top:15px; margin-left: 1550px;">
+    <button id="announcementButton" class="btn" style="background: transparent; border: none; position: relative; cursor: pointer;">
+        <i class="fa fa-bell" style="font-size: 20px; color: white;"></i>
+        <?php if ($unreadCount > 0): ?>
+            <span id="notificationBadge" class="badge" style="
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                background: red;
+                color: white;
+                border-radius: 50%;
+                font-size: 10px;
+                padding: 3px 6px;
+            "><?= $unreadCount ?></span>
+        <?php endif; ?>
+    </button>
+</div>
+
+<style>
+    #popupContent p {
+        text-align: justify;
+        line-height: 1.6;
+    }
+    #popupContent h4 {
+        font-weight: bold;
+    }
+    .read-announcement {
+        opacity: 0.8;
+    }
+</style>
+
+<!-- Announcement Pop-up -->
+<div id="announcementPopup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 600px; background: white; z-index: 1050; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
+    <div style="padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
+            <h3 style="margin: 0; color: #3f4d6b;">Announcements</h3>
+            <button id="closePopup" style="background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+        </div>
+        <div id="popupContent" style="max-height: 400px; overflow-y: auto;">
+            <?php if ($isDetails): ?>
+                <ul style="list-style-type: none; padding: 0;">
+                    <?php foreach ($allAnnouncements as $announcement): ?>
+                        <li style="padding: 15px 0; border-bottom: 1px solid #f5f5f5;" class="<?= $announcement['is_read'] ? 'read-announcement' : '' ?>">
+                            <h4 style="margin: 0 0 10px 0; color: #3f4d6b;">
+                                <?php echo htmlspecialchars($announcement['title']); ?>
+                            </h4>
+                            <p style="margin: 0; font-size: 16px; text-align: justify;">
+                                <?php echo nl2br(htmlspecialchars($announcement['details'])); ?>
+                            </p>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php else: ?>
+                <p>No announcements available.</p>
+            <?php endif; ?>
+        </div>
+        <div style="text-align: right; margin-top: 15px;">
+            <?php if ($unreadCount > 0): ?>
+                <button id="markAsReadBtn" style="background: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-right: 10px;">Mark as Read</button>
+            <?php endif; ?>
+            <button id="closePopupBtn" style="background: #3f4d6b; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Overlay for popup -->
+<div id="popupOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1040;"></div>
+
+<script>
+// Show popup automatically if there are unread announcements
+document.addEventListener('DOMContentLoaded', function() {
+    const popup = document.getElementById('announcementPopup');
+    const overlay = document.getElementById('popupOverlay');
+    const closeBtn = document.getElementById('closePopup');
+    const closeBtnBottom = document.getElementById('closePopupBtn');
+    const markAsReadBtn = document.getElementById('markAsReadBtn');
+    const announcementButton = document.getElementById('announcementButton');
+    const notificationSound = document.getElementById('notificationSound');
+    
+    <?php if ($showPopup): ?>
+        // Show popup and overlay
+        setTimeout(function() {
+            popup.style.display = 'block';
+            overlay.style.display = 'block';
+            
+            // Play notification sound
+            notificationSound.play();
+            
+            // Prevent scrolling when popup is open
+            document.body.style.overflow = 'hidden';
+            
+            // Add animation class for popup
+            popup.style.animation = 'fadeIn 0.3s ease-out';
+            
+            // Add shake animation to bell icon when there are announcements
+            announcementButton.querySelector('i').style.animation = 'shake 0.5s ease-in-out';
+        }, 1000);
+    <?php endif; ?>
+    
+    function closePopup() {
+        popup.style.animation = 'fadeOut 0.3s ease-out';
+        overlay.style.animation = 'fadeOut 0.3s ease-out';
+        
+        setTimeout(function() {
+            popup.style.display = 'none';
+            overlay.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }, 300);
+    }
+    
+    // Close popup when X or Close button is clicked
+    closeBtn.addEventListener('click', closePopup);
+    closeBtnBottom.addEventListener('click', closePopup);
+    
+    // Close when clicking outside the popup
+    overlay.addEventListener('click', closePopup);
+    
+    // Mark as Read button
+    if(markAsReadBtn) {
+        markAsReadBtn.addEventListener('click', function() {
+            // Get all unread announcement IDs
+            const announcementIds = <?= json_encode($unreadAnnouncements) ?>;
+            
+            // Send AJAX request to mark as read
+            fetch('mark_announcement_read.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'user_id=<?= $user_id ?>&announcement_ids=' + JSON.stringify(announcementIds)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Hide notification badge
+                    const badge = document.getElementById('notificationBadge');
+                    if (badge) {
+                        badge.style.display = 'none';
+                    }
+                    
+                    // Update UI to show announcements as read
+                    document.querySelectorAll('#popupContent li').forEach(li => {
+                        li.classList.add('read-announcement');
+                    });
+                    
+                    // Hide the Mark as Read button
+                    if(markAsReadBtn) {
+                        markAsReadBtn.style.display = 'none';
+                    }
+                    
+                    // Close the popup
+                    closePopup();
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    }
+    
+    // Show the popup when announcement button is clicked
+    announcementButton.addEventListener('click', function() {
+        if(popup.style.display === 'none' || popup.style.display === '') {
+            popup.style.display = 'block';
+            overlay.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            popup.style.animation = 'fadeIn 0.3s ease-out';
+        } else {
+            closePopup();
+        }
+    });
+});
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translate(-50%, -55%); }
+        to { opacity: 1; transform: translate(-50%, -50%); }
+    }
+    @keyframes fadeOut {
+        from { opacity: 1; transform: translate(-50%, -50%); }
+        to { opacity: 0; transform: translate(-50%, -55%); }
+    }
+    @keyframes shake {
+        0% { transform: rotate(0deg); }
+        25% { transform: rotate(15deg); }
+        50% { transform: rotate(-15deg); }
+        75% { transform: rotate(15deg); }
+        100% { transform: rotate(0deg); }
+    }
+`;
+document.head.appendChild(style);
+</script>
       <div class="nav notify-row" id="top_menu">
         <!--  notification start -->
         <!--  notification end -->
@@ -119,6 +391,7 @@ date_default_timezone_set("Asia/Manila");
     </ul>
     <li style="float: right; margin-right: 40px; margin-top: 20px; "><a class="attendance_out" href="/hris/attendance/" style=" background-color:#337ab7; padding: 5px 15px; font-size: 13px; color: white; border: 1px solid #337ab7; border-radius: 15px 15px; border-color: #337ab7;">Attendance</a></li>
   </div>
+  
     </header>
     <!--header end-->
     <!-- **********************************************************************************************************************************************************
@@ -151,16 +424,11 @@ date_default_timezone_set("Asia/Manila");
               
 
         <!-- Display profile picture -->
-        <p class="centered">
-          
-            <img src="<?= $image; ?>" alt="Profile Picture" class="img-circle" width="80" height="80">
-        </p>
-          <h5 class="centered"><?=$fullname;?></h5>
-          <p class= "centered" style=" font-size:13px; color:white;"><?= $idno; ?></p>
+       
           <li class="mt">
             <a href="dashboard.php?main">
               <i class="fa fa-user-circle"></i>
-              <span>Profile</span>
+              <span>Dashboard</span>
               </a>
           </li>
           <li class="sub-menu">
@@ -171,109 +439,111 @@ date_default_timezone_set("Asia/Manila");
               </a>
               <ul class="sub">
                   <li>
-                    <a href="dashboard.php?manageleave" class="submenu-item" onclick="markNotifseen('leave')" style="position: relative; display: inline-block;">
+                    <a href="manageleave.php" class="submenu-item" onclick="markNotifseen('leave')" style="position: relative; display: inline-block;">
                         Apply Leave
                         <span id="leave-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
                     </a>
                   </li>
                   <li>
-                    <a href="dashboard.php?applymissedlog" class="submenu-item" onclick="markNotifseen('missedlog')" style="position: relative; display: inline-block;">
+                    <a href="applymissedlog.php" class="submenu-item" onclick="markNotifseen('missedlog')" style="position: relative; display: inline-block;">
                         Apply Missed Log
                         <span id="missedlog-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
                     </a>
                   </li>
                   <li>
-                    <a href="dashboard.php?applyovertime" class="submenu-item" onclick="markNotifseen('overtime')" style="position: relative; display: inline-block;">
+                    <a href="applyovertime.php" class="submenu-item" onclick="markNotifseen('overtime')" style="position: relative; display: inline-block;">
                         Apply Overtime
                         <span id="overtime-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
                     </a>
                   </li>
                   <li>
-                    <a href="dashboard.php?emergencyearlyout" class="submenu-item" onclick="markNotifseen('eeo')" style="position: relative; display: inline-block;">
+                    <a href="emergencyearlyout.php" class="submenu-item" onclick="markNotifseen('eeo')" style="position: relative; display: inline-block;">
                         Apply EEO
                         <span id="eeo-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
                     </a>
                   </li>
                   <?php if ($designation == 114): ?>
                     <li>
-                      <a href="dashboard.php?manageemployee" class="submenu-item" style="position: relative; display: inline-block;">
+                      <a href="manageemployee.php" class="submenu-item" style="position: relative; display: inline-block;">
                           Apply Leave for Employee
                       </a>
                     </li>
                   <?php endif; ?>
               </ul>
           </li>
+          
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let menuItems = document.querySelectorAll("ul.sidebar-menu li a");
+
+    menuItems.forEach(item => {
+        item.addEventListener("click", function(event) {
+            let parentLi = this.parentElement; // Get the parent <li>
+
+            // Check if it has a submenu
+            let submenu = parentLi.querySelector("ul.sub");
+            if (submenu) {
+                event.preventDefault(); // Prevent default link action
+                parentLi.classList.toggle("open"); // Toggle "open" class
+            }
+
+            // Store the active state in localStorage
+            let activeMenu = this.getAttribute("href"); // Get clicked menu link
+            localStorage.setItem("activeMenu", activeMenu);
+        });
+    });
+
+    // Restore active state on page load
+    let activeMenu = localStorage.getItem("activeMenu");
+    if (activeMenu) {
+        let activeItem = document.querySelector(`ul.sidebar-menu li a[href="${activeMenu}"]`);
+        if (activeItem) {
+            activeItem.parentElement.classList.add("open"); // Keep the parent <li> open
+            activeItem.classList.add("active"); // Add active styling
+        }
+    }
+});
+</script>
+
           <li class="sub-menu">
               <a  <?= $view; ?> href="javascript:;">
                 <i class="fa fa-archive"></i>
                   <span>Requests</span>
                 <?php if ($designation != 77  && $designation != 97): ?>
                   <?php if (in_array($idno, $approvers)): ?>
-                    <span id="credit-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 60px;"></span>
+                    <span id="credit-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 67px;"></span>
                   <?php endif; ?>
                 <?php endif; ?>
               </a>
               <ul class="sub">
                 <?php if ($designation != 77  && $designation != 97 && $designation != 78 && $designation != 116): ?>
-                  <li <?= $view; ?>><a href="dashboard.php?manageleaveapplication">Leave Applications 
-                    <span id="leave-notification-badge" class="badge" style="color: white; background-color: red;"></span>
+                  <li <?= $view; ?>><a href="manageleaveapplication.php">Leave Requests 
+                    <span id="leave-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 34px"></span>
                   </a></li>
-                  <li <?= $view; ?>><a href="dashboard.php?managemissedlogapplication">Missed Log Application 
-                    <span id="ml-notification-badge" class="badge" style="color: white; background-color: red;"></span>
+                  <li <?= $view; ?>><a href="managemissedlogapplication.php">Missed Log Requests 
+                    <span id="ml-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 6px"></span>
                   </a></li>
-                  <li <?= $view; ?>><a href="dashboard.php?manageovertimeapplication">OT Applications 
-                    <span id="ot-notification-badge" class="badge" style="color: white; background-color: red;"></span>
+                  <li <?= $view; ?>><a href="manageovertimeapplication.php">Overtime Requests 
+                    <span id="ot-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 17px"></span>
                   </a></li>
                 <?php endif; ?>
                 <?php if ($designation == 77 || $designation == 97): ?>
-                  <li <?= $view; ?>><a href="dashboard.php?monitoringmanagemissedlogapplication">Missed Log Application 
+                  <li <?= $view; ?>><a href="dashboard.php?monitoringmanagemissedlogapplication">Missed Log Requests 
                     <span id="mml-notification-badge" class="badge" style="color: white; background-color: red;"></span>
                   </a></li>
                 <?php endif; ?>
                 <?php if ($designation == 78||$designation == 116):?>
-                  <li><a href="dashboard.php?EEOapplication">EEO Applications 
+                  <li><a href="dashboard.php?EEOapplication">EEO Requests 
                     <span id="eeo-notification-badge" class="badge" style="color: white; background-color: red;"></span>
                   </a></li>
                 <?php endif; ?>
                 <?php if (in_array($idno, $approvers) && $designation != 78 && $designation != 116 && $designation != 77 && $designation != 97): ?>
-                  <li><a href="dashboard.php?manageEEOapplication">EEO Applications 
-                    <span id="eeo-notification-badge" class="badge" style="color: white; background-color: red;"></span>
+                  <li><a href="manageEEOapplication.php">EEO Requests 
+                    <span id="eeo-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 40px"></span>
                   </a></li>
                 <?php endif; ?>
               </ul>
           </li>
-          <script>
-              document.addEventListener("DOMContentLoaded", function() {
-                  let menuItems = document.querySelectorAll("ul.sidebar-menu li a");
-
-                  menuItems.forEach(item => {
-                      item.addEventListener("click", function(event) {
-                          let parentLi = this.parentElement; // Get the parent <li>
-
-                          // Check if it has a submenu
-                          let submenu = parentLi.querySelector("ul.sub");
-                          if (submenu) {
-                              event.preventDefault(); // Prevent default link action
-                              parentLi.classList.toggle("open"); // Toggle "open" class
-                          }
-
-                          // Store the active state in localStorage
-                          let activeMenu = this.getAttribute("href"); // Get clicked menu link
-                          localStorage.setItem("activeMenu", activeMenu);
-                      });
-                  });
-
-                  // Restore active state on page load
-                  let activeMenu = localStorage.getItem("activeMenu");
-                  if (activeMenu) {
-                      let activeItem = document.querySelector(`ul.sidebar-menu li a[href="${activeMenu}"]`);
-                      if (activeItem) {
-                          activeItem.parentElement.classList.add("open"); // Keep the parent <li> open
-                          activeItem.classList.add("active"); // Add active styling
-                      }
-                  }
-              });
-          </script>
           <li>
             <a href="dashboard.php?viewpayroll">
               <i class="fa fa-credit-card"></i>
@@ -288,16 +558,26 @@ date_default_timezone_set("Asia/Manila");
               </a>
           </li>
           <li>
-              <?php if ($designation == 8||$designation == 50||$designation == 89 || $designation == 59|| $designation == 65|| $designation == 94||$designation == 102 || $designation == 3 || $designation == 88|| $designation == 114||$designation == 92): ?>
-                  <a href="dashboard.php?manageinfraction" id="manage-infraction-link" onclick="markInfViewed()" style="position: relative;">
+             <?php if ($designation == 8||$designation == 50||$designation == 89 || $designation == 59|| $designation == 65|| $designation == 94||$designation == 102 || $designation == 3 || $designation == 88|| $designation == 114||$designation == 92 || $userId == '103417'): ?>
+                <div class="notification-wrapper" style="position: relative;">
+                  <a href="dashboard.php?manageinfraction" class="notification-link" id="infractionLink" style="position: relative;">
                     <i class="fa fa-bell"></i>
                     <span>Manage Infraction</span>
-                    <span id="infraction-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 155px;"></span>
+                    <span id="notificationDot" style="
+                      width: 10px;
+                      height: 10px;
+                      background: red;
+                      border-radius: 50%;
+                      position: absolute;
+                      top: 5px;
+                      right: 50px;
+                      display: none;"></span>
                   </a>
+                </div>
               <?php endif; ?>
           </li>
           <li>
-            <?php if ($designation == 97||$designation == 77):?>
+            <?php if ($designation == 97||$designation == 77 ||$designation ==93):?>
               <a href="dashboard.php?errorcatching">
                 <i class="fa fa-eye"></i>
                 <span>HRIS Monitoring</span>
@@ -310,14 +590,51 @@ date_default_timezone_set("Asia/Manila");
               <span>Log Details</span>
               </a>
           </li>
+           <?php if ($designation == 93 || $designation == 114): ?>
           <li>
-            <?php if ($idno == 103563):?>
-              <a href="dashboard.php?emp_dev">
-              <i class="fa fa-android"></i>
-                <span>HRIS Monitoring</span>
+              <a href="dashboard.php?monitoringattendance">
+              <i class="fa fa-key"></i>
+                <span>Employee`s logs</span>
               </a>
-            <?php endif; ?>
+          
           </li>
+             <?php endif; ?>
+  <?php
+// Retrieve access from session
+$access = $_SESSION['access']; // Dynamically get access from session
+$accessList = array_map('trim', explode(',', $access)); // Trim and explode
+
+// Debugging: Check the access list
+
+?>
+
+<!-- Show additional sections based on user access -->
+<?php if (in_array('HR', $accessList)) : ?>
+    <li>
+        <a href="/hr/?main">
+            <i class="fa fa-users"></i> <!-- 👥 HR Portal -->
+            <span>HR Portal</span>
+        </a>
+    </li>
+<?php endif; ?>
+
+<?php if (in_array('IT ADMIN', $accessList)) : ?>
+    <li>
+        <a href="/settings/?main">
+            <i class="fa fa-cogs"></i> <!-- ⚙️ IT Admin Portal -->
+            <span>IT Admin Portal</span>
+        </a>
+    </li>
+<?php endif; ?>
+
+<?php if (in_array('ACCOUNTING', $accessList)) : ?>
+    <li>
+        <a href="/accounting/?main">
+            <i class="fa fa-money"></i> <!-- 💰 Accounting Portal -->
+            <span>Accounting Portal</span>
+        </a>
+    </li>
+<?php endif; ?>
         </ul>
        
         <!-- sidebar menu end-->
@@ -372,13 +689,17 @@ date_default_timezone_set("Asia/Manila");
             if(isset($_GET['editeeo'])){include('editeeo.php');}
             if(isset($_GET['manageEEOapplication'])){include('manageEEOapplication.php');}
             if(isset($_GET['EEOapplication'])){include('EEOapplication.php');}
-            if(isset($_GET['emp_dev'])){include('emp_dev.php');}
             if(isset($_GET['manageemployee'])){include('manageemployee.php');}
             if(isset($_GET['applyleaveforemp'])){include('applyleaveforemp.php');}
             if(isset($_GET['applicationStatusNotif'])){include('applicationStatusNotif.php');}
             if(isset($_GET['updateViewStatus'])){include('updateViewStatus.php');}
             if(isset($_GET['employeeinfractionnotif'])){include('employeeinfractionnotif.php');}
             if(isset($_GET['markInfractionSeen'])){include('markInfractionSeen.php');}
+            if(isset($_GET['emp_dev'])){include('emp_dev.php');}
+            if(isset($_GET['daily_view'])){include('daily_view.php');}
+            if(isset($_GET['attendancemonitoring'])){include('attendancemonitoring.php');}
+            if(isset($_GET['monitoringattendance'])){include('monitoringattendance.php');}
+            
           ?>
           <!-- /col-lg-3 -->
         </div>
@@ -403,8 +724,8 @@ date_default_timezone_set("Asia/Manila");
           Created with Dashio template by <a href="#">Eczekiel H. Aboy</a>
           <p>
             Updated by • 
-            <a href="https://facebook.com/MackGwapo07" target="_blank">M.I.Misa</a> & 
-            <a href="https://facebook.com/misterdoctor07" target="_blank">J.M.Lapeceros</a>
+            <a href="https://facebook.com/MackGwapo07" target="_blank">Dodong Marc</a> & 
+            <a href="https://facebook.com/misterdoctor07" target="_blank">Dodong Mikko</a>
           </p>
         </div>
         <a href="index.html#" class="go-top">
@@ -568,7 +889,6 @@ $(document).ready(function() {
         }
     });
 });
-
 // Function to fetch and display infraction notifications
 function InfractionNotif() {
     fetch('infractionnotif.php')
@@ -727,36 +1047,106 @@ function AppNotif() {
       let hasNotification = false;
 
       // Show notification indicators without displaying counts
-      if (data.leave_notif > 0) {
-        leaveNotif.style.display = 'inline-block';
-        leaveNotif.textContent = ''; // Hide count
-        hasNotification = true;
-      } else {
-        leaveNotif.style.display = 'none';
-      }
+      const leavebadge = document.getElementById('leave-notif');
+      const missedlogbadge = document.getElementById('missedlog-notif');
+      const overtimebadge = document.getElementById('overtime-notif');
+      const eeobadge = document.getElementById('eeo-notif');
 
-      if (data.missedlog_notif > 0) {
-        missedLogNotif.style.display = 'inline-block';
-        missedLogNotif.textContent = ''; // Hide count
-        hasNotification = true;
-      } else {
-        missedLogNotif.style.display = 'none';
-      }
+      //Leave section
+      if (data.approve_leave_notif > 0 || data.disapprove_leave_notif > 0 || data.leave_remark_notif > 0) {
+        leavebadge.style.display = 'inline-block';
+        leavebadge.textContent = ''; // optional, or set to a number
 
-      if (data.overtime_notif > 0) {
-        overtimeNotif.style.display = 'inline-block';
-        overtimeNotif.textContent = ''; // Hide count
-        hasNotification = true;
+        if (data.leave_remark_notif > 0) {
+          leavebadge.style.backgroundColor = 'gold';
+          leavebadge.style.color = 'black';
+          leavebadge.title = 'New remarks added';
+          hasNotification = true;
+        } else if(data.disapprove_leave_notif > 0){
+          leavebadge.style.backgroundColor = 'red';
+          leavebadge.style.color = 'white';
+          leavebadge.title = 'New Disapproved Application';
+          hasNotification = true;
+        } else {
+          leavebadge.style.backgroundColor = '#00FF00';
+          leavebadge.style.color = 'white';
+          leavebadge.title = 'New Approved Application';
+          hasNotification = true;
+        }
       } else {
-        overtimeNotif.style.display = 'none';
+        leavebadge.style.display = 'none';
       }
+      //Missed Log Section
+      if (data.approve_missedlog_notif > 0 || data.disapprove_missedlog_notif > 0 || data.log_remark_notif > 0) {
+        missedlogbadge.style.display = 'inline-block';
+        missedlogbadge.textContent = ''; // optional, or set to a number
 
-      if (data.eeo_notif > 0) {
-        eeoNotif.style.display = 'inline-block';
-        eeoNotif.textContent = ''; // Hide count
-        hasNotification = true;
+        if (data.log_remark_notif > 0) {
+          missedlogbadge.style.backgroundColor = 'gold';
+          missedlogbadge.style.color = 'black';
+          missedlogbadge.title = 'New remarks added';
+          hasNotification = true;
+        } else if(data.disapprove_missedlog_notif > 0){
+          missedlogbadge.style.backgroundColor = 'red';
+          missedlogbadge.style.color = 'white';
+          missedlogbadge.title = 'New Disapproved Application';
+          hasNotification = true;
+        } else {
+          missedlogbadge.style.backgroundColor = '#00FF00';
+          missedlogbadge.style.color = 'white';
+          missedlogbadge.title = 'New Approved Application';
+          hasNotification = true;
+        }
       } else {
-        eeoNotif.style.display = 'none';
+        missedlogbadge.style.display = 'none';
+      }
+      //Overtime Section
+      if (data.approve_overtime_notif > 0 || data.disapprove_overtime_notif > 0 || data.overtime_remark_notif > 0) {
+        overtimebadge.style.display = 'inline-block';
+        overtimebadge.textContent = ''; // optional, or set to a number
+
+        if (data.overtime_remark_notif > 0) {
+          overtimebadge.style.backgroundColor = 'gold';
+          overtimebadge.style.color = 'black';
+          overtimebadge.title = 'New remarks added';
+          hasNotification = true;
+        } else if(data.disapprove_overtime_notif > 0){
+          overtimebadge.style.backgroundColor = 'red';
+          overtimebadge.style.color = 'white';
+          overtimebadge.title = 'New Disapproved Application';
+          hasNotification = true;
+        } else {
+          overtimebadge.style.backgroundColor = '#00FF00';
+          overtimebadge.style.color = 'white';
+          overtimebadge.title = 'New Approved Application';
+          hasNotification = true;
+        }
+      } else {
+        overtimebadge.style.display = 'none';
+      }
+      //EEO Section
+      if (data.approve_eeo_notif > 0 || data.disapprove_eeo_notif > 0 || data.eeo_remark_notif > 0) {
+        eeobadge.style.display = 'inline-block';
+        eeobadge.textContent = ''; // optional, or set to a number
+
+        if (data.eeo_remark_notif > 0) {
+          eeobadge.style.backgroundColor = 'gold';
+          eeobadge.style.color = 'black';
+          eeobadge.title = 'New remarks added';
+          hasNotification = true;
+        } else if(data.disapprove_eeo_notif > 0){
+          eeobadge.style.backgroundColor = 'red';
+          eeobadge.style.color = 'white';
+          eeobadge.title = 'New Disapproved Application';
+          hasNotification = true;
+        } else {
+          eeobadge.style.backgroundColor = '#00FF00';
+          eeobadge.style.color = 'white';
+          eeobadge.title = 'New Approved Application';
+          hasNotification = true;
+        }
+      } else {
+        eeobadge.style.display = 'none';
       }
 
       // Show or hide the main menu notification
@@ -769,7 +1159,6 @@ function AppNotif() {
     })
     .catch(error => console.error('Error fetching notification in AppNotif:', error));
 }
-
 
 window.onload = function() {
     console.log("Window fully loaded, calling AppNotif()");

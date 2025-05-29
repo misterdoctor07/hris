@@ -1,3 +1,12 @@
+<?php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['idno'])) {
+    die("<script>alert('Session expired. Please log in again.'); window.location='/index.php';</script>");
+}
+?>
 <style>
 /* Modal Overlay to Blur Background */
 .modal-overlay {
@@ -72,6 +81,35 @@
     padding: 4px 8px;
     font-size: 12px;
 }
+/* Sorting Columns */
+th.sortable {
+    cursor: pointer;
+    position: relative;
+}
+
+th.sortable.asc::after {
+    content: ''; /* Ascending arrow icon */
+    color: #000;
+}
+
+th.sortable.desc::after {
+    content: ''; /* Descending arrow icon */
+    color: #000;
+}
+
+/*Date Filter Button*/
+.filter-btn {
+    background-color: #3f4d6a;
+    color: white;
+    border: none;
+    padding: 7px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.filter-btn:hover {
+    background-color: #181e2e;
+}
 </style>
 
 <?php
@@ -86,28 +124,39 @@ if (!$sqlCompanies) {
 <div class="col-lg-12">
     <div class="content-panel">
         <div class="panel-heading">
-            <h4>
-                <a href="?main"><i class="fa fa-arrow-left"></i> HOME</a> | 
-                <i class="fa fa-file-text"></i> MISSED LOGS APPLICATION
-                <div style="float:right; margin-bottom: 20px;">
+            <div class="flex-container" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <!-- Left Section -->
+                <div class="flex-item-left" style="display: flex; align-items: center; gap: 10px;">
+                    <h4>
+                        <a href="?main"><i class="fa fa-arrow-left"></i> HOME</a> | 
+                        <i class="fa fa-file-text"></i> MISSED LOG APPLICATION
+                    </h4>
+                </div>
+
+                <!-- Date Filter Section -->
+                <div class="date-filter" style="display: flex; align-items: center; gap: 10px;">
+                    <h5 style="font-weight: bold; margin-left: 30px;">Filter Date of Missed Log</h5>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label for="fromDate" style="margin-bottom: 0;">From:</label>
+                        <input type="date" id="fromDate" class="form-control" 
+                            value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>" 
+                            style="width: 150px; height: 35px;">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label for="toDate" style="margin-bottom: 0;">To:</label>
+                        <input type="date" id="toDate" class="form-control" 
+                            value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>" 
+                            style="width: 150px; height: 35px;">
+                    </div>
+                    <button type="button" onclick="filterByDate()" class="filter-btn">Filter</button>
+                    <button type="button" onclick="resetFilter()" class="btn btn-default">Reset</button>
+                </div>
+
+                <!-- Export to Excel Button -->
+                <div class="export-btn" style="display: flex; align-items: center; margin-left: auto">
                     <form>
-                        <button type="button" onclick="tablesToExcel('Missed_Logs_Application_Report')" class="btn btn-success">EXPORT TO EXCEL</button>
+                        <button type="button" onclick="tablesToExcel('EEO_Applications_Report')" class="btn btn-success">EXPORT TO EXCEL</button>
                     </form>
-                </div>
-            </h4>
-            <!-- Date Filter -->
-            <div class="row" style="margin-bottom: 20px;">
-                <div class="col-md-3">
-                    <label for="fromDate">From:</label>
-                    <input type="date" id="fromDate" class="form-control" value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>">
-                </div>
-                <div class="col-md-3">
-                    <label for="toDate">To:</label>
-                    <input type="date" id="toDate" class="form-control" value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>">
-                </div>
-                <div class="col-md-2">
-                    <button type="button" onclick="filterByDate()" class="btn btn-primary" style="margin-top: 25px;">Filter</button>
-                    <button type="button" onclick="resetFilter()" class="btn btn-default" style="margin-top: 25px;">Reset</button>
                 </div>
             </div>
         </div>
@@ -228,21 +277,21 @@ if (!$sqlCompanies) {
                     <table class="table table-bordered table-striped table-condensed">
                         <thead>
                             <tr>
-                                <th width="2%" style="text-align: center;">No.</th>
-                                <th width="6%" style="text-align: center;">Employee ID</th>
-                                <th width="7%" style="text-align: center;">Employee Name</th>
-                                <th width="5%" style="text-align: center;">Department</th>
-                                <th width="5%" style="text-align: center;">Work Area</th>
-                                <th width="7%" style="text-align: center;">Date of Missed Time IN/OUT</th>
-                                <th width="5%" style="text-align: center;">Incident</th>
-                                <th width="5%" style="text-align: center;">Time</th>
-                                <th style="text-align: center;">Reason</th>
-                                <th width="10%" style="text-align: center;">Date and Time Applied</th>
-                                <th width="10%" style="text-align: center;">Status</th>
-                                <th style="text-align: center;">HR Remarks</th>
-                                <th style="text-align: center;">Monitoring Remarks</th>
-                                <th style="text-align: center;">Approver Remarks</th>
-                                <th width="6%" style="text-align: center;">Action</th>
+                                <th class="sortable" data-column="0" width="2%" style="text-align: center;">No.</th>
+                                <th class="sortable" data-column="1" width="6%" style="text-align: center;">Employee ID</th>
+                                <th class="sortable" data-column="2" width="7%" style="text-align: center;">Employee Name</th>
+                                <th class="sortable" data-column="3" width="5%" style="text-align: center;">Department</th>
+                                <th class="sortable" data-column="4" width="5%" style="text-align: center;">Work Area</th>
+                                <th class="sortable" data-column="5" width="8%" style="text-align: center;">Date of Missed Log</th>
+                                <th class="sortable" data-column="6" width="5%" style="text-align: center;">Incident</th>
+                                <th class="sortable" data-column="7" width="5%" style="text-align: center;">Time</th>
+                                <th class="sortable" data-column="8" style="text-align: center;">Reason</th>
+                                <th class="sortable" data-column="9" width="10%" style="text-align: center;">Date and Time Applied</th>
+                                <th class="sortable" data-column="10" width="10%" style="text-align: center;">Status</th>
+                                <th class="sortable" data-column="11" style="text-align: center;">HR Remarks</th>
+                                <th class="sortable" data-column="12" style="text-align: center;">Monitoring Remarks</th>
+                                <th class="sortable" data-column="13" style="text-align: center;">Approver Remarks</th>
+                               
                             </tr>
                         </thead>
                         <tbody>
@@ -283,17 +332,11 @@ if (!$sqlCompanies) {
                                     <td align='center'><?= date('m/d/Y', strtotime($emp['date_applied'])) . " " . date('g:i:s A', strtotime($emp['time_applied'])); ?></td>
                                     <td align='center'><?= $emp['applic_status'] ?></td>
                                     <td align='left'><?= $emp['remarks'] ?></td>
-                                    <td align='left' class="editable-cell" data-id="<?= $emp['mlid']; ?>" data-column="monitoring_remarks">
+                                   <td align='center' class="editable-cell" data-id="<?= $emp['mlid']; ?>" data-column="monitoring_remarks">
                                             <?= htmlspecialchars($emp['monitoring_remarks'], ENT_QUOTES); ?>
                                         </td>
                                     <td align='left'><?= $emp['approver_remarks'] ?></td>
-                                    <td align="center">
-                                        <a href="?monitoringmanagemissedlogapplication&addremarks&id=<?= $emp['mlid']; ?>&monitoring_remarks=<?= $emp['monitoring_remarks']; ?>" 
-                                            class="btn btn-primary btn-xs"
-                                            title="Remarks">
-                                            <i class='fa fa-edit'></i>
-                                        </a>
-                                    </td>
+                                   
                                 </tr>
                                 <?php
                             }
@@ -316,51 +359,43 @@ if (!$sqlCompanies) {
     </div>
 </div>
 <script>
-    // Enable in-line editing when clicking on a cell
-    document.querySelectorAll('.editable-cell').forEach(cell => {
-        cell.addEventListener('click', function (e) {
-            const currentText = this.textContent.trim();
-            const mlid = this.getAttribute('data-id');
+  // Enable in-line editing when clicking on a cell
+document.querySelectorAll('.editable-cell').forEach(cell => {
+    cell.addEventListener('click', function (e) {
+        // Prevent double-editing
+        if (this.querySelector('textarea')) return;
 
-            // If the cell is already being edited, return
-            if (this.querySelector('textarea')) return;
+        const currentText = this.textContent.trim();
+        const mlid = this.getAttribute('data-id');
 
-            // Create a textarea for editing
-            const textarea = document.createElement('textarea');
-            textarea.value = currentText;
-            textarea.classList.add('form-control');
-            this.innerHTML = '';  // Clear the cell content
-            this.appendChild(textarea);
-            textarea.focus();
+        // Create a textarea for editing
+        const textarea = document.createElement('textarea');
+        textarea.value = currentText;
+        textarea.classList.add('form-control');
+        this.innerHTML = '';  // Clear the cell content
+        this.appendChild(textarea);
+        textarea.focus();
 
-            // Handle Enter key to save the remark
-            textarea.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();  // Prevent default behavior (line break in textarea)
-                    saveRemarks(mlid, textarea.value);
-                }
-            });
-
-            // Handle Esc key to cancel the editing
-            textarea.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') {
-                    e.preventDefault();  // Prevent default behavior
-                    this.value = currentText;  // Restore original text
-                    this.blur();  // Remove focus
-                    cancelEdit();  // Restore the cell to its original state
-                }
-            });
-
-            // Handle clicking outside the editable cell to cancel the editing
-            function cancelEdit() {
-                document.removeEventListener('click', closeEditOnClickOutside);
-                this.innerHTML = currentText;  // Restore original content in cell
+        // Handle Enter key to save the remark
+        textarea.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();  // Prevent default behavior (line break in textarea)
+                saveAllRemarks();  // Save all remarks
             }
+        });
 
+        // Handle Esc key to cancel the editing
+        textarea.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                e.preventDefault();  // Prevent default behavior
+                cancelEdit(cell, currentText);  // Restore the cell to its original state
+            }
+        });
+
+     // Handle clicking outside the editable cell to cancel the editing
             function closeEditOnClickOutside(event) {
-                // Close editing if the click is outside the cell
                 if (!cell.contains(event.target)) {
-                    cancelEdit();
+                    cancelEdit(cell, currentText);  // Restore the cell to its original state
                 }
             }
 
@@ -368,37 +403,70 @@ if (!$sqlCompanies) {
         });
     });
 
-    // Function to save remarks to the database
-    function saveRemarks(mlid, remarks) {
-        remarks = remarks.trim();
+    // Function to cancel editing and restore the cell's original content
+    function cancelEdit(cell, originalText) {
+        document.removeEventListener('click', closeEditOnClickOutside);
+        cell.innerHTML = originalText;  // Restore original content in cell
+    }
 
-        if (remarks === '') {
-            alert('Remarks cannot be empty!');
-            return;
-        }
+    // Function to save all remarks to the database
+function saveAllRemarks() {
+    const remarksData = [];
+    let hasEmptyRemark = false;
 
-        // Make an AJAX request to save the remark
-        $.ajax({
-            url: 'save_remarks.php',
-            method: 'POST',
-            data: {
+    document.querySelectorAll('.editable-cell').forEach(cell => {
+        const textarea = cell.querySelector('textarea');
+        if (textarea) {
+            const mlid = cell.getAttribute('data-id');
+            const remarks = textarea.value.trim();
+
+            if (remarks === '') {
+                hasEmptyRemark = true;
+            }
+
+            remarksData.push({
                 mlid: mlid,
                 monitoring_remarks: remarks
-            },
-            success: function (response) {
+            });
+        }
+    });
+
+    if (hasEmptyRemark) {
+        alert('Remarks cannot be empty!');
+        return;
+    }
+
+    // AJAX request to save all remarks
+    $.ajax({
+        url: 'save_remarks.php',
+        method: 'POST',
+        data: {
+            remarks: JSON.stringify(remarksData) // Send remarks as a JSON array
+        },
+        success: function (response) {
+            console.log('Server Response:', response); // Debugging: Log the server response
+
+            try {
                 const res = JSON.parse(response);
                 if (res.success) {
                     alert('Remarks saved successfully!');
-                    location.reload(); // Refresh the page to show updated remarks
+                    location.reload(); // Refresh the page
                 } else {
                     alert('Failed to save remarks: ' + res.message);
                 }
-            },
-            error: function () {
-                alert('Failed to save remarks. Please try again.');
+            } catch (error) {
+                console.error('Error parsing server response:', error); // Debugging: Log parsing errors
+                console.error('Raw Server Response:', response); // Log the raw server response
+                alert('Details are saved!');
+window.location.href = '/hris/employeeportal/dashboard.php?monitoringmanagemissedlogapplication';
             }
-        });
-    }
+        },
+        error: function (xhr, status, error) {
+            console.error('AJAX Error:', status, error); // Debugging: Log AJAX errors
+            alert('Failed to save remarks. Please check the console for details.');
+        }
+    });
+}
 </script>
 <?php 
 //Done Logic
@@ -694,4 +762,45 @@ function filterByDate() {
 function resetFilter() {
     window.location.href = '?monitoringmanagemissedlogapplication';
 }
+
+//Sorting Columns
+document.addEventListener("DOMContentLoaded", function () {
+    const headers = document.querySelectorAll(".sortable");
+    headers.forEach(header => {
+        header.addEventListener("click", function () {
+            const table = header.closest("table");
+            const tbody = table.querySelector("tbody");
+            const columnIndex = parseInt(header.getAttribute("data-column"));
+            const isAscending = header.classList.contains("asc");
+            
+            // Clear existing sorting classes
+            headers.forEach(h => h.classList.remove("asc", "desc"));
+
+            // Toggle sorting order
+            header.classList.toggle("asc", !isAscending);
+            header.classList.toggle("desc", isAscending);
+
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+            rows.sort((a, b) => {
+                const aText = a.cells[columnIndex].innerText.trim();
+                const bText = b.cells[columnIndex].innerText.trim();
+
+                // Handle numeric vs. string comparison
+                return isAscending
+                    ? compareValues(bText, aText)
+                    : compareValues(aText, bText);
+            });
+
+            // Append sorted rows back to the table body
+            rows.forEach(row => tbody.appendChild(row));
+        });
+    });
+
+    function compareValues(a, b) {
+        if (!isNaN(a) && !isNaN(b)) {
+            return parseFloat(a) - parseFloat(b); // Numeric comparison
+        }
+        return a.localeCompare(b); // String comparison
+    }
+});
 </script>

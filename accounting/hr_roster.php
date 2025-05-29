@@ -111,7 +111,8 @@ if (!$sqlCompanies) {
                                 <th style = 'text-align: center;'>Date of Regularization</th>
                                 <th style = 'text-align: center;'>Date of Fulltime</th>
                                 <th style = 'text-align: center;'>Shift</th>
-                                <th style = 'text-align: center;'>Work Area</th>
+                                <th style = 'text-align: center;'>Work Setup</th>
+                                <th style = 'text-align: center;'>Location</th>
                                 <th style = 'text-align: center;'>Referred by</th>
                                 <th style = 'text-align: center;'>Referral Fee</th>
                             </tr>
@@ -123,6 +124,13 @@ if (!$sqlCompanies) {
                         $status = $employee['status'] === "REGULAR"
                             ? "<span class='label label-success label-mini'>{$employee['status']}</span>"
                             : "<span class='label label-warning label-mini'>{$employee['status']}</span>";
+                        $location = $employee['location'] === "OS"
+                            ? "<span class='label label-primary label-sm'>{$employee['location']}</span>"
+                            : "<span class='label label-warning label-sm'>{$employee['location']}</span>";
+                        $work_area = $employee['work_area'];
+                        $startTime = date('h:i A', strtotime($employee['startshift']));
+                        $nightShifts = ['12:00 AM', '01:00 AM', '09:00 PM', '11:00 PM'];
+                        $bgColor = in_array($startTime, $nightShifts) ? '#e0e0e0' : '#add8e6';
 
                         $shift = date('h:i A', strtotime($employee['startshift'])) . " - " . date('h:i A', strtotime($employee['endshift']));
                         $dateHired = date('M d, Y', strtotime($employee['dateofhired']));
@@ -135,18 +143,22 @@ if (!$sqlCompanies) {
                             $referrerDetails = "";
                             $referralfee = "";
                         }
+                        if ($employee['effectivity'] == "0001-01-01"){
+                            $referralfee = "";
+                        }
 
                         echo "<tr>
                             <td align='center'>{$x}.</td>
                             <td align='center'>{$employee['idno']}</td>
-                            <td align='center'>{$employee['lastname']}, {$employee['firstname']} {$employee['middlename']} {$employee['suffix']}</td>
+                            <td><strong>{$employee['lastname']}</strong>, {$employee['firstname']} {$employee['middlename']} {$employee['suffix']}</td>
                             <td align='center'>{$jobTitle}</td>
                             <td align='center'>{$status}</td>
                             <td align='center'>{$dateHired}</td>
                             <td align='center'>{$dateRegular}</td>
                             <td align='center'>{$dateFulltime}</td>
-                            <td align='center'>{$shift}</td>
-                            <td align='center'>{$employee['location']}</td>
+                            <td align='center' style='background-color: $bgColor;'>$shift</td>
+                            <td align='center'>{$location}</td>
+                            <td align='center'>{$work_area}</td>
                             <td align='center'>{$referrerDetails}</td>
                             <td align='center'>{$referralfee}</td>
                         </tr>";

@@ -2,14 +2,18 @@
 // Define the isNightShift function
 function isNightShift($startShift, $endShift) {
     // Check if the shift starts at midnight and ends in the morning
-    return ($startShift == '00:00:00' && $endShift == '09:00:00');
+    return ($startShift == '00:00:00' && $endShift == '09:00:00') || 
+           ($startShift == '23:00:00' && $endShift == '08:00:00');
 }
 
-// Retrieve GET parameters
-$comp = $_GET['company'];
-$startdate = $_GET['startdate'];
-$enddate = $_GET['enddate'];
+// Retrieve and sanitize GET parameters
+$comp = mysqli_real_escape_string($con, $_GET['company']);
+$startdate = mysqli_real_escape_string($con, $_GET['startdate']);
+$enddate = mysqli_real_escape_string($con, $_GET['enddate']);
+// If you need department filtering, you should get it from GET/POST
+$dept = isset($_GET['dept']) ? mysqli_real_escape_string($con, $_GET['dept']) : '';
 ?>
+
 
 <!-- Rest of your HTML and PHP code -->
 <div class="col-lg-12">
@@ -18,9 +22,11 @@ $enddate = $_GET['enddate'];
             <h4>
                 <a href="?monitorattendance"><i class="fa fa-arrow-left"></i> HOME</a> | 
                 <i class="fa fa-user"></i> EMPLOYEE LIST (<?= $comp ?>)
-                <button onclick="tableToExcel('printThis','Detailed_Report')" class="btn btn-success" style="float:right;">
-                    <i class="fa fa-download"></i> EXPORT
-                </button>
+                <div style="float:right; margin-bottom: 20px;">
+                    <form>
+                        <button type="button" onclick="tablesToExcel('Attendance_monitoring')" class="btn btn-success">EXPORT TO EXCEL</button>
+                    </form>
+                </div>
             </h4>
         </div>
         <div class="panel-body" id="printThis">
@@ -48,13 +54,17 @@ $enddate = $_GET['enddate'];
                     </tr>
                 </thead>
                 <tbody>
-                    <?php
+                   <?php
                     $x = 1;
                     mysqli_query($con, "SET NAMES 'utf8'");
-                    $sqlEmployee = mysqli_query($con, "SELECT ep.*, ed.* FROM employee_profile ep 
+                    // Modified SQL query with proper department handling
+                    $sqlEmployee = mysqli_query($con, "SELECT ep.*, ed.*, i.department AS department_name 
+                                                      FROM employee_profile ep 
                                                       LEFT JOIN employee_details ed ON ed.idno = ep.idno 
+                                                      LEFT JOIN department i ON i.id = ed.department
                                                       WHERE ed.status NOT LIKE '%RESIGNED%' 
                                                       AND company = '$comp' 
+                                                      ".($dept ? " AND ed.department = '$dept'" : "")."
                                                       ORDER BY ep.lastname ASC");
 
                     if (mysqli_num_rows($sqlEmployee) > 0) {
@@ -108,7 +118,7 @@ $enddate = $_GET['enddate'];
                             echo "<td>$company[idno]</td>";
                             echo "<td>$company[lastname], $company[firstname] $company[middlename] $company[suffix]</td>";
                             echo "<td>$company[status]</td>";
-                            echo "<td>$company[department]</td>";
+                            echo "<td>$company[department_name]</td>";
                             echo "<td>$company[startshift], $company[endshift]</td>";
                             echo "<td align='center'>$company[location]</td>";
                             echo "<td align='center'>$datearray</td>";
@@ -128,3 +138,67 @@ $enddate = $_GET['enddate'];
         </div>
     </div>
 </div>
+<script>
+    function tablesToExcel() {
+    const dataType = 'application/vnd.ms-excel';
+    let tableHTML = '';
+
+    // Define the filename for the exported file
+    const filename = 'Attendance_Report.xls';
+
+    // Select all tables on the page
+    const tables = document.querySelectorAll('table');
+
+    // Loop through each table and prepare the HTML content
+    tables.forEach((table, index) => {
+        // Add a header for each table (optional, if you want to distinguish them)
+        tableHTML += `<h3>Table ${index + 1}</h3>`; // Add a title for each table
+
+        // Clone the table to modify it
+        const clonedTable = table.cloneNode(true);
+
+        // Add inline styles for borders
+        clonedTable.style.borderCollapse = 'collapse'; // Collapse borders
+        clonedTable.querySelectorAll('th, td').forEach(cell => {
+            cell.style.border = '1px solid black'; // Add border to each cell
+            cell.style.padding = '5px'; // Add padding for better spacing
+        });
+
+        tableHTML += clonedTable.outerHTML + '<br>'; // Append each table's HTML
+    });
+
+    // Create a download link
+    const downloadLink = document.createElement("a");
+    document.body.appendChild(downloadLink);
+
+    // Create a Blob with the combined table HTML
+    const blob = new Blob([tableHTML], {
+        type: dataType
+    });
+
+    // Create a URL for the Blob
+    const url = URL.createObjectURL(blob);
+    downloadLink.href = url;
+    downloadLink.download = filename; // Set the filename
+
+    // Trigger the download
+    downloadLink.click();
+
+    // Clean up
+    document.body.removeChild(downloadLink);
+}
+
+
+    $(document).ready(function() {
+    // Store active tab on click
+    $('.nav-tabs a').on('click', function() {
+        localStorage.setItem('activeTab', $(this).attr('href'));
+    });
+
+    // Retrieve active tab on page load
+    const activeTab = localStorage.getItem('activeTab');
+    if (activeTab) {
+        $('.nav-tabs a[href="' + activeTab + '"]').tab('show');
+    }
+});
+</script>

@@ -12,14 +12,13 @@ Website: http://Alvarez.is/
 */
 
 /* Import fonts */
-@import url(http://fonts.googleapis.com/css?family=Ruda:400,700,900);
+
 
 /* BASIC THEME CONFIGURATION */
 body {
-    
+    background-color:#e8e8e8 ;
     display: flex;
-    color: #000000;
-    background: rgb(98,247,220);
+    color: #20283a;
     font-family: 'Ruda', sans-serif;
     font-size:13px;
 }
@@ -234,10 +233,11 @@ ul.top-menu > li > .logout {
 /*sidebar navigation*/
 
 #sidebar {
+    
     width: 210px;
     height: 100%;
     position: fixed;
-    background: #2f323a;
+    background: #20283a;
 }
 
 #sidebar h5 {
@@ -369,10 +369,9 @@ ul.sidebar-menu li a{
 }
 
 ul.sidebar-menu li a.active, ul.sidebar-menu li a:hover, ul.sidebar-menu li a:focus {
-    background: #1310e4;
+    background: #3f4d6b;
     color: #fff;
     display: block;
-
     -webkit-transition: all 0.3s ease;
     -moz-transition: all 0.3s ease;
     -o-transition: all 0.3s ease;
@@ -1378,7 +1377,7 @@ PANELS CONFIGURATIONS
 
 /* Calendar Configuration */
 #calendar {
-	color: white;
+
 	padding: 0px !important;
 }
 .calendar-month-header {
@@ -1482,7 +1481,7 @@ PANELS CONFIGURATIONS
 	font-weight: 900;
 }
 .profile-01 {
-	background: #4ECDC4;
+	background: #20283a;
 	height: 50px;
 }
 .profile-01:hover {
@@ -1530,7 +1529,7 @@ PANELS CONFIGURATIONS
 	color: #cdcdcd;
 }
 .pr2-social a:hover {
-	color: #4ECDC4;
+	color: #20283a;
 }
 .pr2-social i {
 	margin-top: 15px;
@@ -2125,12 +2124,12 @@ background: linear-gradient(90deg, rgba(98,247,220,1) 0%, rgba(0,176,255,1) 25%)
 
 /* PROFILE PAGE CONF */
 .profile-pic img {
-	width: 130px;
-	height: 130px;
+	width: 180px;
+	height: 180px;
 	border-radius: 50%;
 	-webkit-border-radius: 50%;
-	border: 10px solid #48cfad;
-	margin-top: 20px;
+	border: 10px solid #20283a;
+	margin-bottom: 15px;
 }
 
 .profile-text h6 {
@@ -2141,11 +2140,11 @@ background: linear-gradient(90deg, rgba(98,247,220,1) 0%, rgba(0,176,255,1) 25%)
 
 .profile-text h3 {
 	font-weight: 700;
-	color: #48cfad;
+	color: #20283a;
 }
 
 .profile-text h4 {
-	color: #48cfad;
+	color: #20283a;
 }
 
 profile-text p {
@@ -2184,7 +2183,7 @@ profile-text p {
 	text-transform: uppercase;
 	border-bottom: 1px solid #e2e2e2;
 	font-weight: 700;
-	color: #48cfad;
+	color: #20283a;
 }
 
 ul.my-friends {
@@ -3424,7 +3423,7 @@ ul.chat-available-user li a:hover {
 
 /*footer*/
 .site-footer {
-    background: #4ECDC4;
+    background: #20283a;
     color: #fff;
     padding: 15px 0;
 }

@@ -1,4 +1,12 @@
-<style>
+<?php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['idno'])) {
+    die("<script>alert('Session expired. Please log in again.'); window.location='/index.php';</script>");
+}
+?><style>
   /* Hide the checkbox */
   .toggle {
     display: none;
@@ -124,7 +132,7 @@
                             <input id="toggle" class="toggle" type="checkbox" name="ot_type" value="IT-related" onchange="toggleTooltip(); updateLabelText(this);">
                             <label for="toggle" class="slot"></label>
                             <span id="label-text" class="label-text">Not IT-related</span>
-                            <span id="tooltip" class="tooltip">Click only if your main job title is not IT and doing authorized IT tasks.</span>
+                            <span id="tooltip" class="tooltip">Click only if you are an IT staff from Satellite Office and will be performing IT-related tasks.</span>
                         </div>
                     </div>
                 </div>                                              
@@ -167,11 +175,11 @@
             $sqlAddEmployee=mysqli_query($con,"INSERT INTO $table $values");
             if($sqlAddEmployee){
                 echo "<script>";
-                echo "alert('Details successfully saved!');window.location='?addovertime';";
+                echo "alert('Details successfully saved!');window.location='applyovertime.php';";
                 echo "</script>";
             }else{
                 echo "<script>";
-                echo "alert('Unable to saved details!');window.location='?addovertime;";
+                echo "alert('Unable to saved details!');window.location='dashboard.php?addovertime;";
                 echo "</script>";
             }            
     }

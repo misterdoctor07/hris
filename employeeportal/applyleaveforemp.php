@@ -155,7 +155,9 @@ if (isset($_POST['submit'])) {
     $endDate = $_POST['endDate']; 
     $reasons = isset($_POST['reasons']) ? urldecode($_POST['reasons']) : ''; // Decode the input
     $reasons = mysqli_real_escape_string($con, $reasons); // Sanitize for SQL    
-    $datenow = date('Y-m-d H:i:s'); 
+    $datenow = date('Y-m-d H:i:s');  
+    $timearray = date('H:i:s'); 
+    $startMonth = date('n', strtotime($startDate));
 
     // Check if there's already an existing record for the selected leave type within the same date range
     $sqlCheck = mysqli_query($con, "SELECT * FROM leave_application 
@@ -170,13 +172,56 @@ if (isset($_POST['submit'])) {
     } else {
         // Insert the leave application
         $sqlInsertLeave = mysqli_query($con, "INSERT INTO leave_application 
-                                              (idno, leavetype, eo_month, numberofdays, dayfrom, dayto, reason, datearray, appstatus) 
+                                              (idno, leavetype, eo_month, numberofdays, dayfrom, dayto, reason, datearray, timearray, appstatus) 
                                               VALUES 
-                                              ('$idno', '$leavetype', '$eoMonth', '$nofdays', '$startDate', '$endDate', '$reasons', '$datenow', 'Pending')");
+                                              ('$idno', '$leavetype', '$eoMonth', '$nofdays', '$startDate', '$endDate', '$reasons', '$datenow', '$timearray', 'Pending')");
 
         // Check if the leave application was successfully inserted
         if ($sqlInsertLeave) {
-                echo "<script>alert('Leave application submitted successfully!');</script>";
+            
+            // Update leave credits based on leave type
+            switch ($leavetype) {
+                case 'VL':
+                    $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET vlused = vlused + $nofdays WHERE idno = '$idno'");
+                    break;
+                case 'SL':
+                    $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET slused = slused + $nofdays WHERE idno = '$idno'");
+                    break;
+                case 'PTO':
+                    $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET ptoused = ptoused + $nofdays WHERE idno = '$idno'");
+                    break;
+                case 'BLP':
+                    $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET blp_used = blp_used + $nofdays WHERE idno = '$idno'");
+                    break;
+                case 'EO':
+                    // Ensure $startMonth is an integer
+                    $startMonth = (int) $startMonth;
+                    $monthNames = [
+                        1 => "jan", 2 => "feb", 3 => "mar", 4 => "apr", 5 => "may", 6 => "jun",
+                        7 => "jul", 8 => "aug", 9 => "sep", 10 => "oct", 11 => "nov", 12 => "dec"
+                    ];
+                    
+                    if (isset($monthNames[$startMonth])) {
+                        $columnName = $monthNames[$startMonth] . "_eo_used";
+                        $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET $columnName = $columnName + $nofdays WHERE idno = '$idno'");
+                    }
+                    break;
+                case 'SPL':
+                    $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET spl_used = spl_used + $nofdays WHERE idno = '$idno'");
+                    break;
+                case 'MTL':
+                case 'LTL':
+                case 'MDL':
+                case 'PTL':
+                case 'BL':
+                    // No update logic yet for these types
+                    break;
+                default:
+                    echo "<script>alert('Leave type not recognized. No credits updated.');</script>";
+                    break;
+            }
+            
+            echo "<script>alert('Leave application submitted successfully!');</script>";
         }else {
                 echo "<script>alert('Failed to insert leave application. Please try again.');</script>";
          }
