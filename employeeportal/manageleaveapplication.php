@@ -1,3 +1,58 @@
+<style>
+    /*Date Filter Button*/
+    .filter-btn {
+        background-color: #3f4d6a;
+        color: white;
+        border: none;
+        padding: 7px 20px;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+    }
+    
+    .filter-btn:hover {
+        background-color: #181e2e;
+    }
+    
+    .reset-btn {
+        border: #cccccc 0.5px solid;
+        padding: 7px 20px;
+        border-radius: 5px;
+    }
+    /*Funnel*/
+    .column-filter {
+        height: 25px;           
+        font-weight: normal;    
+        font-size: 13px;       
+        padding: 2px 5px;   
+    }
+    /*Toggle in columns*/
+    .toggle-filter {
+        margin-left: 4px;
+        font-size: 0.8rem;
+        padding: 2px 5px;
+    }
+    .filter-wrapper {
+        margin-top: 5px;
+    }
+    /* Sorting Columns */
+    th.sortable {
+        cursor: pointer;
+    }
+    th.sortable .sort-icon::before {
+        content: '';
+        margin-right: 6px;
+        font-size: 0.8em;
+        vertical-align: middle;
+    }
+    
+    th.sortable.asc .sort-icon::before {
+        content: '▲';
+    }
+    
+    th.sortable.desc .sort-icon::before {
+        content: '▼';
+    }
+</style>
 <?php
 date_default_timezone_set("Asia/Manila");
 ?>
@@ -10,22 +65,22 @@ if (!isset($_SESSION['idno'])) {
     die("<script>alert('Session expired. Please log in again.'); window.location='/index.php';</script>");
 }
 // Get user's access level
-$fullname = $_SESSION['fullname'];
-$access = $_SESSION['access'];
+// $fullname = $_SESSION['fullname'];
+// $access = $_SESSION['access'];
 
 
 $idno=$_SESSION['idno'];
 //   if(!isset($_SESSION['idno'])){
 //     echo "<script>window.location='/hris/employeeportal/dashboard.?emp_dev';</script>";
 //   }
-    $sqlEmployee=mysqli_query($con,"SELECT lastname,firstname FROM employee_profile WHERE idno='$_SESSION[idno]'");
+    // $sqlEmployee=mysqli_query($con,"SELECT lastname,firstname FROM employee_profile WHERE idno='$_SESSION[idno]'");
     
-    if(mysqli_num_rows($sqlEmployee)>0){
-      $name=mysqli_fetch_array($sqlEmployee);
-      $fullname=$name['lastname'].", ".$name['firstname'];
-    }else{
-      $fullname="";
-    }
+    // if(mysqli_num_rows($sqlEmployee)>0){
+    //   $name=mysqli_fetch_array($sqlEmployee);
+    //   $fullname=$name['lastname'].", ".$name['firstname'];
+    // }else{
+    //   $fullname="";
+    // }
     $sqlDetails=mysqli_query($con,"SELECT ed.*,jt.* 
       FROM employee_details ed 
       INNER JOIN department d ON d.id=ed.department 
@@ -83,6 +138,7 @@ $idno=$_SESSION['idno'];
   <meta name="author" content="Dashboard">
   <meta name="keyword" content="Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
   <title>HRIS - North East Solutions Inc.</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
   <!-- Favicons -->
   <!-- <link href="img/favicon.png" rel="icon">
@@ -101,20 +157,13 @@ $idno=$_SESSION['idno'];
   <script src="lib/chart-master/Chart.js"></script>
   
   <!-- jQuery (MUST come first if you're using DataTables or Bootstrap 4) -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<!-- Bootstrap CSS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-<!-- Bootstrap Bundle (with Popper) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- DataTables CSS -->
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"/>
-
-<!-- DataTables JS -->
-<script type="text/javascript" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+  <!-- Bootstrap Bundle (with Popper) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- =======================================================
     Template Name: Dashio
@@ -460,16 +509,15 @@ document.head.appendChild(style);
             <a href="javascript:;">
               <i class="fa fa-envelope-open"></i>
               <span>Applications</span>
+              <span id="app-menu-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 8px; right: 25px;"></span>
             </a>
             <ul class="sub">
-              <!-- Active "Manage Leave" -->
               <li>
-                <a href="manageleave.php"> Manage Leave</a>
+                <a href="manageleave.php"> Manage Leave <span id="leave-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 155px;"></span></a> 
               </li>
-              <!-- Other Submenu Items -->
-              <li><a href="applymissedlog.php">Apply Missed Log</a></li>
-              <li><a href="applyovertime.php"> Apply Overtime</a></li>
-              <li><a href="emergencyearlyout.php"> Apply EEO</a></li>
+              <li><a href="applymissedlog.php">Apply Missed Log <span id="missedlog-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 155px;"></span></a></li>
+              <li><a href="applyovertime.php"> Apply Overtime <span id="overtime-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 155px;"></span></a></li>
+              <li><a href="emergencyearlyout.php"> Apply EEO <span id="eeo-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 155px;"></span></a></li>
               <?php if ($designation == 114): ?>
                 <li><a href="manageemployee.php">Add Leave for Employee</a></li>
               <?php endif; ?>
@@ -549,7 +597,7 @@ document.addEventListener("DOMContentLoaded", function() {
             <a href="dashboard.php?infractions">
               <i class="fa fa-folder-open"></i>
               <span>Infractions</span>
-              <span id="emp-infraction-notif" style="background:red; width:10px; height:10px; border-radius:50%; display:none;"></span>
+              <span id="emp-infraction-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 157px;"></span>
             </a>
           </li>
 
@@ -641,26 +689,39 @@ $requestingOfficersStr = !empty($requestingOfficers) ? "'" . implode("','", $req
 $requestingCompStr = !empty($requestingCompany) ? "'" . implode("','", $requestingCompany) . "'" : null;
 $requestingDeptStr = !empty($requestingDepartment) ? "'" . implode("','", $requestingDepartment) . "'" : null;
 
+// Bulk Processing HERE!!!!!
 // Handle approval action for leave application
 if (isset($_GET['approved']) && isset($_GET['id'])) {
-    $id = intval($_GET['id']); 
+    $ids = is_array($_GET['id']) ? $_GET['id'] : [$_GET['id']]; 
     $datetime = date('M j, Y - g:i A');
     // Update query to approve only the specific leave application
     $approval = "{$userDetails['lastname']} ({$userDetails['jobtitle']})";
+    $successCount = 0;
+    foreach ($ids as $id){
+        $id = intval($id);
     $sqlUpdate = mysqli_query($con, "UPDATE leave_application SET appstatus='Approved - $approval [$datetime]', view_status='Unseen' WHERE id='$id'");
 
     if ($sqlUpdate) {
-        echo "<script>alert('Leave application successfully approved!'); window.location='?manageleaveapplication';</script>";
-    } else {
-        echo "<script>alert('Unable to approve leave application!'); window.location='?manageleaveapplication';</script>";
+    $successCount++;
     }
+    }
+    
+    if ($successCount >0){
+        $messsage = $successCount . ($successCount > 1 ? ' applications' : ' application') . ' Approved successfully!';
+        echo "<script>alert('message'); window.location='?manageleaveapplication';</script>";
+    } else {
+        echo "<script>alert('Unable to approve application(s). Please try again!'); window.location='?manageleaveapplication';</script>";
+    }
+    exit();
 }
 
 // Handle disapproval action for leave application
 if (isset($_GET['disapproved']) && isset($_GET['id'])) {
-    $id = intval($_GET['id']); 
+    $ids = is_array($_GET['id']) ? $_GET['id'] : [$_GET['id']]; 
     $datetime = date('M j, Y - g:i A');
-
+    $successCount = 0;
+    $approval = "{$userDetails['lastname']} ({$userDetails['jobtitle']})";
+     foreach ($ids as $id){
     //Retrieve leave application data
     $sqlRetrieve = mysqli_query($con, "SELECT leavetype, numberofdays, idno, dayfrom FROM leave_application WHERE id = '$id'");
     if ($sqlRetrieve && mysqli_num_rows($sqlRetrieve) > 0) {
@@ -672,66 +733,72 @@ if (isset($_GET['disapproved']) && isset($_GET['id'])) {
         $startMonth = date('n', strtotime($startDate));
     }
 
-    // Update query to approve only the specific missed log application
-    $approval = "{$userDetails['lastname']} ({$userDetails['jobtitle']})";
-    $sqlUpdate = mysqli_query($con, "UPDATE leave_application SET appstatus='Disapproved - $approval [$datetime]', view_status='Unseen' WHERE id='$id'");
+                    // Update query to approve only the specific missed log application
+                   
+                    $sqlUpdate = mysqli_query($con, "UPDATE leave_application SET appstatus='Disapproved - $approval [$datetime]', view_status='Unseen' WHERE id='$id'");
+                     if ($sqlUpdate) {
+                        // Update leave credits based on leave type
+                        switch ($leaveType) {
+                            case 'VL':
+                                $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET vlused = vlused - $nofdays WHERE idno = '$idno'");
+                                break;
+                            case 'SL':
+                                $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET slused = slused - $nofdays WHERE idno = '$idno'");
+                                break;
+                            case 'PTO':
+                                $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET ptoused = ptoused - $nofdays WHERE idno = '$idno'");
+                                break;
+                            case 'BLP':
+                                $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET blp_used = blp_used - $nofdays WHERE idno = '$idno'");
+                                break;
+                            case 'EO':
+                                // Ensure $startMonth is an integer
+                                $startMonth = (int) $startMonth;
+                                $monthNames = [
+                                    1 => "jan", 2 => "feb", 3 => "mar", 4 => "apr", 5 => "may", 6 => "jun",
+                                    7 => "jul", 8 => "aug", 9 => "sep", 10 => "oct", 11 => "nov", 12 => "dec"
+                                ];
+                                
+                                if (isset($monthNames[$startMonth])) {
+                                    $columnName = $monthNames[$startMonth] . "_eo_used";
+                                    $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET $columnName = $columnName - $nofdays WHERE idno = '$idno'");
+                                }
+                                break;
+                            case 'SPL':
+                                $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET spl_used = spl_used - $nofdays WHERE idno = '$idno'");
+                                break;
+                            case 'MTL':
+                            case 'LTL':
+                            case 'MDL':
+                            case 'PTL':
+                            case 'BL':
+                                // No update logic yet for these types
+                                break;
+                            default:
+                                echo "<script>alert('Leave type not recognized. No credits updated.');</script>";
+                                break;
+                                
+                                 $successCount++;
+                          }
+                    }
+   
 
-    if ($sqlUpdate) {
-        // Update leave credits based on leave type
-        switch ($leaveType) {
-            case 'VL':
-                $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET vlused = vlused - $nofdays WHERE idno = '$idno'");
-                break;
-            case 'SL':
-                $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET slused = slused - $nofdays WHERE idno = '$idno'");
-                break;
-            case 'PTO':
-                $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET ptoused = ptoused - $nofdays WHERE idno = '$idno'");
-                break;
-            case 'BLP':
-                $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET blp_used = blp_used - $nofdays WHERE idno = '$idno'");
-                break;
-            case 'EO':
-                // Ensure $startMonth is an integer
-                $startMonth = (int) $startMonth;
-                $monthNames = [
-                    1 => "jan", 2 => "feb", 3 => "mar", 4 => "apr", 5 => "may", 6 => "jun",
-                    7 => "jul", 8 => "aug", 9 => "sep", 10 => "oct", 11 => "nov", 12 => "dec"
-                ];
-                
-                if (isset($monthNames[$startMonth])) {
-                    $columnName = $monthNames[$startMonth] . "_eo_used";
-                    $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET $columnName = $columnName - $nofdays WHERE idno = '$idno'");
                 }
-                break;
-            case 'SPL':
-                $sqlUpdateCredits = mysqli_query($con, "UPDATE leave_credits SET spl_used = spl_used - $nofdays WHERE idno = '$idno'");
-                break;
-            case 'MTL':
-            case 'LTL':
-            case 'MDL':
-            case 'PTL':
-            case 'BL':
-                // No update logic yet for these types
-                break;
-            default:
-                echo "<script>alert('Leave type not recognized. No credits updated.');</script>";
-                break;
-          }
-
-        echo "<script>alert('Leave application successfully disapproved!'); window.location='?manageleaveapplication';</script>";
-    } else {
-        echo "<script>alert('Unable to disapprove leave application!'); window.location='?manageleaveapplication';</script>";
-    }
-
-}
+                if ($successCount > 0){
+                    $message = $successCount . ($successCount > 1 ? ' applications' : ' application') . ' disapproved successfully!';
+                    echo "<script>alert('$message'); window.location='?manageleaveapplication';</script>";
+                } else {
+                    echo "<script>alert('Unable to disapproved application(s). Please try again!'); window.location='?manageleaveapplication';</script>";
+                }
+                exit();
+            }
 
 // Handle undo action for leave application
 if (isset($_GET['undo']) && isset($_GET['id'])) {
-    $id = intval($_GET['id']); 
-
+    $ids = is_array($_GET['id']) ? $_GET['id'] : [$_GET['id']];
+    $successCount = 0;
     $disapproveFlag = false; // initialize the flag
-
+    foreach ($ids as $id){
     // Retrieve leave application data
     $sqlRetrieve = mysqli_query($con, "SELECT leavetype, numberofdays, idno, dayfrom, appstatus FROM leave_application WHERE id = '$id'");
     if ($sqlRetrieve && mysqli_num_rows($sqlRetrieve) > 0) {
@@ -794,37 +861,165 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
             }
         }
 
-        echo "<script>alert('Action successfully undone!'); window.location='?manageleaveapplication';</script>";
-    } else {
-        echo "<script>alert('Action taken was not successful!'); window.location='?manageleaveapplication';</script>";
+       $successCount++;
     }
+    }
+    if ($successCount > 0) {
+        $message = $successCount . ($successCount > 1 ? ' applications' : ' application') . ' undone successfully!';
+        echo "<script>alert('$message'); windows.location='?manageleaveapplication';</script>";
+    } else {
+        echo "<script>alert('Unabale to undo application(s). Please try again!'); window.location='?manageleaveapplication';</script>";
+    }
+    exit();
 }
+
+
+
 ?>
 
 <section id="main-content">
       <section class="wrapper">
         <div class="col-lg-12">
     <div class="content-panel">
-        <div class="panel-heading">
-            <h4><a href="?main" style="text-decoration: none;"><i class="fa fa-arrow-left"></i> HOME</a> | <i class="fa fa-suitcase"></i> MANAGE LEAVE APPLICATION</h4>
+        <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+            <h4 style="margin: 0;">
+                <a href="?main" style="text-decoration: none;">
+                    <i class="fa fa-arrow-left"></i> HOME
+                </a> |
+                <i class="fa fa-suitcase"></i> MANAGE LEAVE APPLICATION
+            </h4>
+        
+            <!-- Date Filter Section -->
+            <div class="date-filter" style="display: flex; align-items: center; gap: 15px; font-size: 14px; font-weight: 500; margin-top: 10px; margin-right: 5px">
+                <h5 style="margin: 0; font-size: 14px; font-weight: 600;">Filter Start Date</h5>
+            
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <label for="fromDate" style="margin-bottom: 0;">From:</label>
+                    <input type="date" id="fromDate" class="form-control"
+                           value="<?php echo isset($_GET['fromDate']) ? $_GET['fromDate'] : ''; ?>"
+                           style="width: 150px; height: 35px; font-size: 14px;">
+                </div>
+            
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <label for="toDate" style="margin-bottom: 0;">To:</label>
+                    <input type="date" id="toDate" class="form-control"
+                           value="<?php echo isset($_GET['toDate']) ? $_GET['toDate'] : ''; ?>"
+                           style="width: 150px; height: 35px; font-size: 14px;">
+                </div>
+            
+                <button id="filterButton" type="button" onclick="filterByDate()" class="filter-btn" style="font-size: 14px; font-weight: 500;">Filter</button>
+                <button type="button" onclick="resetFilter()" class="reset-btn" style="font-size: 14px; font-weight: 500;">Reset</button>
+            </div>
         </div>
         <div class="panel-body">
+            <div class="bulk-actions">
+            <button class="btn btn-success btn-lg" onclick="bulkAction('approved')">
+                <i class="fa fa-thumbs-up"></i> Approve
+            </button>
+            <button class="btn btn-warning btn-lg" onclick="bulkAction('disapproved')">
+                <i class="fa fa-thumbs-down"></i> Disapprove
+            </button>
+            <button class="btn btn-info btn-lg" onclick="bulkAction('undo')">
+                <i class="fa fa-undo"></i> Undo
+            </button>
+            <span class="badge" id="selectorCount-leave">0 Selected</span>
+        </div>
             <table class="table table-bordered table-striped table-condensed" id="hidden-table-info">
                 <thead>
                     <tr>
-                        <th width="2%" style="text-align: center; background-color:#20273a; color: white;">No.</th>
-                        <th width="8%" style="text-align: center; background-color:#20273a; color: white;">Employee ID</th>
-                        <th width="10%" style="text-align: center; background-color:#20273a; color: white;">Employee Name</th>
-                        <th width="8%" style="text-align: center; background-color:#20273a; color: white;">Leave Type</th>
-                        <th width="8%" style="text-align: center; background-color:#20273a; color: white;">No. of Days</th>
-                        <th width="6%" style="text-align: center; background-color:#20273a; color: white;">From</th>
-                        <th width="6%" style="text-align: center; background-color:#20273a; color: white;">To</th>
-                        <th style="text-align: center; background-color:#20273a; color: white;">Reason</th>
-                        <th width="8%" style="text-align: center; background-color:#20273a; color: white;">Time Applied</th>
-                        <th width="6%" style="text-align: center; background-color:#20273a; color: white;">Status</th>
-                        <th style="text-align: center; background-color:#20273a; color: white;">HR's Remarks</th>
-                        <th style="text-align: center; background-color:#20273a; color: white;">Remarks</th>
-                        <th width="6%" style="text-align: center; background-color:#20273a; color: white;">Action</th>
+                         <th class='sortable' data-column='0' class="checkbox-cell" style="text-align: center;">
+                             <input type="checkbox" id="selectAll-leave" onclick="toggleSelectAll()">
+                        </th>
+                        <th class='sortable' data-column='1' width="1%" style="text-align: center;">No.</th>
+                        <th class='sortable' data-column='2' width="7%" style="text-align: center;">
+                            <span class='sort-icon'></span>
+                            <span class='sort-label'>Emp ID</span>
+                            <button class='toggle-filter btn btn-sm btn-light'><i class='bi bi-funnel-fill'></i></button>
+                            <div class='filter-wrapper' style='display:none;'>
+                                <input type='text' class='form-control column-filter' placeholder='Search ID'>
+                            </div>
+                        </th>
+                        <th class='sortable' data-column='3' width="8%" style="text-align: center;">
+                            <span class='sort-icon'></span>
+                            <span class='sort-label'>Emp Name</span>
+                            <button class='toggle-filter btn btn-sm btn-light'><i class='bi bi-funnel-fill'></i></button>
+                            <div class='filter-wrapper' style='display:none;'>
+                                <input type='text' class='form-control column-filter' placeholder='Search Name'>
+                            </div>
+                        </th>
+                        <th class='sortable' data-column='4' width="9%" style="text-align: center;">
+                            <span class='sort-icon'></span>
+                            <span class='sort-label'>Leave Type</span>
+                            <button class='toggle-filter btn btn-sm btn-light'><i class='bi bi-funnel-fill'></i></button>
+                            <div class='filter-wrapper' style='display:none;'>
+                                <input type='text' class='form-control column-filter' placeholder='Search Leave Type'>
+                            </div>
+                        </th>
+                        <th class='sortable' data-column='5' width="9%" style="text-align: center;">
+                            <span class='sort-icon'></span>
+                            <span class='sort-label'>No. of Days</span>
+                            <button class='toggle-filter btn btn-sm btn-light'><i class='bi bi-funnel-fill'></i></button>
+                            <div class='filter-wrapper' style='display:none;'>
+                                <input type='text' class='form-control column-filter' placeholder='Search No. of Days'>
+                            </div>
+                        </th>
+                        <th class='sortable' data-column='6' width="6%" style="text-align: center;">
+                            <span class='sort-icon'></span>
+                            <span class='sort-label'>From</span>
+                            <button class='toggle-filter btn btn-sm btn-light'><i class='bi bi-funnel-fill'></i></button>
+                            <div class='filter-wrapper' style='display:none;'>
+                                <input type='text' class='form-control column-filter' placeholder='Search Date From'>
+                            </div>
+                        </th>
+                        <th class='sortable' data-column='7' width="6%" style="text-align: center;">
+                            <span class='sort-icon'></span>
+                            <span class='sort-label'>To</span>
+                            <button class='toggle-filter btn btn-sm btn-light'><i class='bi bi-funnel-fill'></i></button>
+                            <div class='filter-wrapper' style='display:none;'>
+                                <input type='text' class='form-control column-filter' placeholder='Search Date To'>
+                            </div>
+                        </th>
+                        <th class='sortable' data-column='8' style="text-align: center;">
+                            <span class='sort-icon'></span>
+                            <span class='sort-label'>Reason</span>
+                            <button class='toggle-filter btn btn-sm btn-light'><i class='bi bi-funnel-fill'></i></button>
+                            <div class='filter-wrapper' style='display:none;'>
+                                <input type='text' class='form-control column-filter' placeholder='Search Reason'>
+                            </div>
+                        </th>
+                        <th class='sortable' data-column='9' width="10%" style="text-align: center;">
+                            <span class='sort-icon'></span>
+                            <span class='sort-label'>Time Applied</span>
+                            <button class='toggle-filter btn btn-sm btn-light'><i class='bi bi-funnel-fill'></i></button>
+                            <div class='filter-wrapper' style='display:none;'>
+                                <input type='text' class='form-control column-filter' placeholder='Search Time Applied'>
+                            </div>
+                        </th>
+                        <th class='sortable' data-column='10' width="6%" style="text-align: center;">
+                            <span class='sort-icon'></span>
+                            <span class='sort-label'>Status</span>
+                            <button class='toggle-filter btn btn-sm btn-light'><i class='bi bi-funnel-fill'></i></button>
+                            <div class='filter-wrapper' style='display:none;'>
+                                <input type='text' class='form-control column-filter' placeholder='Search Status'>
+                            </div>
+                        </th>
+                        <th class='sortable' data-column='11' style="text-align: center;">
+                            <span class='sort-icon'></span>
+                            <span class='sort-label'>HR's Note</span>
+                            <button class='toggle-filter btn btn-sm btn-light'><i class='bi bi-funnel-fill'></i></button>
+                            <div class='filter-wrapper' style='display:none;'>
+                                <input type='text' class='form-control column-filter' placeholder='Search HR's Note>
+                            </div>
+                        </th>
+                        <th class='sortable' data-column='12' style="text-align: center;">
+                            <span class='sort-icon'></span>
+                            <span class='sort-label'>Remarks</span>
+                            <button class='toggle-filter btn btn-sm btn-light'><i class='bi bi-funnel-fill'></i></button>
+                            <div class='filter-wrapper' style='display:none;'>
+                                <input type='text' class='form-control column-filter' placeholder='Search Remarks'>
+                            </div>
+                        </th>
+                        <th width="6%" style="text-align: center;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -872,12 +1067,15 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                     $whereClause = !empty($conditions) ? implode(' OR ', $conditions) : '1=1';
 
                     // Build the final query
+                    $fromDate = isset($_GET['fromDate']) ? $_GET['fromDate'] : null;
+                    $toDate = isset($_GET['toDate']) ? $_GET['toDate'] : null;
                     $query = "SELECT la.*, la.id as laid, ep.*, ed.* 
                             FROM leave_application la 
                             INNER JOIN employee_profile ep ON ep.idno = la.idno 
                             INNER JOIN employee_details ed ON ed.idno = ep.idno 
                             WHERE la.idno != '$userId' 
                             AND ($whereClause)
+                            AND (la.dayfrom BETWEEN '$fromDate' AND '$toDate' OR '$fromDate' = '' OR '$toDate' = '')
                             ORDER BY 
                                 CASE 
                                     WHEN la.appstatus = 'Pending' THEN 1 
@@ -917,6 +1115,9 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                             $statusText = $appStatus;
 
                             echo "<tr $style>";
+                            echo "<td style='text-align: center; vertical-align:middle;'>
+                                    <input type='checkbox' class='rowCheckbox' value='{$company['laid']}' data-tab='leave'>
+                                </td>";
                             echo "<td style='text-align: center; vertical-align: middle'>$x.</td>";
                             echo "<td style='text-align: center; vertical-align: middle'>{$company['idno']}</td>";
                             echo "<td style='text-align: justify; vertical-align: middle'>
@@ -943,11 +1144,7 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
                             echo "<td style='text-align: justify; vertical-align: middle'>{$company['approver_remarks']}</td>";
                             echo "<td style='text-align: center; vertical-align: middle'>";
                             if ($appStatus == "Pending") {
-                                echo "<a href='?manageleaveapplication&id={$company['laid']}&approved' class='btn btn-success btn-xs' title='Approve' onclick=\"return confirm('Do you wish to approve this leave application?'); return false;\"><i class='fa fa-thumbs-up'></i></a>";
-                                echo "<a href='?manageleaveapplication&id={$company['laid']}&disapproved' class='btn btn-danger btn-xs' title='Disapprove' onclick=\"return confirm('Do you wish to disapprove this leave application?'); return false;\"><i class='fa fa-thumbs-down'></i></a>";
                                 echo "<a href='?manageleaveapplication&addremarks&id={$company['laid']}&approver_remarks' class='btn btn-primary btn-xs' title='Remarks');\"><i class='fa fa-comment'></i></a>";
-                            } else {
-                                echo "<a href='?manageleaveapplication&id={$company['laid']}&undo' class='btn btn-warning btn-xs' title='Undo Action' onclick=\"return confirm('Do you wish to undo the action taken?'); return false;\"><i class='fa fa-exchange'></i></a>";
                             }
                             echo "</td>";
                             echo "</tr>";
@@ -962,7 +1159,106 @@ if (isset($_GET['undo']) && isset($_GET['id'])) {
         </div>
     </div>
 </div>
+<script>
+// Update the toggleSelectAll function
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll-leave');
+    const checkboxes = document.querySelectorAll('.rowCheckbox[data-tab="leave"]');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateSelectedCount();
+}
 
+// Update the selected count badge
+function updateSelectedCount() {
+    const checkboxes = document.querySelectorAll('.rowCheckbox[data-tab="leave"]:checked');
+    const count = checkboxes.length;
+    document.getElementById('selectorCount-leave').textContent = `${count} Selected`;
+    
+    // Show/hide bulk actions
+    const bulkActions = document.querySelector('.bulk-actions');
+    if (count > 0) {
+        bulkActions.classList.add('visible');
+    } else {
+        bulkActions.classList.remove('visible');
+    }
+}
+
+function bulkAction(action) {
+    const checkboxes = document.querySelectorAll('.rowCheckbox[data-tab="leave"]:checked');
+    const ids = Array.from(checkboxes).map(checkbox => checkbox.value);
+    
+    if (ids.length === 0) {
+        alert('Please select at least one application');
+        return;
+    }
+    
+    let confirmationMsg = '';
+    switch(action) {
+        case 'approved':
+            confirmationMsg = `Approve ${ids.length} selected application(s)?`;
+            break;
+        case 'disapproved':
+            confirmationMsg = `Disapprove ${ids.length} selected application(s)?`;
+            break;
+        case 'undo':
+            confirmationMsg = `Undo ${ids.length} selected application(s) to Pending status?`;
+            break;
+    }
+    
+    if (confirm(confirmationMsg)) {
+        // Create a form element
+        const form = document.createElement('form');
+        form.method = 'GET';
+        form.action = window.location.pathname;
+        
+        // Add the action parameter
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = action;
+        actionInput.value = '1';
+        form.appendChild(actionInput);
+        
+        // Add all selected IDs
+        ids.forEach(id => {
+            const idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.name = 'id[]';
+            idInput.value = id;
+            form.appendChild(idInput);
+        });
+        
+        // Add existing query parameters (to maintain other GET params)
+        const params = new URLSearchParams(window.location.search);
+        params.forEach((value, key) => {
+            if (key !== action && key !== 'id') {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                form.appendChild(input);
+            }
+        });
+        
+        // Submit the form
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+// Add event listeners when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Add change event to all checkboxes
+    document.querySelectorAll('.rowCheckbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedCount);
+    });
+    
+    // Add click event to select all checkbox
+    document.getElementById('selectAll-leave').addEventListener('click', toggleSelectAll);
+});
+</script>
 <?php
 // Check if the user clicked 'Add Remarks'
 if (isset($_GET['addremarks'])) {
@@ -1024,6 +1320,22 @@ if (isset($_POST['submitRemarks'])) {
 ?>
 
 <style>
+.bulk-actions {
+    margin-bottom: 15px;
+    display: none; /* Hidden by default */
+}
+
+.bulk-actions.visible {
+    display: block; /* Show when items are selected */
+}
+
+.rowCheckbox {
+    cursor: pointer;
+}
+
+#selectAll {
+    cursor: pointer;
+}
 /* Modal Overlay to Blur Background */
 .modal-overlay {
     position: fixed;
@@ -1417,36 +1729,106 @@ function AppNotif() {
       let hasNotification = false;
 
       // Show notification indicators without displaying counts
-      if (data.leave_notif > 0) {
-        leaveNotif.style.display = 'inline-block';
-        leaveNotif.textContent = ''; // Hide count
-        hasNotification = true;
-      } else {
-        leaveNotif.style.display = 'none';
-      }
+      const leavebadge = document.getElementById('leave-notif');
+      const missedlogbadge = document.getElementById('missedlog-notif');
+      const overtimebadge = document.getElementById('overtime-notif');
+      const eeobadge = document.getElementById('eeo-notif');
 
-      if (data.missedlog_notif > 0) {
-        missedLogNotif.style.display = 'inline-block';
-        missedLogNotif.textContent = ''; // Hide count
-        hasNotification = true;
-      } else {
-        missedLogNotif.style.display = 'none';
-      }
+      //Leave section
+      if (data.approve_leave_notif > 0 || data.disapprove_leave_notif > 0 || data.leave_remark_notif > 0) {
+        leavebadge.style.display = 'inline-block';
+        leavebadge.textContent = ''; // optional, or set to a number
 
-      if (data.overtime_notif > 0) {
-        overtimeNotif.style.display = 'inline-block';
-        overtimeNotif.textContent = ''; // Hide count
-        hasNotification = true;
+        if (data.leave_remark_notif > 0) {
+          leavebadge.style.backgroundColor = 'gold';
+          leavebadge.style.color = 'black';
+          leavebadge.title = 'New remarks added';
+          hasNotification = true;
+        } else if(data.disapprove_leave_notif > 0){
+          leavebadge.style.backgroundColor = 'red';
+          leavebadge.style.color = 'white';
+          leavebadge.title = 'New Disapproved Application';
+          hasNotification = true;
+        } else {
+          leavebadge.style.backgroundColor = '#00FF00';
+          leavebadge.style.color = 'white';
+          leavebadge.title = 'New Approved Application';
+          hasNotification = true;
+        }
       } else {
-        overtimeNotif.style.display = 'none';
+        leavebadge.style.display = 'none';
       }
+      //Missed Log Section
+      if (data.approve_missedlog_notif > 0 || data.disapprove_missedlog_notif > 0 || data.log_remark_notif > 0) {
+        missedlogbadge.style.display = 'inline-block';
+        missedlogbadge.textContent = ''; // optional, or set to a number
 
-      if (data.eeo_notif > 0) {
-        eeoNotif.style.display = 'inline-block';
-        eeoNotif.textContent = ''; // Hide count
-        hasNotification = true;
+        if (data.log_remark_notif > 0) {
+          missedlogbadge.style.backgroundColor = 'gold';
+          missedlogbadge.style.color = 'black';
+          missedlogbadge.title = 'New remarks added';
+          hasNotification = true;
+        } else if(data.disapprove_missedlog_notif > 0){
+          missedlogbadge.style.backgroundColor = 'red';
+          missedlogbadge.style.color = 'white';
+          missedlogbadge.title = 'New Disapproved Application';
+          hasNotification = true;
+        } else {
+          missedlogbadge.style.backgroundColor = '#00FF00';
+          missedlogbadge.style.color = 'white';
+          missedlogbadge.title = 'New Approved Application';
+          hasNotification = true;
+        }
       } else {
-        eeoNotif.style.display = 'none';
+        missedlogbadge.style.display = 'none';
+      }
+      //Overtime Section
+      if (data.approve_overtime_notif > 0 || data.disapprove_overtime_notif > 0 || data.overtime_remark_notif > 0) {
+        overtimebadge.style.display = 'inline-block';
+        overtimebadge.textContent = ''; // optional, or set to a number
+
+        if (data.overtime_remark_notif > 0) {
+          overtimebadge.style.backgroundColor = 'gold';
+          overtimebadge.style.color = 'black';
+          overtimebadge.title = 'New remarks added';
+          hasNotification = true;
+        } else if(data.disapprove_overtime_notif > 0){
+          overtimebadge.style.backgroundColor = 'red';
+          overtimebadge.style.color = 'white';
+          overtimebadge.title = 'New Disapproved Application';
+          hasNotification = true;
+        } else {
+          overtimebadge.style.backgroundColor = '#00FF00';
+          overtimebadge.style.color = 'white';
+          overtimebadge.title = 'New Approved Application';
+          hasNotification = true;
+        }
+      } else {
+        overtimebadge.style.display = 'none';
+      }
+      //EEO Section
+      if (data.approve_eeo_notif > 0 || data.disapprove_eeo_notif > 0 || data.eeo_remark_notif > 0) {
+        eeobadge.style.display = 'inline-block';
+        eeobadge.textContent = ''; // optional, or set to a number
+
+        if (data.eeo_remark_notif > 0) {
+          eeobadge.style.backgroundColor = 'gold';
+          eeobadge.style.color = 'black';
+          eeobadge.title = 'New remarks added';
+          hasNotification = true;
+        } else if(data.disapprove_eeo_notif > 0){
+          eeobadge.style.backgroundColor = 'red';
+          eeobadge.style.color = 'white';
+          eeobadge.title = 'New Disapproved Application';
+          hasNotification = true;
+        } else {
+          eeobadge.style.backgroundColor = '#00FF00';
+          eeobadge.style.color = 'white';
+          eeobadge.title = 'New Approved Application';
+          hasNotification = true;
+        }
+      } else {
+        eeobadge.style.display = 'none';
       }
 
       // Show or hide the main menu notification
@@ -1493,26 +1875,207 @@ function markNotifseen(type) {
 // Auto-refresh notifications every 5 seconds
 setInterval(AppNotif, 5000);
 AppNotif(); // Run immediately on page load
+
+//Filter Button for Date Filter
+function filterByDate() {
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
+
+    if (fromDate && toDate) {
+        // Save dates in sessionStorage
+        sessionStorage.setItem('fromDate', fromDate);
+        sessionStorage.setItem('toDate', toDate);
+
+        // Redirect with query params
+        window.location.href = `?manageleaveapplication&fromDate=${fromDate}&toDate=${toDate}`;
+    } else {
+        alert('Please select both "From" and "To" dates.');
+    }
+}
+
+window.onload = function () {
+    const searchValue = sessionStorage.getItem('searchValue');
+    const companyTabId = sessionStorage.getItem('companyTabId');
+    const deptTabId = sessionStorage.getItem('deptTabId');
+    const fromDate = sessionStorage.getItem('fromDate');
+    const toDate = sessionStorage.getItem('toDate');
+
+    // Restore date filters
+    if (fromDate && toDate) {
+        document.getElementById('fromDate').value = fromDate;
+        document.getElementById('toDate').value = toDate;
+    }
+
+    // Restore tab and search filters
+    if (searchValue && companyTabId && deptTabId) {
+        const companyTabLink = document.querySelector(`a[href="#${companyTabId}"]`);
+        if (companyTabLink) companyTabLink.click();
+
+        setTimeout(() => {
+            const deptTabLink = document.querySelector(`a[href="#${deptTabId}"]`);
+            if (deptTabLink) deptTabLink.click();
+
+            setTimeout(() => {
+                const deptPane = document.getElementById(deptTabId);
+                const searchInput = deptPane.querySelector('input[type="text"]');
+                if (searchInput) {
+                    searchInput.value = searchValue;
+                    filterTable(searchInput);
+                }
+            }, 200);
+        }, 200);
+    }
+};
+
+//Reset button for Date Filter
+function resetFilter() {
+    window.location.href = '?manageleaveapplication';
+    sessionStorage.removeItem('fromDate');
+    sessionStorage.removeItem('toDate');
+}
+
+            //Sorting Columns
+    document.addEventListener("DOMContentLoaded", function () {
+        const headers = document.querySelectorAll(".sortable");
+    
+        headers.forEach(header => {
+            header.addEventListener("click", function (event) {
+                // Prevent sorting if clicking inside filter button or filter input wrapper
+                if (
+                    event.target.closest(".toggle-filter") ||
+                    event.target.closest(".filter-wrapper")
+                ) {
+                    return;
+                }
+    
+                const table = header.closest("table");
+                const tbody = table.querySelector("tbody");
+                const columnIndex = parseInt(header.getAttribute("data-column"));
+                const isCurrentlyAscending = header.classList.contains("asc");
+    
+                // Reset classes
+                headers.forEach(h => h.classList.remove("asc", "desc"));
+                header.classList.add(isCurrentlyAscending ? "desc" : "asc");
+    
+                const rows = Array.from(tbody.querySelectorAll("tr"));
+                rows.sort((a, b) => {
+                    const cellA = a.cells[columnIndex]?.innerText.trim() || '';
+                    const cellB = b.cells[columnIndex]?.innerText.trim() || '';
+    
+                    const result = compareValues(cellA, cellB);
+                    return isCurrentlyAscending ? -result : result;
+                });
+    
+                rows.forEach(row => tbody.appendChild(row));
+            });
+        });
+    
+        function compareValues(a, b) {
+            const dateA = parseDate(a);
+            const dateB = parseDate(b);
+    
+            if (dateA && dateB) return dateA - dateB;
+    
+            const numA = parseFloat(a.replace(/,/g, ''));
+            const numB = parseFloat(b.replace(/,/g, ''));
+            if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+    
+            return a.localeCompare(b, undefined, { sensitivity: 'base' });
+        }
+    
+        function parseDate(str) {
+            const monthMap = {
+                Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+                Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
+            };
+        
+            // Match both lines: "Jun 12, 2025\n3:45 PM"
+            const lines = str.split('\n');
+            const dateMatch = lines[0]?.match(/^([A-Za-z]{3})\s+(\d{1,2}),\s*(\d{4})$/);
+            const timeMatch = lines[1]?.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+        
+            if (dateMatch) {
+                const [, mon, day, year] = dateMatch;
+                const month = monthMap[mon];
+                let hour = 0, minute = 0;
+        
+                if (timeMatch) {
+                    hour = parseInt(timeMatch[1]);
+                    minute = parseInt(timeMatch[2]);
+                    const meridian = timeMatch[3].toUpperCase();
+        
+                    if (meridian === 'PM' && hour < 12) hour += 12;
+                    if (meridian === 'AM' && hour === 12) hour = 0;
+                }
+        
+                return new Date(parseInt(year), month, parseInt(day), hour, minute);
+            }
+        
+            return null;
+        }
+    });
+    // Info button
+    document.addEventListener("DOMContentLoaded", function () {
+        const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+        popoverTriggerList.forEach(function (popoverTriggerEl) {
+            new bootstrap.Popover(popoverTriggerEl);
+        });
+    });
+    document.addEventListener("click", function (e) {
+        document.querySelectorAll('.info-btn').forEach(btn => {
+            if (!btn.contains(e.target) && btn.getAttribute('aria-describedby')) {
+                bootstrap.Popover.getInstance(btn).hide();
+            }
+        });
+    });
+    $(document).ready(function () {
+        // Remember main tab
+        $('.nav-tabs a').on('click', function () {
+            localStorage.setItem('activeMainTab', $(this).attr('href'));
+        });
+    
+        const activeMainTab = localStorage.getItem('activeMainTab');
+        if (activeMainTab) {
+            $('.nav-tabs a[href="' + activeMainTab + '"]').tab('show');
+        }
+    
+        // Remember inner tab
+        $('.nav-pills a').on('click', function () {
+            const companyId = $(this).closest('.tab-pane').attr('id');
+            localStorage.setItem('activeInnerTab-' + companyId, $(this).attr('href'));
+        });
+    
+        $('.tab-pane').each(function () {
+            const companyId = $(this).attr('id');
+            const activeInnerTab = localStorage.getItem('activeInnerTab-' + companyId);
+            if (activeInnerTab) {
+                $('.nav-pills a[href="' + activeInnerTab + '"]').tab('show');
+            }
+        });
+    
+        // Accurate column filtering
+        $(document).on('keyup', '.column-filter', function () {
+            const $input = $(this);
+            const $table = $input.closest('table');
+            const colIndex = parseInt($input.closest('th').data('column'));
+            const filterVal = $input.val().toLowerCase().trim();
+    
+            $table.find('tbody tr').each(function () {
+                const $row = $(this);
+                const $cell = $row.find('td').eq(colIndex);
+                const cellText = $cell.text().toLowerCase().trim();
+    
+                if (!filterVal || cellText.includes(filterVal)) {
+                    $row.show();
+                } else {
+                    $row.hide();
+                }
+            });
+        });
+    });
+    //Icon Toggle in columns
+    $(document).on('click', '.toggle-filter', function(e) {
+        e.stopPropagation();
+        $(this).siblings('.filter-wrapper').slideToggle(150);
+    });
 </script>
-  <script src="lib/bootstrap/js/bootstrap.min.js"></script>
-  <script class="include" type="text/javascript" src="lib/jquery.dcjqaccordion.2.7.js"></script>
-  <script src="lib/jquery.scrollTo.min.js"></script>
-  <script src="lib/jquery.nicescroll.js" type="text/javascript"></script>
-  <script src="lib/jquery.sparkline.js"></script>
-  <!--common script for all pages-->
-  <script src="lib/common-scripts.js"></script>
-  <script type="text/javascript" src="lib/gritter/js/jquery.gritter.js"></script>
-  <script type="text/javascript" src="lib/gritter-conf.js"></script>
-  <!--script for this page-->
-  <script src="lib/sparkline-chart.js"></script>
-  <script src="lib/zabuto_calendar.js"></script>
-  <script type="text/javascript" language="javascript" src="lib/advanced-datatable/js/jquery.dataTables.js"></script>
-  <script type="text/javascript" src="lib/advanced-datatable/js/DT_bootstrap.js"></script>
-   <script type="text/javascript" src="lib/bootstrap-fileupload/bootstrap-fileupload.js"></script>
-  <script type="text/javascript" src="lib/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
-  <script type="text/javascript" src="lib/bootstrap-daterangepicker/date.js"></script>
-  <script type="text/javascript" src="lib/bootstrap-daterangepicker/daterangepicker.js"></script>
-  <script type="text/javascript" src="lib/bootstrap-datetimepicker/js/bootstrap-datetimepicker.js"></script>
-  <script type="text/javascript" src="lib/bootstrap-daterangepicker/moment.min.js"></script>
-  <script type="text/javascript" src="lib/bootstrap-timepicker/js/bootstrap-timepicker.js"></script>
-  <script src="lib/advanced-form-components.js"></script>

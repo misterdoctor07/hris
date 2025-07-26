@@ -219,6 +219,25 @@ $showPopup = ($unreadCount > 0);
     .read-announcement {
         opacity: 0.8;
     }
+    
+    .table-border-bottom-only {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    
+    .table-border-bottom-only th,
+    .table-border-bottom-only td {
+        border: none;
+        border-bottom: 1px solid #ccc;
+        padding: 8px;
+        vertical-align: middle;
+        text-align: center;
+    }
+    
+    .table-border-bottom-only thead th {
+        font-weight: bold;
+        background-color: #f9f9f9;
+    }
 </style>
 
 <!-- Announcement Pop-up -->
@@ -506,7 +525,11 @@ document.head.appendChild(style);
                 <?php endif; ?>
                 <?php if (in_array($idno, $approvers) && $designation != 78 && $designation != 116 && $designation != 77 && $designation != 97): ?>
                   <li><a href="manageEEOapplication.php">EEO Requests
-                    <span id="eeo-notification-badge" class="badge" style="color: white; background-color: red; border-radius: 10px; font-size: 11px; margin-left: 40px;"></span>
+                    <span id="eeo-notification-badge" class="badge" style="color: white; background-color: red; border-radius: 10px; font-size: 11px; margin-left: 45px;"></span>
+                  </a></li>
+                <?php endif; ?>
+                  <?php if ($designation == 97 || $designation == 50 || $designation == 65 || $designation == 89 || $designation == 104 || $designation == 105 || $designation == 114 || $designation == 93 || $designation == 115 || $designation == 94): ?>
+                  <li><a href="movementApp.php">Movement Request
                   </a></li>
                 <?php endif; ?>
               </ul>
@@ -545,7 +568,7 @@ $(document).ready(function() {
             <a href="dashboard.php?infractions">
               <i class="fa fa-folder-open"></i>
               <span>Infractions</span>
-              <span id="emp-infraction-notif" style="background:red; width:10px; height:10px; border-radius:50%; display:none;"></span>
+              <span id="emp-infraction-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 157px;"></span>
             </a>
           </li>
 
@@ -610,16 +633,15 @@ $accessList = array_map('trim', explode(',', $access)); // Trim and explode
         <div class="col-lg-12">
     <div class="content-panel">
         <div class="panel-heading">
-            <h4>
-                <a href="?main"><i class="fa fa-arrow-left"></i> HOME</a> |
-                <i class="fa fa-book"></i> EMERGENCY EARLY OUT APPLICATION HISTORY
+            <h5>
+                DASHBOARD > <strong>EEO APPLICATION HISTORY</strong>
                 <a href="dashboard.php?addeeo" style="float:right;" class="btn btn-primary">
-                    <i class="fa fa-plus"></i> Apply Emergency Early Out
+                    <i class="fa fa-plus"></i> New EEO
                 </a>
-            </h4>
+            </h5>
         </div>
         <div class="panel-body">
-            <table class="table table-bordered table-striped table-condensed">
+            <table class="table table-striped table-condensed table-border-bottom-only">
                 <thead>
                     <tr>
                         <th width="2%" style="text-align: center; background-color:#20273a; color: white;">No.</th>
