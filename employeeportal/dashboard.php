@@ -454,6 +454,25 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                                         <span id="eeo-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
                                     </a>
                                 </li>
+                                <?php
+                                    $idno = $_SESSION['idno'];
+                                    
+                                    $allowWFH = false;
+                                    
+                                    $sqlToggle = mysqli_query($con, "SELECT status_toggle FROM allowed_wfh WHERE idno = '$idno' LIMIT 1");
+                                    
+                                    if ($row = mysqli_fetch_assoc($sqlToggle)) {
+                                        $allowWFH = ($row['status_toggle'] == 1);
+                                    }
+                                ?>
+                                <?php if ($allowWFH): ?>
+                                    <li>
+                                        <a href="dashboard.php?wfh_form" class="submenu-item" onclick="markNotifseen('wfh')" style="position: relative; display: inline-block;">
+                                            Apply WFH
+                                            <span id="wfh-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
+                                        </a>
+                                    </li>
+                                <?php endif; ?>
                                 <?php if ($designation == 114): ?>
                                     <li>
                                         <a href="manageemployee.php" class="submenu-item" style="position: relative; display: inline-block;">
@@ -575,11 +594,11 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                             ?>
                             <li>
                                 <a href="dashboard.php?wfh_nurse_note">
-                                    <i class="fa fa-file"></i>
+                                    <i class="fa fa-map-marker"></i>
                                     <span>WFH Nurse Notes</span>
-                                    <?php if ($note_count > 0) { ?>
-                                        <span class="badge" style="color: white; background-color: red; margin-left: 22px;""><?php echo $note_count; ?></span>
-                                    <?php } ?>
+                                    <?php if ($note_count > 0):?>
+                                        <span class="badge" style="color: white; background-color: red; margin-left: 22px;"><?php echo $note_count; ?></span>
+                                    <?php endif; ?>
                                 </a>
                             </li>
                         <?php endif; ?>
@@ -630,34 +649,15 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                                 <span>Log Details</span>
                             </a>
                         </li>
-                        <?php
-                            $idno = $_SESSION['idno'];
-                            
-                            $allowWFH = false;
-                            
-                            $sqlToggle = mysqli_query($con, "SELECT status_toggle FROM allowed_wfh WHERE idno = '$idno' LIMIT 1");
-                            
-                            if ($row = mysqli_fetch_assoc($sqlToggle)) {
-                                $allowWFH = ($row['status_toggle'] == 1);
-                            }
-                        ?>
-                        <li>
-                            <?php if ($allowWFH): ?>
-                                <a href="dashboard.php?wfh_form">
-                                    <i class="fa fa-file"></i>
-                                    <span>WFH Application</span>
-                                </a>
-                            <?php endif; ?>
-                        </li>
                         <li>
                             <?php if ($idno == '111111' || $idno == '102215'):?>
                                 <a href="dashboard.php?transfer_form">
-                                    <i class="fa fa-file"></i>
+                                    <i class="fa fa-plane"></i>
                                     <span>Work Setting Transfer</span>
                                 </a>
                             <?php endif; ?>
                         </li>
-                        <?php if ($idno=='103564' || $idno=='111111' || $idno=='102033' || $idno=='102215' || $idno=='101850'): ?>
+                        <?php if (in_array($designation, ['97', '114', '105', '93', '89'])): ?>
                             <li class="sub-menu">
                                 <a href="javascript:;">
                                     <i class="fa fa-book"></i>
@@ -665,17 +665,29 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                                 </a>
                                 <ul class="sub">
                                     <li><a href="dashboard.php?handbook">Company Handbook</a></li>
-                                    <?php if ($designation=='97' || $designation=='114' || $designation=='105' || $designation=='93'): ?>
+                            
+                                    <?php if (in_array($designation, ['97', '114', '105', '93', '89', '50'])): ?>
                                         <li><a href="dashboard.php?create_memo">Create Memo</a></li>
                                     <?php endif; ?>
+                            
                                     <li class="submenu">
                                         <a href="javascript:;">Memorandum</a>
                                         <ul class="sub">
-                                            <li><a href="dashboard.php?memo_admin"  class="submenu-item">Admin</a></li>
-                                            <li><a href="dashboard.php?memo_hr"  class="submenu-item">HR</a></li>
-                                            <li><a href="dashboard.php?memo_it"  class="submenu-item">IT</a></li>
+                                            <li><a href="dashboard.php?memo_admin" class="submenu-item">Admin</a></li>
+                                            <li><a href="dashboard.php?memo_hr" class="submenu-item">HR</a></li>
+                                            <li><a href="dashboard.php?memo_it" class="submenu-item">IT</a></li>
                                         </ul>
                                     </li>
+                                    
+                                    <?php if ($company == 'NESI1'): ?>
+                                        <li><a href="dashboard.php?memo_solutions">Operations Memo</a></li>
+                                    <?php endif; ?>
+                                    <?php if ($company == 'NESI2'): ?>
+                                        <li><a href="dashboard.php?memo_strategies">Operations Memo</a></li>
+                                    <?php endif; ?>
+                                    <?php if ($company == 'NEWIND'): ?>
+                                        <li><a href="dashboard.php?memo_newind">Operations Memo</a></li>
+                                    <?php endif; ?>
                                 </ul>
                             </li>
                         <?php endif; ?>
@@ -798,8 +810,12 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                             if(isset($_GET['memo_admin'])){include('memo_admin.php');}
                             if(isset($_GET['memo_hr'])){include('memo_hr.php');}
                             if(isset($_GET['memo_it'])){include('memo_it.php');}
+                            if(isset($_GET['memo_solutions'])){include('memo_solutions.php');}
+                            if(isset($_GET['memo_strategies'])){include('memo_strategies.php');}
+                            if(isset($_GET['memo_newind'])){include('memo_newind.php');}
                             if(isset($_GET['create_memo'])){include('create_memo.php');}
                             if(isset($_GET['addmemo'])){include('addmemo.php');}
+                            if(isset($_GET['editmemo'])){include('editmemo.php');}
                             if(isset($_GET['wfh_form'])){include('wfh_form.php');}
                             if(isset($_GET['addwfh'])){include('addwfh.php');}
                             if(isset($_GET['edit_wfhform'])){include('edit_wfhform.php');}
@@ -819,7 +835,7 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                     </div>
                 </section>
             </section>
-            <footer class="site-footer fixed">
+            <footer class="site-footer fixed" style="margin-left: 210px">
                 <div class="text-center">
                     <p>
                         &copy; Copyrights <strong>iHRIS</strong>. All Rights Reserved
