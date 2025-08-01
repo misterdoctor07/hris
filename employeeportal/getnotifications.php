@@ -1,212 +1,280 @@
 <?php
-session_start();
-include '../config.php';
-
-// Get the logged-in user ID
-$userId = $_SESSION['idno'];
-
-//Approver name
-$userQuery = mysqli_query($con, "SELECT ep.lastname, jt.jobtitle, ed.designation, ed.department 
-                                 FROM employee_details ed 
-                                 INNER JOIN employee_profile ep ON ep.idno = ed.idno 
-                                 INNER JOIN jobtitle jt ON jt.id = ed.designation 
-                                 WHERE ed.idno = '$userId'");
-$userDetails = mysqli_fetch_assoc($userQuery);
-$approval = trim("{$userDetails['lastname']} ({$userDetails['jobtitle']})");
-$jobTitle = $userDetails['jobtitle'];
-
-//Identifying jobtitle
-$sqlDetails = "SELECT ed.designation, ed.* 
-               FROM employee_details ed 
-               WHERE ed.idno = '$userId'";
-
-$result = mysqli_query($con, $sqlDetails);
-
-if ($result && mysqli_num_rows($result) > 0) {
-    $row = mysqli_fetch_assoc($result);
-    $jobtitle = !empty($row['designation']) ? $row['designation'] : '';
-} else {
-    $jobtitle = ''; // Fallback if no record is found
-}
-
-// Initialize an empty array for conditions
-$conditions = [];
-
-// Query to fetch the approver's combinations
-$approverQuery = "SELECT company, department, requestingofficer, shift 
-                FROM leave_protocols 
-                WHERE approvingofficer = '$userId'";
-$result = mysqli_query($con, $approverQuery);
-
-if (!$result) {
-    die("Database query failed: " . mysqli_error($con));
-}
-
-// Loop through each row and build a condition
-while ($row = mysqli_fetch_assoc($result)) {
-    $clauseParts = [];
-
-    // Build conditions based on non-null values
-    if (!empty($row['shift'])) {
-        $clauseParts[] = "ed.startshift = '{$row['shift']}'";
+    session_start();
+    include '../config.php';
+    
+    // Get the logged-in user ID
+    $userId = $_SESSION['idno'];
+    
+    //Approver name
+    $userQuery = mysqli_query($con, "SELECT ep.lastname, jt.jobtitle, ed.designation, ed.department 
+                                     FROM employee_details ed 
+                                     INNER JOIN employee_profile ep ON ep.idno = ed.idno 
+                                     INNER JOIN jobtitle jt ON jt.id = ed.designation 
+                                     WHERE ed.idno = '$userId'");
+    $userDetails = mysqli_fetch_assoc($userQuery);
+    $approval = trim("{$userDetails['lastname']} ({$userDetails['jobtitle']})");
+    $jobTitle = $userDetails['jobtitle'];
+    $designation = $userDetails['designation'];
+    $department = $userDetails['department'];
+    
+    //Identifying jobtitle
+    $sqlDetails = "SELECT ed.designation, ed.* 
+                   FROM employee_details ed 
+                   WHERE ed.idno = '$userId'";
+    
+    $result = mysqli_query($con, $sqlDetails);
+    
+    if ($result && mysqli_num_rows($result) > 0) {
+        $row = mysqli_fetch_assoc($result);
+        $jobtitle = !empty($row['designation']) ? $row['designation'] : '';
+    } else {
+        $jobtitle = ''; // Fallback if no record is found
     }
-    if (!empty($row['company'])) {
-        $clauseParts[] = "ed.company = '{$row['company']}'";
+    
+    // Initialize an empty array for conditions
+    $conditions = [];
+    
+    // Query to fetch the approver's combinations
+    $approverQuery = "SELECT company, department, requestingofficer, shift 
+                    FROM leave_protocols 
+                    WHERE approvingofficer = '$userId'";
+    $result = mysqli_query($con, $approverQuery);
+    
+    if (!$result) {
+        die("Database query failed: " . mysqli_error($con));
     }
-    if (!empty($row['department'])) {
-        $clauseParts[] = "ed.department = '{$row['department']}'";
+    
+    // Loop through each row and build a condition
+    while ($row = mysqli_fetch_assoc($result)) {
+        $clauseParts = [];
+    
+        // Build conditions based on non-null values
+        if (!empty($row['shift'])) {
+            $clauseParts[] = "ed.startshift = '{$row['shift']}'";
+        }
+        if (!empty($row['company'])) {
+            $clauseParts[] = "ed.company = '{$row['company']}'";
+        }
+        if (!empty($row['department'])) {
+            $clauseParts[] = "ed.department = '{$row['department']}'";
+        }
+        if (!empty($row['requestingofficer'])) {
+            $clauseParts[] = "ed.designation = '{$row['requestingofficer']}'";
+        }
+    
+        // Combine the conditions for this specific row
+        if (!empty($clauseParts)) {
+            $conditions[] = '(' . implode(' AND ', $clauseParts) . ')';
+        }
     }
-    if (!empty($row['requestingofficer'])) {
-        $clauseParts[] = "ed.designation = '{$row['requestingofficer']}'";
+    // Join all conditions with OR to match any valid combination
+    $whereClause = !empty($conditions) ? implode(' OR ', $conditions) : '1=1';
+    
+    //Id in where clause
+    $idno = ($jobtitle == '78' || $jobtitle == '116') 
+        ? "eeo.idno != '$userId'" 
+        : '1=1';
+    //Type in where clause
+    $type = ($jobtitle == '78' || $jobtitle == '116') 
+        ? "eeo.type_EEO = 'Medical'" 
+        : '1=1';
+    //OT Type in where clause
+    $ottype = ($jobtitle == '93' || $jobTitle == '114') 
+        ? "ot.ot_type = 'IT-related'" 
+        : '1=1';
+    //Status in where clause
+    $status = ($jobtitle == '78' || $jobtitle == '116') 
+        ? "eeo.eeo_status = 'Pending'" 
+        : "eeo.eeo_status LIKE '%Approved%'";
+    //acknowledge in where clause
+    $acknowledge = ($jobtitle == '78' || $jobtitle == '116') 
+        ? "1=1" 
+        : "(COALESCE(eeo.acknowledged, '') NOT LIKE '%$approval%' 
+            AND COALESCE(eeo.acknowledged, '') NOT LIKE '%$jobTitle%')";
+    
+    // Count pending leave applications for the same company
+    $pendingLeaveCount = 0;
+    $leaveQuery = "SELECT COUNT(*) AS total 
+                        FROM leave_application la 
+                        INNER JOIN employee_profile ep ON ep.idno = la.idno 
+                        INNER JOIN employee_details ed ON ed.idno = ep.idno 
+                        WHERE la.idno != '$userId' 
+                        AND la.appstatus = 'Pending'
+                        AND ($whereClause)";
+    
+        $sqlLeave = mysqli_query($con, $leaveQuery);
+    
+        if (!$sqlLeave) {
+            die("Error: " . mysqli_error($con));
+        }
+    
+        $leaveRow = mysqli_fetch_assoc($sqlLeave);
+    
+        if (!$leaveRow) {
+        die("Error: No leave data found");
     }
-
-    // Combine the conditions for this specific row
-    if (!empty($clauseParts)) {
-        $conditions[] = '(' . implode(' AND ', $clauseParts) . ')';
-    }
-}
-// Join all conditions with OR to match any valid combination
-$whereClause = !empty($conditions) ? implode(' OR ', $conditions) : '1=1';
-
-//Id in where clause
-$idno = ($jobtitle == '78' || $jobtitle == '116') 
-    ? "eeo.idno != '$userId'" 
-    : '1=1';
-//Type in where clause
-$type = ($jobtitle == '78' || $jobtitle == '116') 
-    ? "eeo.type_EEO = 'Medical'" 
-    : '1=1';
-//OT Type in where clause
-$ottype = ($jobtitle == '93' || $jobTitle == '114') 
-    ? "ot.ot_type = 'IT-related'" 
-    : '1=1';
-//Status in where clause
-$status = ($jobtitle == '78' || $jobtitle == '116') 
-    ? "eeo.eeo_status = 'Pending'" 
-    : "eeo.eeo_status LIKE '%Approved%'";
-//acknowledge in where clause
-$acknowledge = ($jobtitle == '78' || $jobtitle == '116') 
-    ? "1=1" 
-    : "(COALESCE(eeo.acknowledged, '') NOT LIKE '%$approval%' 
-        AND COALESCE(eeo.acknowledged, '') NOT LIKE '%$jobTitle%')";
-
-// Count pending leave applications for the same company
-$pendingLeaveCount = 0;
-$leaveQuery = "SELECT COUNT(*) AS total 
-                    FROM leave_application la 
-                    INNER JOIN employee_profile ep ON ep.idno = la.idno 
-                    INNER JOIN employee_details ed ON ed.idno = ep.idno 
-                    WHERE la.idno != '$userId' 
-                    AND la.appstatus = 'Pending'
-                    AND ($whereClause)";
-
-    $sqlLeave = mysqli_query($con, $leaveQuery);
-
-    if (!$sqlLeave) {
-        die("Error: " . mysqli_error($con));
-    }
-
-    $leaveRow = mysqli_fetch_assoc($sqlLeave);
-
-    if (!$leaveRow) {
-    die("Error: No leave data found");
-}
-
-$pendingLeaveCount = $leaveRow['total'];
-
-// Initialize pending OT count
-$pendingOTCount = 0;
-
-// Define the base query
-$baseQuery = "SELECT COUNT(*) AS total 
-    FROM overtime_application ot
-    INNER JOIN employee_profile ep ON ep.idno = ot.idno 
-    INNER JOIN employee_details ed ON ed.idno = ep.idno 
-    WHERE ot.idno != '$userId' 
-    AND ot.app_status = 'Pending'
-    AND ($whereClause)";
-
-// Execute the base query
-$sqlOT = mysqli_query($con, $baseQuery);
-if (!$sqlOT) {
-    die("Error: " . mysqli_error($con));
-}
-$pendingOTCount = mysqli_fetch_assoc($sqlOT)['total'] ?? 0;
-
-// Additional condition for job title IT Officer and Admin Executive
-if ($jobtitle == '93' || $jobTitle == '114') {
-    $additionalQuery = "SELECT COUNT(*) AS total 
+    
+    $pendingLeaveCount = $leaveRow['total'];
+    
+    // Initialize pending OT count
+    $pendingOTCount = 0;
+    
+    // Define the base query
+    $baseQuery = "SELECT COUNT(*) AS total 
         FROM overtime_application ot
         INNER JOIN employee_profile ep ON ep.idno = ot.idno 
         INNER JOIN employee_details ed ON ed.idno = ep.idno 
         WHERE ot.idno != '$userId' 
         AND ot.app_status = 'Pending'
-        AND ($ottype)";
-
-    $sqlOT1 = mysqli_query($con, $additionalQuery);
-    if (!$sqlOT1) {
+        AND ($whereClause)";
+    
+    // Execute the base query
+    $sqlOT = mysqli_query($con, $baseQuery);
+    if (!$sqlOT) {
         die("Error: " . mysqli_error($con));
     }
-    $pendingOTCount += mysqli_fetch_assoc($sqlOT1)['total'] ?? 0;
-}
-
-// Count pending missed log applications
-$pendingMLCount = 0;
-$mlQuery = "SELECT COUNT(*) AS total
-            FROM missed_log_application ml 
-            INNER JOIN employee_profile ep ON ep.idno = ml.idno 
+    $pendingOTCount = mysqli_fetch_assoc($sqlOT)['total'] ?? 0;
+    
+    // Additional condition for job title IT Officer and Admin Executive
+    if ($jobtitle == '93' || $jobTitle == '114') {
+        $additionalQuery = "SELECT COUNT(*) AS total 
+            FROM overtime_application ot
+            INNER JOIN employee_profile ep ON ep.idno = ot.idno 
             INNER JOIN employee_details ed ON ed.idno = ep.idno 
-            WHERE ml.idno != '$userId' 
-            AND ml.applic_status = 'Pending'
-            AND ($whereClause)";
-
-    $sqlML = mysqli_query($con, $mlQuery);
-
-    if (!$sqlML) {
+            WHERE ot.idno != '$userId' 
+            AND ot.app_status = 'Pending'
+            AND ($ottype)";
+    
+        $sqlOT1 = mysqli_query($con, $additionalQuery);
+        if (!$sqlOT1) {
+            die("Error: " . mysqli_error($con));
+        }
+        $pendingOTCount += mysqli_fetch_assoc($sqlOT1)['total'] ?? 0;
+    }
+    
+    // Count pending missed log applications
+    $pendingMLCount = 0;
+    $mlQuery = "SELECT COUNT(*) AS total
+                FROM missed_log_application ml 
+                INNER JOIN employee_profile ep ON ep.idno = ml.idno 
+                INNER JOIN employee_details ed ON ed.idno = ep.idno 
+                WHERE ml.idno != '$userId' 
+                AND ml.applic_status = 'Pending'
+                AND ($whereClause)";
+    
+        $sqlML = mysqli_query($con, $mlQuery);
+    
+        if (!$sqlML) {
+            die("Error: " . mysqli_error($con));
+        }
+    
+        $mlRow = mysqli_fetch_assoc($sqlML);
+    
+        if (!$mlRow) {
+            die("Error: No ML data found");
+        }
+    
+        $pendingMLCount = $mlRow['total'];
+    
+    // Count pending EEO applications
+    $pendingEEOCount = 0;
+    $eeoQuery = "SELECT COUNT(*) AS total
+                 FROM emergencyearlyout eeo
+                 INNER JOIN employee_profile ep ON ep.idno = eeo.idno
+                 INNER JOIN employee_details ed ON ed.idno = ep.idno
+                 WHERE ($status)
+                 AND ($idno)
+                 AND eeo.idno != '$userId'
+                 AND ($type)
+                 AND ($acknowledge)
+                 AND ($whereClause)";
+    
+    $sqlEEO = mysqli_query($con, $eeoQuery);
+    if (!$sqlEEO) {
         die("Error: " . mysqli_error($con));
     }
-
-    $mlRow = mysqli_fetch_assoc($sqlML);
-
-    if (!$mlRow) {
-        die("Error: No ML data found");
+    
+    $eeoRow = mysqli_fetch_assoc($sqlEEO);
+    $pendingEEOCount = $eeoRow['total'] ?? 0;
+    
+    // Count pending WFH applications
+    $pendingWFHCount = 0;
+    $wfhQuery = "SELECT COUNT(*) AS total
+                 FROM wfh_application wfh
+                 INNER JOIN employee_profile ep ON ep.idno = wfh.idno
+                 INNER JOIN employee_details ed ON ed.idno = ep.idno
+                 WHERE wfh.application_status = 'Pending' 
+                 AND ($whereClause)";
+    
+    $sqlWFH = mysqli_query($con, $wfhQuery);
+    if (!$sqlWFH) {
+        die("Error: " . mysqli_error($con));
     }
-
-    $pendingMLCount = $mlRow['total'];
-
-// Count pending EEO applications
-$pendingEEOCount = 0;
-$eeoQuery = "SELECT COUNT(*) AS total
-             FROM emergencyearlyout eeo
-             INNER JOIN employee_profile ep ON ep.idno = eeo.idno
-             INNER JOIN employee_details ed ON ed.idno = ep.idno
-             WHERE ($status)
-             AND ($idno)
-             AND eeo.idno != '$userId'
-             AND ($type)
-             AND ($acknowledge)
-             AND ($whereClause)";
-
-$sqlEEO = mysqli_query($con, $eeoQuery);
-if (!$sqlEEO) {
-    die("Error: " . mysqli_error($con));
-}
-
-$eeoRow = mysqli_fetch_assoc($sqlEEO);
-$pendingEEOCount = $eeoRow['total'] ?? 0;
-
-$totalCount = ($jobtitle === '116' || $jobtitle === '78') 
-              ? (int)$pendingEEOCount 
-              : (int)$pendingLeaveCount + (int)$pendingOTCount + (int)$pendingMLCount + (int)$pendingEEOCount;
-
-
-// Output the pending counts as JSON
-header('Content-Type: application/json');
-echo json_encode(array(
-    'leave_count' => $pendingLeaveCount,
-    'ot_count' => $pendingOTCount,
-    'ml_count' => $pendingMLCount,
-    'eeo_count' => $pendingEEOCount,
-    'total_count' => $totalCount
-));
+    
+    $wfhRow = mysqli_fetch_assoc($sqlWFH);
+    $pendingWFHCount = $wfhRow['total'] ?? 0;
+    
+    // Count pending WFH acknowledges
+    $pendingWFHackCount = 0;
+    $wfhackQuery = "SELECT COUNT(*) AS total
+                 FROM wfh_application wfh
+                 INNER JOIN employee_profile ep ON ep.idno = wfh.idno
+                 INNER JOIN employee_details ed ON ed.idno = ep.idno
+                 WHERE acknowledged NOT LIKE '%IT%'
+                 OR acknowledged IS NULL";
+    
+    $sqlWFHack = mysqli_query($con, $wfhackQuery);
+    if (!$sqlWFHack) {
+        die("Error: " . mysqli_error($con));
+    }
+    
+    $wfhackRow = mysqli_fetch_assoc($sqlWFHack);
+    $pendingWFHackCount = $wfhackRow['total'] ?? 0;
+    
+    // Count pending Transfer acknowledges
+    $pendingTransferCount = 0;
+    $transferQuery = "SELECT COUNT(*) AS total
+                 FROM work_transfer wt
+                 INNER JOIN employee_profile ep ON ep.idno = wt.idno
+                 INNER JOIN employee_details ed ON ed.idno = ep.idno
+                 WHERE acknowledged NOT LIKE '%IT%'
+                 OR acknowledged IS NULL";
+    
+    $sqlTransfer = mysqli_query($con, $transferQuery);
+    if (!$sqlTransfer) {
+        die("Error: " . mysqli_error($con));
+    }
+    
+    $transferRow = mysqli_fetch_assoc($sqlTransfer);
+    $pendingTransferCount = $transferRow['total'] ?? 0;
+        
+    // Total Count
+    if ($jobtitle === '116' || $jobtitle === '78') {
+        $totalCount = (int)$pendingEEOCount;
+    } elseif ($jobtitle === '93') {
+        $totalCount = (int)$pendingLeaveCount 
+                    + (int)$pendingOTCount 
+                    + (int)$pendingMLCount 
+                    + (int)$pendingEEOCount 
+                    + (int)$pendingWFHackCount 
+                    + (int)$pendingTransferCount;
+    } else {
+        $totalCount = (int)$pendingLeaveCount 
+                    + (int)$pendingOTCount 
+                    + (int)$pendingMLCount 
+                    + (int)$pendingEEOCount;
+    }
+    
+    // Output the pending counts as JSON
+    header('Content-Type: application/json');
+    echo json_encode(array(
+        'leave_count' => $pendingLeaveCount,
+        'ot_count' => $pendingOTCount,
+        'ml_count' => $pendingMLCount,
+        'eeo_count' => $pendingEEOCount,
+        'wfh_req_count' => $pendingWFHCount,
+        'wfh_ack_count' => $pendingWFHackCount,
+        'transfer_count' => $pendingTransferCount,
+        'total_count' => $totalCount
+    ));
 ?>
