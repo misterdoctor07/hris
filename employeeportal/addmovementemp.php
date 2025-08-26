@@ -1,51 +1,114 @@
 <?php
+    // Stronger mysqli error reporting so we can catch issues in try/catch
+    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
     include('../config.php');
-    
-    // Initialize variables
+
+    // Initialize defaults (kept from your original; not used directly below but harmless)
     $employeeDetails = [
         'company' => 'N/A',
         'department' => 'N/A',
         'jobtitle' => 'N/A',
         'shift' => 'N/A'
     ];
-    
-    // Process form submission
+
+    $error = null;
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit']) && isset($_POST['addmovement'])) {
-        $idno = mysqli_real_escape_string($con, $_POST['idno']);
-        $movement_type = mysqli_real_escape_string($con, $_POST['movement_type']);
-        $current_company = mysqli_real_escape_string($con, $_POST['current_company']);
-        $current_department = mysqli_real_escape_string($con, $_POST['current_department']);
-        $current_jobtitle = mysqli_real_escape_string($con, $_POST['current_jobtitle']);
-        $current_shift = mysqli_real_escape_string($con, $_POST['current_shift']);
-        $new_company = mysqli_real_escape_string($con, $_POST['new_company']);
-        $new_department = mysqli_real_escape_string($con, $_POST['new_department']);
-        $new_jobtitle = mysqli_real_escape_string($con, $_POST['new_jobtitle']);
-        $new_shift = mysqli_real_escape_string($con, $_POST['new_shift']);
-        $datenow = mysqli_real_escape_string($con, date('Y-m-d H:i:s'));
-        $reason = mysqli_real_escape_string($con, $_POST['reason']);
-        $other_reason = isset($_POST['other_reason']) ? mysqli_real_escape_string($con, $_POST['other_reason']) : null;
-        $custom_shift = isset($_POST['custom_shift']) ? mysqli_real_escape_string($con, $_POST['custom_shift']) : null;
-        $effectivity_date = mysqli_real_escape_string($con, $_POST['effectivity_date']);
-        $addedby = mysqli_real_escape_string($con, $_POST['addedby']);
-        
-        $query = "INSERT INTO employee_movements (
-            employee_idno, movement_type, 
-            current_company, current_department, current_jobtitle, current_shift,
-            new_company, new_department, new_jobtitle, new_shift,created_at,
-            reason, other_reason,custom_shift, effectivity_date, created_by
-        ) VALUES (
-            '$idno', '$movement_type',
-            '$current_company', '$current_department', '$current_jobtitle', '$current_shift',
-            '$new_company', '$new_department', '$new_jobtitle', '$new_shift','$datenow',
-            '$reason', " . ($other_reason ? "'$other_reason'" : "NULL") . ", " . ($custom_shift ? "'$custom_shift'" : "NULL") . ",
-            '$effectivity_date', '$addedby'
-        )";
-        
-        if (mysqli_query($con, $query)) {
-            echo "<script>alert('Employee movement submitted successfully!'); window.location='movementApp.php';</script>";
+        try {
+            // Collect & sanitize
+            $idno               = mysqli_real_escape_string($con, $_POST['idno']);
+            $movement_type      = mysqli_real_escape_string($con, $_POST['movement_type']);
+            $current_company    = mysqli_real_escape_string($con, $_POST['current_company']);   // from hidden
+            $current_department = mysqli_real_escape_string($con, $_POST['current_department']); // from hidden
+            $current_jobtitle   = mysqli_real_escape_string($con, $_POST['current_jobtitle']);   // from hidden
+            $current_shift      = mysqli_real_escape_string($con, $_POST['current_shift']);      // from hidden
+
+            $new_company        = !empty($_POST['new_company']) ? mysqli_real_escape_string($con, $_POST['new_company']) : null;
+            $new_department     = !empty($_POST['new_department']) ? mysqli_real_escape_string($con, $_POST['new_department']) : null;
+            $new_jobtitle       = !empty($_POST['new_jobtitle']) ? mysqli_real_escape_string($con, $_POST['new_jobtitle']) : null;
+            $new_shift          = !empty($_POST['new_shift']) ? mysqli_real_escape_string($con, $_POST['new_shift']) : null;
+
+            $datenow            = date('Y-m-d H:i:s');
+
+            $reason             = mysqli_real_escape_string($con, $_POST['reason']);
+            $other_reason       = !empty($_POST['other_reason']) ? mysqli_real_escape_string($con, $_POST['other_reason']) : null;
+            $custom_shift       = !empty($_POST['custom_shift']) ? mysqli_real_escape_string($con, $_POST['custom_shift']) : null;
+
+            $effectivity_date   = mysqli_real_escape_string($con, $_POST['effectivity_date']);
+            $addedby            = mysqli_real_escape_string($con, $_POST['addedby']);
+            $remarks            = !empty($_POST['remarks']) ? mysqli_real_escape_string($con, $_POST['remarks']) : null;
+
+            $location           = mysqli_real_escape_string($con, $_POST['location']);
+            $transfer_reason    = !empty($_POST['transfer_reason']) ? mysqli_real_escape_string($con, urldecode($_POST['transfer_reason'])) : null;
+            // ✅ FIX: use the correct field name from your form
+            $date_transfer      = mysqli_real_escape_string($con, $_POST['transfer_date']);
+
+            // Start transaction
+            mysqli_begin_transaction($con);
+
+            // --- INSERT employee_movements ---
+            $sql1 = "INSERT INTO employee_movements (
+                employee_idno, movement_type, 
+                current_company, current_department, current_jobtitle, current_shift,
+                new_company, new_department, new_jobtitle, new_shift, created_at,
+                reason, other_reason, custom_shift, effectivity_date, created_by, remarks
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+            $stmt1 = mysqli_prepare($con, $sql1);
+
+            // Bind params (all strings; NULLs will be sent as NULL)
+            mysqli_stmt_bind_param(
+                $stmt1,
+                "sssssssssssssssss",
+                $idno,
+                $movement_type,
+                $current_company,
+                $current_department,
+                $current_jobtitle,
+                $current_shift,
+                $new_company,
+                $new_department,
+                $new_jobtitle,
+                $new_shift,
+                $datenow,
+                $reason,
+                $other_reason,
+                $custom_shift,
+                $effectivity_date,
+                $addedby,
+                $remarks
+            );
+            mysqli_stmt_execute($stmt1);
+            mysqli_stmt_close($stmt1);
+
+            // --- INSERT work_transfer ---
+            $sql2 = "INSERT INTO work_transfer (idno, new_loc, reason, date_transfer)
+                     VALUES (?,?,?,?)";
+            $stmt2 = mysqli_prepare($con, $sql2);
+            mysqli_stmt_bind_param(
+                $stmt2,
+                "ssss",
+                $idno,
+                $location,
+                $transfer_reason,
+                $date_transfer
+            );
+            mysqli_stmt_execute($stmt2);
+            mysqli_stmt_close($stmt2);
+
+            // Commit if both succeed
+            mysqli_commit($con);
+
+            echo "<script>alert('Employee movement submitted successfully!'); window.location='dashboard.php?movementApp';</script>";
             exit();
-        } else {
-            $error = "Error: " . mysqli_error($con);
+
+        } catch (Throwable $e) {
+            // Rollback if anything fails
+            if ($con && mysqli_errno($con)) {
+                mysqli_rollback($con);
+            }
+            $error = "Error saving movement: " . $e->getMessage();
         }
     }
 ?>
@@ -60,7 +123,7 @@
             font-family: Arial, sans-serif;
             line-height: 1.6;
             margin: 0;
-            background-color: #f5f5f5;
+            background-color: #f0f2f5
         }
         .employee-details {
             background: #f9f9f9;
@@ -84,13 +147,10 @@
             color: white;
         }
         input[readonly] {
-            background-color: #f0f0f0;  /* light gray background */
-            color: #20283a;             /* muted text color */
-            border: 1px solid #ced4da;  /* subtle border */
-            cursor: not-allowed;        /* show that it's not editable */
-        }
-        body{
-            background-color: #f0f2f5
+            background-color: #f0f0f0;
+            color: #20283a;
+            border: 1px solid #ced4da;
+            cursor: not-allowed;
         }
         .centered-container {
             display: flex;
@@ -143,7 +203,7 @@
         
         .form-control:focus {
             outline: none;
-            border-bottom-color: #007bff; /* Optional: Change on focus */
+            border-bottom-color: #007bff;
             box-shadow: none;
         }
         .form-group {
@@ -162,31 +222,32 @@
 
         .custom-select {
             width: 100%;
-            appearance: none;           /* Hide default arrow (WebKit) */
+            appearance: none;
             -webkit-appearance: none;
             -moz-appearance: none;
-            padding-right: 30px;        /* Leave space for custom icon */
+            padding-right: 30px;
         }
 
         .custom-dropdown-icon {
             font-size: 25px;
             position: absolute;
             top: 50%;
-            right: 13px;                /* Adjust this to control position */
+            right: 13px;
             transform: translateY(-50%);
-            pointer-events: none;       /* Allows click through to select */
+            pointer-events: none;
         }
     </style>
 </head>
-<body style="background-image: url('3.png'); background-size: cover; background-repeat: no-repeat; background-position: center;">
+<body>
     <div class="centered-container">
-        <?php if (isset($error)): ?>
-            <div style="color: red; margin-bottom: 15px;"><?php echo $error; ?></div>
+        <?php if (!empty($error)): ?>
+            <div style="color: red; margin-bottom: 15px;"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
         
         <form class="form-horizontal style-form" method="POST" onsubmit="return confirm('Do you wish to submit details?');" style="width: 100%; max-width: 500px;">
-            <input type="hidden" name="addmovement">
-            <input type="hidden" name="addedby" value="<?=htmlspecialchars($fullname);?>">
+            <input type="hidden" name="addmovement" value="1">
+            <input type="hidden" name="addedby" value="<?= isset($fullname) ? htmlspecialchars($fullname) : '' ?>">
+            <!-- Hidden fields actually POSTED to PHP -->
             <input type="hidden" name="current_company" id="currentCompanyHidden">
             <input type="hidden" name="current_department" id="currentDepartmentHidden">
             <input type="hidden" name="current_jobtitle" id="currentJobtitleHidden">
@@ -195,11 +256,13 @@
             <div class="content-panel">
                 <div class="panel-heading d-flex align-items-center justify-content-between" style="position: relative;">
                     <h4 class="mb-0 mx-auto text-center" style="flex: 1;">EMPLOYEE MOVEMENT FORM</h4>
-                    <a href="movementApp.php" style="color: white; position: absolute; right: 15px;">
+                    <a href="dashboard.php?movementApp" style="color: white; position: absolute; right: 15px;">
                         <i class="fa fa-times" style="cursor: pointer;"></i>
                     </a>
                 </div>
                 <div class="panel-body">  
+
+                    <!-- Employee Search/Select -->
                     <div class="form-group mb-3" style="margin: 10px; margin-bottom: 30px;">
                         <label class="form-label">Employee</label>
                         <div style="position: relative; background-color: white;">
@@ -207,6 +270,7 @@
                             <select id="employeeSelect" name="idno" required onchange="updateEmployeeFields()" class="form-control" size="5" style="position: absolute; top: 100%; left: 0; width: 100%; display: none; z-index: 1; background-color: white;">
                                 <option value="">Select an employee</option>
                                 <?php
+                                    // Load employees (same as your original joins/labels)
                                     $employees = mysqli_query($con, "
                                         SELECT 
                                             p.idno,
@@ -227,57 +291,52 @@
                                     ");
                                     
                                     while ($emp = mysqli_fetch_assoc($employees)) {
-                                        $idno       = htmlspecialchars($emp['idno']);
-                                        $name       = htmlspecialchars($emp['name']);
-                                        $company    = htmlspecialchars($emp['company_name'] ?? 'N/A');
-                                        $jobtitle   = htmlspecialchars($emp['jobtitle_name'] ?? 'N/A');
-                                        $department = htmlspecialchars($emp['department_name'] ?? 'N/A');
-                                        // Format the shifts
+                                        $idnoOpt     = htmlspecialchars($emp['idno']);
+                                        $name        = htmlspecialchars($emp['name']);
+                                        $companyTxt  = htmlspecialchars($emp['company_name'] ?? 'N/A');
+                                        $jobtitleTxt = htmlspecialchars($emp['jobtitle_name'] ?? 'N/A');
+                                        $deptTxt     = htmlspecialchars($emp['department_name'] ?? 'N/A');
+
                                         $shift_display = 'N/A';
                                         if (!empty($emp['startshift']) && !empty($emp['endshift'])) {
                                             $start = date("h:i A", strtotime($emp['startshift']));
-                                            $end = date("h:i A", strtotime($emp['endshift']));
+                                            $end   = date("h:i A", strtotime($emp['endshift']));
                                             $shift_display = "$start to $end";
                                         }
-                                        
+                                        $shiftTxt = htmlspecialchars($shift_display);
+
                                         echo "<option 
-                                                value='$idno' 
-                                                data-company='$company' 
-                                                data-jobtitle='$jobtitle'
-                                                data-shift='$shift_display'
-                                                data-department='$department'
-                                            >$name</option>";
+                                                value='{$idnoOpt}' 
+                                                data-company='{$companyTxt}' 
+                                                data-jobtitle='{$jobtitleTxt}'
+                                                data-shift='{$shiftTxt}'
+                                                data-department='{$deptTxt}'
+                                            >{$name}</option>";
                                     }
                                 ?>
                             </select>
+                        </div>
                     </div>
+
+                    <!-- Current Details (visible only; NO name attributes to avoid overwriting) -->
                     <div class="form-group mb-3" style="margin: 1px; margin-top: 15px;">
                         <label for="companys" class="form-label">Current Company</label>
-                        <input type="text" id="companys" name="current_company" class="form-control" readonly>
+                        <input type="text" id="companys" class="form-control" readonly>
                     </div>
                     <div class="form-group mb-3" style="margin: 1px;">
                         <label for="jobtitle" class="form-label">Current Job Title</label>
-                        <input type="text" id="jobtitle" name="current_jobtitle" class="form-control" readonly>
+                        <input type="text" id="jobtitle" class="form-control" readonly>
                     </div>
                     <div class="form-group mb-3" style="margin: 1px;">
                         <label for="department" class="form-label">Current Department</label>
-                        <input type="text" id="department" name="current_department" class="form-control" readonly>
+                        <input type="text" id="department" class="form-control" readonly>
                     </div>
                     <div class="form-group mb-3" style="margin: 1px;">
                         <label for="shift" class="form-label">Current Shift</label>
-                        <input type="text" id="shift" name="current_shift" class="form-control" readonly>
+                        <input type="text" id="shift" class="form-control" readonly>
                     </div>
-                    <script>
-                        function updateEmployeeFields() {
-                            const select = document.getElementById('employeeSelect');
-                            const selected = select.options[select.selectedIndex];
-                
-                            document.getElementById('companys').value   = selected.getAttribute('data-company') || '';
-                            document.getElementById('jobtitle').value   = selected.getAttribute('data-jobtitle') || '';
-                            document.getElementById('department').value = selected.getAttribute('data-department') || '';
-                            document.getElementById('shift').value      = selected.getAttribute('data-shift') || '';
-                        }
-                    </script>
+
+                    <!-- Movement Type -->
                     <div class="form-group mb-3" style="margin: 1px;">
                         <label class="form-label">Type of Movement</label>
                         <div class="custom-select-wrapper">
@@ -292,6 +351,7 @@
                         </div>
                     </div>
                     
+                    <!-- New Company -->
                     <div class="form-group mb-3" style="margin: 1px;">
                         <label class="form-label">New Company</label>
                         <div class="custom-select-wrapper">
@@ -300,14 +360,16 @@
                                 <?php
                                 $sqlCompany = mysqli_query($con, "SELECT * FROM settings ORDER BY companycode ASC");
                                 while($company = mysqli_fetch_array($sqlCompany)) {
-                                    echo "<option value='".$company['companycode']."'>".$company['companycode']."</option>";
+                                    echo "<option value='".htmlspecialchars($company['companycode'])."'>".htmlspecialchars($company['companycode'])."</option>";
                                 }
                                 ?>
                             </select>
                             <span class="custom-dropdown-icon">&#9662;</span>
                         </div>
+                        <small class="text-danger" style="font-style: italic;">If same Company, leave this selection blank. It's already indicated as 'Same'.</small>
                     </div>
                     
+                    <!-- New Department -->
                     <div class="form-group mb-3" style="margin: 1px;">
                         <label class="form-label">New Department</label>
                         <div class="custom-select-wrapper">
@@ -316,14 +378,16 @@
                                 <?php
                                 $sqlDept = mysqli_query($con, "SELECT * FROM department ORDER BY department ASC");
                                 while($dept = mysqli_fetch_array($sqlDept)) {
-                                    echo "<option value='".$dept['id']."'>".$dept['department']."</option>";
+                                    echo "<option value='".htmlspecialchars($dept['id'])."'>".htmlspecialchars($dept['department'])."</option>";
                                 }
                                 ?>
                             </select>
                             <span class="custom-dropdown-icon">&#9662;</span>
                         </div>
+                        <small class="text-danger" style="font-style: italic;">If same Department, leave this selection blank. It's already indicated as 'Same'.</small>
                     </div>
                     
+                    <!-- New Job Title -->
                     <div class="form-group mb-3" style="margin: 1px;">
                         <label class="form-label">New Job Title</label>
                         <div class="custom-select-wrapper">
@@ -332,14 +396,16 @@
                                 <?php
                                 $sqlJob = mysqli_query($con, "SELECT * FROM jobtitle ORDER BY jobtitle ASC");
                                 while($job = mysqli_fetch_array($sqlJob)) {
-                                    echo "<option value='".$job['id']."'>".$job['jobtitle']."</option>";
+                                    echo "<option value='".htmlspecialchars($job['id'])."'>".htmlspecialchars($job['jobtitle'])."</option>";
                                 }
                                 ?>
                             </select>
                             <span class="custom-dropdown-icon">&#9662;</span>
                         </div>
+                        <small class="text-danger" style="font-style: italic;">If same Jobtitle, leave this selection blank. It's already indicated as 'Same'.</small>
                     </div>
                     
+                    <!-- New Shift -->
                     <div class="form-group mb-3" style="margin: 1px;">
                         <label class="form-label">New Shift</label>
                         <div class="custom-select-wrapper">
@@ -352,12 +418,13 @@
                                 <option value="06:00:00-15:00:00">6:00 AM to 3:00 PM</option>
                                 <option value="23:00:00-08:00:00">11:00 PM to 8:00 AM</option>
                                 <option value="23:30:00-08:30:00">11:30 PM to 8:30 AM</option>
-                                <option value="12:00:00-09:00:00">12:00 PM to 9:00 AM</option>
-                                <option value="12:30:00-09:30:00">12:30 PM to 9:30 AM</option>
+                                <option value="00:00:00-09:00:00">12:00 AM to 9:00 AM</option>
+                                <option value="00:30:00-09:30:00">12:30 AM to 9:30 AM</option>
                                 <option value="other">Other (Specify)</option>
                             </select>
                             <span class="custom-dropdown-icon">&#9662;</span>
                         </div>
+                        <small class="text-danger" style="font-style: italic;">If same Shift, leave this selection blank. It's already indicated as 'Same'.</small>
                     </div>
                         
                     <div class="form-group mb-3" id="customShiftGroup" style="display:none; margin: 1px;">
@@ -365,6 +432,7 @@
                         <input type="text" name="custom_shift" class="form-control" id="customShift" placeholder="HH:MM:SS - HH:MM:SS">
                     </div>
                     
+                    <!-- Reason -->
                     <div class="form-group mb-3" style="margin: 1px;">
                         <label class="form-label">Reason for Change</label>
                         <div class="custom-select-wrapper">
@@ -372,8 +440,6 @@
                                 <option value="">-- Select Reason --</option>
                                 <option value="Employee Request">Employee Request</option>
                                 <option value="Management Discretion">Management Discretion</option>
-                                <option value="Organizational Restructuring">Organizational Restructuring</option>
-                                <option value="Performance Related">Performance Related</option>
                                 <option value="other">Other (Specify Below)</option>
                             </select>
                             <span class="custom-dropdown-icon">&#9662;</span>
@@ -390,6 +456,33 @@
                         <input type="date" name="effectivity_date" class="form-control" required>
                     </div>
                     
+                    <div class="form-group mb-3" style="margin: 1px;">
+                        <label class="form-label">Notes</label>
+                        <textarea name="remarks" class="form-control" rows="5" placeholder="Add notes here"></textarea>
+                    </div>
+
+                    <!-- Work Transfer (branch relocation) -->
+                    <div class="form-group mb-3" style="margin: 10px;">
+                        <label class="form-label">Branch/Satellite Office</label>
+                        <select name="location" class="form-control" required style="cursor: pointer;">
+                            <option value="" disabled selected>Select a location</option>
+                            <option value="Davao">Davao</option>
+                            <option value="Digos">Digos</option>
+                            <option value="Panabo">Panabo</option>
+                            <option value="Kidapawan">Kidapawan</option>
+                            <option value="Iloilo">Iloilo</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3" style="margin: 10px;">
+                        <label class="form-label">Reason</label>
+                        <textarea name="transfer_reason" class="form-control" rows="5" required placeholder="Add your reason here"></textarea>
+                    </div> 
+                    <div class="form-group mb-3" style="margin: 10px;">
+                        <label class="form-label">Effective Date</label>
+                        <!-- ✅ FIX: field name must be transfer_date -->
+                        <input type="date" name="transfer_date" class="form-control" required>
+                    </div>
+                    
                     <div class="panel-footer text-center" style="margin: 1px;">
                         <button type="submit" name="submit" class="btn" style="width: 300px; border-radius: 20px; height: 40px;">Submit Movement</button>
                     </div>
@@ -399,8 +492,9 @@
     </div>
 </body>
 </html>
+
 <script>
- const searchInput = document.getElementById("searchInput");
+    const searchInput = document.getElementById("searchInput");
     const employeeSelect = document.getElementById("employeeSelect");
                 
     // Show dropdown when input is focused
@@ -418,11 +512,12 @@
         }
     }
                 
-    // Update input when option is selected
+    // Update input when option is selected; also update hidden+visible fields
     employeeSelect.addEventListener("change", () => {
         const selectedOption = employeeSelect.options[employeeSelect.selectedIndex];
         searchInput.value = selectedOption.innerText;
         employeeSelect.style.display = "none"; // Hide dropdown after selection
+        updateEmployeeFields();
     });
                 
     // Hide dropdown when clicking outside
@@ -432,25 +527,47 @@
         }
     });
     
-    
-    
     function toggleCustomShift(select) {
-    var customGroup = document.getElementById('customShiftGroup');
-    if (select.value === 'other') {
-        customGroup.style.display = 'block';
-    } else {
-        customGroup.style.display = 'none';
-        document.getElementById('customShift').value = '';
+        var customGroup = document.getElementById('customShiftGroup');
+        if (select.value === 'other') {
+            customGroup.style.display = 'block';
+        } else {
+            customGroup.style.display = 'none';
+            document.getElementById('customShift').value = '';
+        }
     }
-}
 
- function toggleCustomReason(select) {
-    var customGroup = document.getElementById('otherReasonContainer');
-    if (select.value === 'other') {
-        customGroup.style.display = 'block';
-    } else {
-        customGroup.style.display = 'none';
-        document.getElementById('customReason').value = '';
+    function toggleCustomReason(select) {
+        var customGroup = document.getElementById('otherReasonContainer');
+        if (select.value === 'other') {
+            customGroup.style.display = 'block';
+        } else {
+            customGroup.style.display = 'none';
+            document.getElementById('customReason').value = '';
+        }
     }
-}
+
+    // ✅ Updates both visible (no-name) and hidden (POSTed) fields
+    function updateEmployeeFields() {
+        const select = document.getElementById('employeeSelect');
+        const selected = select.options[select.selectedIndex];
+        if (!selected) return;
+
+        const company   = selected.getAttribute('data-company') || '';
+        const jobtitle  = selected.getAttribute('data-jobtitle') || '';
+        const department= selected.getAttribute('data-department') || '';
+        const shift     = selected.getAttribute('data-shift') || '';
+
+        // Visible (no name attrs)
+        document.getElementById('companys').value   = company;
+        document.getElementById('jobtitle').value   = jobtitle;
+        document.getElementById('department').value = department;
+        document.getElementById('shift').value      = shift;
+
+        // Hidden (these are posted to PHP)
+        document.getElementById('currentCompanyHidden').value   = company;
+        document.getElementById('currentJobtitleHidden').value  = jobtitle;
+        document.getElementById('currentDepartmentHidden').value= department;
+        document.getElementById('currentShiftHidden').value     = shift;
+    }
 </script>

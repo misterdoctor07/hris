@@ -97,6 +97,7 @@ if (!isset($_SESSION['idno'])) {
   <!-- Custom styles for this template -->
   <link href="css/style.css" rel="stylesheet">
   <link href="css/style-responsive.css" rel="stylesheet">
+  <link href="css/empPortal.css" rel="stylesheet">
   <script src="lib/chart-master/Chart.js"></script>
 
   <!-- =======================================================
@@ -207,38 +208,6 @@ $showPopup = ($unreadCount > 0);
         <?php endif; ?>
     </button>
 </div>
-
-<style>
-    #popupContent p {
-        text-align: justify;
-        line-height: 1.6;
-    }
-    #popupContent h4 {
-        font-weight: bold;
-    }
-    .read-announcement {
-        opacity: 0.8;
-    }
-    
-    .table-border-bottom-only {
-        border-collapse: collapse;
-        width: 100%;
-    }
-    
-    .table-border-bottom-only th,
-    .table-border-bottom-only td {
-        border: none;
-        border-bottom: 1px solid #ccc;
-        padding: 8px;
-        vertical-align: middle;
-        text-align: center;
-    }
-    
-    .table-border-bottom-only thead th {
-        font-weight: bold;
-        background-color: #f9f9f9;
-    }
-</style>
 
 <!-- Announcement Pop-up -->
 <div id="announcementPopup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 600px; background: white; z-index: 1050; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
@@ -620,126 +589,115 @@ $accessList = array_map('trim', explode(',', $access)); // Trim and explode
           <?php endif; ?>
         </ul>
       </div>
-    </aside>
-    
-     <!--sidebar end-->
-    <!-- **********************************************************************************************************************************************************
-        MAIN CONTENT
-        *********************************************************************************************************************************************************** -->
-    <!--main content start-->
-    
-<section id="main-content">
-      <section class="wrapper">
-        <div class="col-lg-12">
-    <div class="content-panel">
-        <div class="panel-heading">
-            <h5>
-                DASHBOARD > <strong>EEO APPLICATION HISTORY</strong>
-                <a href="dashboard.php?addeeo" style="float:right;" class="btn btn-primary">
-                    <i class="fa fa-plus"></i> New EEO
-                </a>
-            </h5>
-        </div>
-        <div class="panel-body">
-            <table class="table table-striped table-condensed table-border-bottom-only">
-                <thead>
-                    <tr>
-                        <th width="2%" style="text-align: center; background-color:#20273a; color: white;">No.</th>
-                        <th width="6%" style="text-align: center; background-color:#20273a; color: white;">Type of EEO</th>
-                        <th width="12%" style="text-align: center; background-color:#20273a; color: white;">Date</th> 
-                        <th width="5%" style="text-align: center; background-color:#20273a; color: white;">Time</th>
-                        <th width="15%" style="text-align: center; background-color:#20273a; color: white;">Reason</th>
-                        <th width="10%"  style="text-align: center; background-color:#20273a; color: white;">Status</th>
-                        <th style="text-align: center; background-color:#20273a; color: white;">Approver's Remarks</th>
-                        <th width="10%" style="text-align: center; background-color:#20273a; color: white;">Acknowledged by: </th>
-                        <th width="5%" style="text-align: center; background-color:#20273a; color: white;">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $x = 1;
-                    $sqlEmployee = mysqli_query($con, "SELECT * 
-                    FROM emergencyearlyout eeo 
-                    WHERE eeo.idno = '" . mysqli_real_escape_string($con, $_SESSION['idno']) . "' 
-                    ORDER BY 
-                        CASE 
-                            WHEN eeo.eeo_status = 'Pending' THEN 1 
-                            ELSE 2 
-                        END, 
-                    eeo.date_applied,
-                    eeo.time_applied DESC");
+        </aside>
+            <section id="main-content">
+                <section class="wrapper">
+                    <div class="centered-container">
+                        <div class="content-panel">
+                            <div class="panel-heading" style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="font-size: 14px;">
+                                    DASHBOARD > <strong style="font-size: 15px;">EEO APPLICATION</strong>
+                                </div>
+                                <a href="dashboard.php?addeeo" class="btn btn-primary" style="border-radius: 12px;">
+                                    <i class="fa fa-plus"></i> New EEO
+                                </a>
+                            </div>
+                            <div class="panel-body">
+                                <table class="table table-border-bottom-only">
+                                    <thead>
+                                        <tr>
+                                            <th width="3%"  class="table-head">NO.</th>
+                                            <th width="6%"  class="table-head">EEO TYPE</th>
+                                            <th width="12%" class="table-head">DATE</th> 
+                                            <th width="6%"  class="table-head">TIME</th>
+                                            <th width="20%" class="table-head">REASON</th>
+                                            <th width="10%" class="table-head">STATUS</th>
+                                            <th width="28%" class="table-head">APPROVER's NOTES</th>
+                                            <th width="10%" class="table-head">ACKNOWLEDGED</th>
+                                            <th width="5%"  class="table-head-1">ACTION</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $x = 1;
+                                        $sqlEmployee = mysqli_query($con, "SELECT * 
+                                        FROM emergencyearlyout eeo 
+                                        WHERE eeo.idno = '" . mysqli_real_escape_string($con, $_SESSION['idno']) . "' 
+                                        ORDER BY 
+                                            CASE 
+                                                WHEN eeo.eeo_status = 'Pending' THEN 1 
+                                                ELSE 2 
+                                            END, 
+                                        eeo.date_applied,
+                                        eeo.time_applied DESC");
+                                        
+                                        if (mysqli_num_rows($sqlEmployee) > 0) {
+                                            while ($company = mysqli_fetch_array($sqlEmployee)) {
+                                                // Check if the status is "Pending"
+                                                $status = $company['eeo_status'];
+                                                $isPending = ($status === 'Pending');
                     
-                    if (mysqli_num_rows($sqlEmployee) > 0) {
-                        while ($company = mysqli_fetch_array($sqlEmployee)) {
-                            // Check if the status is "Pending"
-                            $status = $company['eeo_status'];
-                            $isPending = ($status === 'Pending');
-
-                            $idno = $company['idno'];
-                            $style = "class='primary'"; // Default style
+                                                $idno = $company['idno'];
+                                                $style = "class='primary'"; // Default style
+                                                
+                                                if (strpos($status, 'Approved') !== false) {
+                                                    $style = "class='success'";
+                                                } elseif (strpos($status, 'Disapproved') !== false) {
+                                                    $style = "class='danger'";
+                                                } elseif (strpos($status, 'Pending') !== false) {
+                                                    $style = "class='warning'";
+                                                }
+                    
+                                                echo "<tr $style>";
+                                                echo "<td class='table-cont'>$x.</td>";
+                                                echo "<td class='table-cont'>$company[type_EEO]</td>";
+                                                echo "<td class='table-cont'>" . date('M d, Y', strtotime($company['dateEEO'])) . "</td>";
+                                                echo "<td class='table-cont'>" . date("h:i A", strtotime($company['timeEEO'])) . "</td>";
+                                                echo "<td class='table-cont'>$company[reason]</td>";
+                                                echo "<td class='table-cont'>$status</td>";
+                                                echo "<td class='table-cont'>$company[approvers_remarks]</td>";
+                                                echo "<td class='table-cont'>$company[acknowledged]</td>";
+                                                ?>
+                                                <td class='table-cont-1'>
+                                                    <?php if (strpos($company['eeo_status'], 'Approved') === false && strpos($company['eeo_status'], 'Disapproved') === false): ?> 
+                                                        <a href="dashboard.php?editeeo&id=<?= $company['id']; ?>" class="btn btn-primary btn-xs" title="Edit Emergency Early Out" <?= !$isPending ? 'disabled' : ''; ?>><i class='fa fa-edit'></i></a>
+                                                        <a href="?emergencyearlyout&id=<?= $company['id']; ?>&delete" class="btn btn-danger btn-xs" title="Delete Early Out" <?= !$isPending ? 'disabled' : ''; ?> onclick="return confirm('Do you wish to delete this item?'); return false;"><i class='fa fa-trash'></i></a>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <?php
+                                                echo "</tr>";
+                                                $x++;
+                                            }
+                                        } else {
+                                            echo "<tr><td colspan='9' align='center'>No record found!</td></tr>";
+                                        }
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <?php
+                        if (isset($_GET['delete'])) {
+                            $id = $_GET['id'];
+                            $sqlDelete = mysqli_query($con, "DELETE FROM emergencyearlyout WHERE id='$id'");
                             
-                            if (strpos($status, 'Approved') !== false) {
-                                $style = "class='success'";
-                            } elseif (strpos($status, 'Disapproved') !== false) {
-                                $style = "class='danger'";
-                            } elseif (strpos($status, 'Pending') !== false) {
-                                $style = "class='warning'";
+                            if ($sqlDelete) {
+                                echo "<script>";
+                                echo "alert('Item successfully removed!');";
+                                echo "window.location='?emergencyearlyout';";
+                                echo "</script>";
+                            } else {
+                                echo "<script>";
+                                echo "alert('Unable to remove item!');";
+                                echo "window.location='?emergencyearlyout';";
+                                echo "</script>";
                             }
-
-                            echo "<tr $style>";
-                            echo "<td align='center'>$x.</td>";
-                            echo "<td>$company[type_EEO]</td>";
-                            echo "<td align='center'>" . date('m/d/Y', strtotime($company['dateEEO'])) . "</td>";
-                            echo "<td align='center'>" . date("g:i A", strtotime($company['timeEEO'])) . "</td>";
-                            echo "<td>$company[reason]</td>";
-                            echo "<td align='center'>$status</td>";
-                            echo "<td align='center'>$company[approvers_remarks]</td>";
-                            echo "<td align='center'>$company[acknowledged]</td>";
-                            ?>
-                            <td align="center">
-                                <?php if (strpos($company['eeo_status'], 'Approved') === false && strpos($company['eeo_status'], 'Disapproved') === false): ?> 
-                                    <a href="dashboard.php?editeeo&id=<?= $company['id']; ?>" class="btn btn-primary btn-xs" title="Edit Emergency Early Out" <?= !$isPending ? 'disabled' : ''; ?>><i class='fa fa-edit'></i></a>
-                                    <a href="?emergencyearlyout&id=<?= $company['id']; ?>&delete" class="btn btn-danger btn-xs" title="Delete Early Out" <?= !$isPending ? 'disabled' : ''; ?> onclick="return confirm('Do you wish to delete this item?'); return false;"><i class='fa fa-trash'></i></a>
-                                <?php endif; ?>
-                            </td>
-                            <?php
-                            echo "</tr>";
-                            $x++;
                         }
-                    } else {
-                        echo "<tr><td colspan='9' align='center'>No record found!</td></tr>";
-                    }
                     ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<?php
-if (isset($_GET['delete'])) {
-    $id = $_GET['id'];
-    $sqlDelete = mysqli_query($con, "DELETE FROM emergencyearlyout WHERE id='$id'");
-    
-    if ($sqlDelete) {
-        echo "<script>";
-        echo "alert('Item successfully removed!');";
-        echo "window.location='?emergencyearlyout';";
-        echo "</script>";
-    } else {
-        echo "<script>";
-        echo "alert('Unable to remove item!');";
-        echo "window.location='?emergencyearlyout';";
-        echo "</script>";
-    }
-}
-?>
-          </div>
-        </div>
-      </section>
-    </section>
-  </section>
-</body>
+                </section>
+            </section>
+    </body>
 </html>
 <!-- 1. Load jQuery (REQUIRED for menu toggles) -->
 <script src="lib/jquery/jquery.min.js"></script>

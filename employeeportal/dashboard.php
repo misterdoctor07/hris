@@ -10,13 +10,15 @@
 
     $idno=$_SESSION['idno'];
 
-    $sqlEmployee=mysqli_query($con,"SELECT lastname,firstname FROM employee_profile WHERE idno='$_SESSION[idno]'");
+    $sqlEmployee=mysqli_query($con,"SELECT lastname,firstname,nickname FROM employee_profile WHERE idno='$_SESSION[idno]'");
     
     if(mysqli_num_rows($sqlEmployee)>0){
         $name=mysqli_fetch_array($sqlEmployee);
         $fullname=$name['lastname'].", ".$name['firstname'];
+        $nickname=$name['nickname'];
     }else{
         $fullname="";
+        $nickname="";
     }
     $sqlDetails=mysqli_query($con,"SELECT ed.*,jt.* 
         FROM employee_details ed 
@@ -61,30 +63,6 @@
             $approvers[] = $row['approvingofficer'];
         }
     }
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['phone_number'], $_POST['comp_email'], $_POST['email_password'])) {
-    $phone_number = mysqli_real_escape_string($con, $_POST['phone_number']);
-    $comp_email = mysqli_real_escape_string($con, $_POST['comp_email']);
-    $email_password = mysqli_real_escape_string($con, $_POST['email_password']);
-
-    mysqli_query($con, "UPDATE employee_profile SET 
-        phone_number = '$phone_number',
-        comp_email = '$comp_email',
-        email_password = '$email_password'
-        WHERE idno = '$idno'");
-
-    // ✅ Redirect to dashboard after successful update
-    header("Location: https://nesistaff.com/hris/employeeportal/dashboard.php?main");
-    exit();
-}
-// 2. Fetch updated data after submission or for initial check
-$result = mysqli_query($con, "SELECT phone_number, comp_email, email_password FROM employee_profile WHERE idno = '$idno'");
-$row = mysqli_fetch_assoc($result);
-
-$phone_number = $row['phone_number'];
-$comp_email = $row['comp_email'];
-$email_password = $row['email_password'];
-
-$showModal = empty($phone_number) || empty($comp_email) || empty($email_password);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -106,6 +84,7 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
         <link rel="stylesheet" type="text/css" href="lib/gritter/css/jquery.gritter.css" />
         <!-- Custom styles for this template -->
         <link href="css/style.css" rel="stylesheet">
+        <link href="css/empPortal.css" rel="stylesheet">
         <link href="css/style-responsive.css" rel="stylesheet">
         <script src="lib/chart-master/Chart.js"></script>
 
@@ -140,19 +119,20 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                     $today = date('Y-m-d');
                     
                     // Fetch all announcements for today (both read and unread)
-                    $sqlWidgets = mysqli_query($con, "
-                        SELECT w.*, ar.id as read_status 
+                     $sqlWidgets = mysqli_query($con, "SELECT w.*, ar.id AS read_status 
                         FROM widgets w
-                        LEFT JOIN announcement_reads ar ON w.id = ar.announcement_id AND ar.user_id = '$user_id'
-                        WHERE w.type='Announcement' 
-                        AND DATE(w.datearray) = '$today'
-                        ORDER BY w.datearray DESC, w.timearray DESC
-                    ");
-                    
+                        LEFT JOIN announcement_reads ar 
+                            ON w.id = ar.announcement_id 
+                            AND ar.user_id = '$user_id'
+                        WHERE w.type = 'Announcement'
+                          AND CONCAT(w.datearray, ' ', w.timearray) >= NOW() - INTERVAL 24 HOUR
+                        ORDER BY w.datearray DESC, w.timearray DESC");
+
+            
                     $allAnnouncements = [];
                     $unreadAnnouncements = [];
                     while ($emp = mysqli_fetch_array($sqlWidgets)) {
-                        $targets = json_decode($emp['targets'], true);
+                        $targets = json_decode($emp['targets'], true) ?: ['departments' => [], 'designations' => []];
                         
                         // Check if announcement is for this user
                         $isForUser = false;
@@ -175,6 +155,9 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                                 'id' => $emp['id'],
                                 'title' => $emp['title'],
                                 'details' => $emp['details'],
+                                'datearray' => $emp['datearray'],  // Added this line
+                                'timearray' => $emp['timearray'],  // Added this line
+                                'image_path' => $emp['image_path'], // Added this line
                                 'is_read' => !empty($emp['read_status'])
                             ];
                             
@@ -183,7 +166,7 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                             }
                         }
                     }
-                    
+            
                     $isDetails = !empty($allAnnouncements);
                     $unreadCount = count($unreadAnnouncements);
                     $showPopup = ($unreadCount > 0);
@@ -193,15 +176,15 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                 <audio id="notificationSound" src="sound/notification.mp3" preload="auto"></audio>
                 
                 <!-- Bell Icon with Notification Badge -->
-                <div style="position: absolute; top:15px; margin-left: 1550px;">
-                    <button id="announcementButton" class="btn" style="background: transparent; border: none; position: relative; cursor: pointer;">
-                        <i class="fa fa-bell" style="font-size: 20px; color: white;"></i>
+                <div style="position: absolute; top: 10px; right: 310px;">
+                    <button id="announcementButton" class="btn icon-btn" style="background: transparent; border: none; position: relative; cursor: pointer;" title="Announcements">
+                        <i class="fa fa-bell" style="font-size: 25px; color: #aab2bd;"></i>
                         <?php if ($unreadCount > 0): ?>
                             <span id="notificationBadge" class="badge" style="
                                 position: absolute;
                                 top: -5px;
                                 right: -5px;
-                                background: red;
+                                background: #e74c3c;
                                 color: white;
                                 border-radius: 50%;
                                 font-size: 10px;
@@ -210,36 +193,97 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                         <?php endif; ?>
                     </button>
                 </div>
-                <style>
-                    #popupContent p {
-                        text-align: justify;
-                        line-height: 1.6;
+
+                <!-- Attendance Button -->
+                <div style="position: absolute; top: 10px; right: 240px;">
+                    <a href="/hris/attendance/" class="btn icon-btn" style="background: transparent; border: none; cursor: pointer;" title="Attendance">
+                        <i class="fa fa-calendar-check-o" style="font-size: 25px; color: #2ecc71;"></i>
+                    </a>
+                </div>
+
+                <!-- Logout Button -->
+                <div style="position: absolute; top: 10px; right: 170px;">
+                    <a href="logout.php" class="btn icon-btn" style="background: transparent; border: none; cursor: pointer;" title="Logout" onclick="return confirm('Do you wish to logout?')">
+                        <i class="fa fa-sign-out" style="font-size: 25px; color: #e74c3c;"></i>
+                    </a>
+                </div>
+                <?php
+                    // Fetch user ID from session
+                    $userId = $_SESSION['idno'] ?? '';
+
+                    // Set default image path
+                    $defaultImage = "../Employees/default_image.png";
+                    $target_dir = "../Employees/";
+                    $image = $defaultImage; // Initialize with default
+
+                    // Check for profile picture in multiple formats
+                    $allowedExtensions = ['png', 'jpg', 'jpeg'];
+                    foreach ($allowedExtensions as $ext) {
+                        $potentialImage = $target_dir . $userId . '.' . $ext;
+                        if (file_exists($potentialImage)) {
+                            $image = $potentialImage;
+                            break;
+                        }
                     }
-                    #popupContent h4 {
-                        font-weight: bold;
-                    }
-                    .read-announcement {
-                        opacity: 0.8;
-                    }
-                </style>
+                ?>
+                <!-- Profile Section with Uploaded Photo -->
+                <div style="position: absolute; top: 10px; right: 40px; display: flex; align-items: center; gap: 10px;">
+                    <a href="?main" class="profile-btn" title="Profile" style="
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        overflow: hidden;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        border: 1px solid rgba(255,255,255,0.2);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        background: #f0f0f0;
+                        margin-left: 5px;
+                    ">
+                        <img src="<?= htmlspecialchars($image) ?>" 
+                            alt="Profile Photo"
+                            style="width: 100%; height: 100%; object-fit: cover;"
+                            onerror="this.onerror=null;this.src='<?= htmlspecialchars($defaultImage) ?>'">
+                    </a>
+                    <span style="color: white; font-size: 14px; font-weight: 500;">Hi, <?= htmlspecialchars($nickname ?? 'User') ?></span>
+                </div>
                 <!-- Announcement Pop-up -->
                 <div id="announcementPopup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 600px; background: white; z-index: 1050; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
                     <div style="padding: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
-                            <h3 style="margin: 0; color: #3f4d6b;">Announcements</h3>
-                            <button id="closePopup" style="background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+                            <?php if ($isDetails): ?>
+                                <!-- Show first announcement's title in header -->
+                                <?php $firstAnnouncement = reset($allAnnouncements); ?>
+                                <h3 style="margin: 0; color: #3f4d6b;  font-weight:bold; font-family: Courier, monospace;">
+                                    <?php echo htmlspecialchars($firstAnnouncement['title']); ?>
+                                    <small style="font-size: 12px; color: #888;">
+                                        <?php echo $firstAnnouncement['datearray'] . ' ' . $firstAnnouncement['timearray']; ?>
+                                    </small>
+                                </h3>
+                            <?php else: ?>
+                                <!-- Fallback if no announcements -->
+                                <h3 style="margin: 0; color: #3f4d6b;">Announcements</h3>
+                            <?php endif; ?>
+                            <button onclick="closePopup()" style="background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
                         </div>
                         <div id="popupContent" style="max-height: 400px; overflow-y: auto;">
                             <?php if ($isDetails): ?>
                                 <ul style="list-style-type: none; padding: 0;">
                                     <?php foreach ($allAnnouncements as $announcement): ?>
                                         <li style="padding: 15px 0; border-bottom: 1px solid #f5f5f5;" class="<?= $announcement['is_read'] ? 'read-announcement' : '' ?>">
-                                            <h4 style="margin: 0 0 10px 0; color: #3f4d6b;">
-                                                <?php echo htmlspecialchars($announcement['title']); ?>
-                                            </h4>
-                                            <p style="margin: 0; font-size: 16px; text-align: justify;">
+                                            <p style="font-weight:bold; margin: 10px 0 10px 0; font-size: 16px; text-align: justify; font-family: 'Times New Roman', Times, serif;">
                                                 <?php echo nl2br(htmlspecialchars($announcement['details'])); ?>
                                             </p>
+                                            <?php if (!empty($announcement['image_path'])): ?>
+                                                <div style="margin-top: 10px;">
+                                                    <img src="<?php echo htmlspecialchars($announcement['image_path']); ?>" 
+                                                         style="max-width: 100%; max-height: 200px; border-radius: 5px; border: 1px solid #eee;"
+                                                         onclick="openImageModal('<?php echo htmlspecialchars($announcement['image_path']); ?>')"
+                                                         class="announcement-image">
+                                                </div>
+                                            <?php endif; ?>
                                         </li>
                                     <?php endforeach; ?>
                                 </ul>
@@ -249,149 +293,182 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                         </div>
                         <div style="text-align: right; margin-top: 15px;">
                             <?php if ($unreadCount > 0): ?>
-                                <button id="markAsReadBtn" style="background: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-right: 10px;">Mark as Read</button>
+                                <button id="markAsReadBtn" disabled style="background: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: not-allowed; opacity: 0.6;">
+                                    Mark as Read (<span id="countdown">10</span>s)
+                                </button>
                             <?php endif; ?>
-                            <button id="closePopupBtn" style="background: #3f4d6b; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Close</button>
                         </div>
                     </div>
                 </div>
+            
+                <!-- Image Modal for larger view -->
+                <div id="imageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1060; text-align: center;">
+                    <span onclick="closeImageModal()" style="position: absolute; top: 20px; right: 30px; color: white; font-size: 35px; font-weight: bold; cursor: pointer;">&times;</span>
+                    <img id="modalImage" style="max-height: 80%; max-width: 90%; margin-top: 5%;">
+                </div>
+            
                 <!-- Overlay for popup -->
                 <div id="popupOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1040;"></div>
                 <script>
-                    // Show popup automatically if there are unread announcements
-                    document.addEventListener('DOMContentLoaded', function() {
+                    document.addEventListener('DOMContentLoaded', function () {
                         const popup = document.getElementById('announcementPopup');
                         const overlay = document.getElementById('popupOverlay');
-                        const closeBtn = document.getElementById('closePopup');
-                        const closeBtnBottom = document.getElementById('closePopupBtn');
                         const markAsReadBtn = document.getElementById('markAsReadBtn');
+                        const countdownSpan = document.getElementById('countdown');
                         const announcementButton = document.getElementById('announcementButton');
                         const notificationSound = document.getElementById('notificationSound');
-                        
+                    
                         <?php if ($showPopup): ?>
                             // Show popup and overlay
-                            setTimeout(function() {
+                            setTimeout(function () {
                                 popup.style.display = 'block';
                                 overlay.style.display = 'block';
-                                
-                                // Play notification sound
-                                notificationSound.play();
-                                
-                                // Prevent scrolling when popup is open
+                                if (notificationSound) notificationSound.play();
                                 document.body.style.overflow = 'hidden';
-                                
-                                // Add animation class for popup
                                 popup.style.animation = 'fadeIn 0.3s ease-out';
-                                
-                                // Add shake animation to bell icon when there are announcements
-                                announcementButton.querySelector('i').style.animation = 'shake 0.5s ease-in-out';
+                                if (announcementButton) {
+                                    announcementButton.querySelector('i').style.animation = 'shake 0.5s ease-in-out';
+                                }
                             }, 1000);
                         <?php endif; ?>
-                        
-                        function closePopup() {
+                    
+                        // Close popup function (now global)
+                        window.closePopup = function() {
                             popup.style.animation = 'fadeOut 0.3s ease-out';
                             overlay.style.animation = 'fadeOut 0.3s ease-out';
-                            
-                            setTimeout(function() {
+                            setTimeout(function () {
                                 popup.style.display = 'none';
                                 overlay.style.display = 'none';
                                 document.body.style.overflow = 'auto';
                             }, 300);
+                        };
+                    
+                        // Image modal functions
+                        window.openImageModal = function(imageSrc) {
+                            const modal = document.getElementById('imageModal');
+                            const modalImg = document.getElementById('modalImage');
+                            modal.style.display = 'block';
+                            modalImg.src = imageSrc;
+                            document.body.style.overflow = 'hidden';
+                        };
+                    
+                        window.closeImageModal = function() {
+                            document.getElementById('imageModal').style.display = 'none';
+                            document.body.style.overflow = 'auto';
+                        };
+                    
+                        // Countdown for "Mark as Read"
+                        if (markAsReadBtn && countdownSpan) {
+                            let timeLeft = 10;
+                            const interval = setInterval(function () {
+                                timeLeft--;
+                                countdownSpan.textContent = timeLeft;
+                    
+                                if (timeLeft <= 0) {
+                                    clearInterval(interval);
+                                    markAsReadBtn.disabled = false;
+                                    markAsReadBtn.innerHTML = 'Mark as Read';
+                                    markAsReadBtn.style.cursor = 'pointer';
+                                    markAsReadBtn.style.opacity = '1';
+                    
+                                    // Add the click handler once it's active
+                                    markAsReadBtn.addEventListener('click', function () {
+                                        const announcementIds = <?= json_encode($unreadAnnouncements) ?>;
+                    
+                                        fetch('mark_announcement_read.php', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/x-www-form-urlencoded',
+                                            },
+                                            body: 'user_id=<?= $user_id ?>&announcement_ids=' + JSON.stringify(announcementIds)
+                                        })
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            if (data.success) {
+                                                const badge = document.getElementById('notificationBadge');
+                                                if (badge) {
+                                                    badge.style.display = 'none';
+                                                }
+                    
+                                                document.querySelectorAll('#popupContent li').forEach(li => {
+                                                    li.classList.add('read-announcement');
+                                                });
+                    
+                                                markAsReadBtn.style.display = 'none';
+                    
+                                                // Auto-close popup
+                                                closePopup();
+                                            }
+                                        })
+                                        .catch(error => console.error('Error:', error));
+                                    });
+                                }
+                            }, 1000);
                         }
-                        
-                        // Close popup when X or Close button is clicked
-                        closeBtn.addEventListener('click', closePopup);
-                        closeBtnBottom.addEventListener('click', closePopup);
-                        
-                        // Close when clicking outside the popup
-                        overlay.addEventListener('click', closePopup);
-                        
-                        // Mark as Read button
-                        if(markAsReadBtn) {
-                            markAsReadBtn.addEventListener('click', function() {
-                                // Get all unread announcement IDs
-                                const announcementIds = <?= json_encode($unreadAnnouncements) ?>;
-                                
-                                // Send AJAX request to mark as read
-                                fetch('mark_announcement_read.php', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/x-www-form-urlencoded',
-                                    },
-                                    body: 'user_id=<?= $user_id ?>&announcement_ids=' + JSON.stringify(announcementIds)
-                                })
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.success) {
-                                        // Hide notification badge
-                                        const badge = document.getElementById('notificationBadge');
-                                        if (badge) {
-                                            badge.style.display = 'none';
-                                        }
-                                        
-                                        // Update UI to show announcements as read
-                                        document.querySelectorAll('#popupContent li').forEach(li => {
-                                            li.classList.add('read-announcement');
-                                        });
-                                        
-                                        // Hide the Mark as Read button
-                                        if(markAsReadBtn) {
-                                            markAsReadBtn.style.display = 'none';
-                                        }
-                                        
-                                        // Close the popup
-                                        closePopup();
-                                    }
-                                })
-                                .catch(error => console.error('Error:', error));
+                    
+                        // Toggle popup via bell icon
+                        if (announcementButton) {
+                            announcementButton.addEventListener('click', function () {
+                                if (popup.style.display === 'none' || popup.style.display === '') {
+                                    popup.style.display = 'block';
+                                    overlay.style.display = 'block';
+                                    document.body.style.overflow = 'hidden';
+                                    popup.style.animation = 'fadeIn 0.3s ease-out';
+                                } else {
+                                    closePopup();
+                                }
                             });
                         }
-                        
-                        // Show the popup when announcement button is clicked
-                        announcementButton.addEventListener('click', function() {
-                            if(popup.style.display === 'none' || popup.style.display === '') {
-                                popup.style.display = 'block';
-                                overlay.style.display = 'block';
-                                document.body.style.overflow = 'hidden';
-                                popup.style.animation = 'fadeIn 0.3s ease-out';
-                            } else {
-                                closePopup();
-                            }
-                        });
-                    });
                     
-                    // Add CSS animations
-                    const style = document.createElement('style');
-                    style.textContent = `
-                        @keyframes fadeIn {
-                            from { opacity: 0; transform: translate(-50%, -55%); }
-                            to { opacity: 1; transform: translate(-50%, -50%); }
-                        }
-                        @keyframes fadeOut {
-                            from { opacity: 1; transform: translate(-50%, -50%); }
-                            to { opacity: 0; transform: translate(-50%, -55%); }
-                        }
-                        @keyframes shake {
-                            0% { transform: rotate(0deg); }
-                            25% { transform: rotate(15deg); }
-                            50% { transform: rotate(-15deg); }
-                            75% { transform: rotate(15deg); }
-                            100% { transform: rotate(0deg); }
-                        }
-                    `;
-                    document.head.appendChild(style);
+                        // Clicking the dark overlay closes the popup
+                        overlay.addEventListener('click', closePopup);
+                    
+                        // Add animations
+                        const style = document.createElement('style');
+                        style.textContent = `
+                            @keyframes fadeIn {
+                                from { opacity: 0; transform: translate(-50%, -55%); }
+                                to { opacity: 1; transform: translate(-50%, -50%); }
+                            }
+                            @keyframes fadeOut {
+                                from { opacity: 1; transform: translate(-50%, -50%); }
+                                to { opacity: 0; transform: translate(-50%, -55%); }
+                            }
+                            @keyframes shake {
+                                0% { transform: rotate(0deg); }
+                                25% { transform: rotate(15deg); }
+                                50% { transform: rotate(-15deg); }
+                                75% { transform: rotate(15deg); }
+                                100% { transform: rotate(0deg); }
+                            }
+                            .read-announcement {
+                                opacity: 0.7;
+                            }
+                            .announcement-image {
+                                transition: transform 0.3s;
+                                cursor: zoom-in;
+                            }
+                            .announcement-image:hover {
+                                transform: scale(1.02);
+                            }
+                            #imageModal {
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            }
+                            #modalImage {
+                                max-height: 90%;
+                                max-width: 90%;
+                                object-fit: contain;
+                            }
+                        `;
+                        document.head.appendChild(style);
+                    });
                 </script>
                 <div class="nav notify-row" id="top_menu">
                     <!--  notification start -->
                     <!--  notification end -->
                 </div>
-                <div class="top-menu">
-                    <ul class="nav pull-right top-menu">
-                        <li><a class="logout" style="border-radius: 15px 15px;" href="logout.php" onclick="return confirm('Do you wish to logout?');return false;">Logout</a></li>
-                    </ul>
-                    <li style="float: right; margin-right: 40px; margin-top: 20px; "><a class="attendance_out" href="/hris/attendance/" style=" background-color:#337ab7; padding: 5px 15px; font-size: 13px; color: white; border: 1px solid #337ab7; border-radius: 15px 15px; border-color: #337ab7;">Attendance</a></li>
-                </div>
-  
             </header>
             <aside>
                 <div id="sidebar" class="nav-collapse ">
@@ -415,41 +492,193 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                               $image = $target_dir . "default_image.png";
                             }
                         ?>
-                        <!-- Display profile picture -->
                         <li class="mt">
                             <a href="dashboard.php?main">
                                 <i class="fa fa-user-circle"></i>
-                                <span>Dashboard</span>
+                                <span>Profile</span>
                             </a>
                         </li>
-                        <li class="sub-menu">
+                        <?php
+                            // Determine current page and active state
+                            $currentPage = basename($_SERVER['PHP_SELF']);
+                            $queryParams = $_GET;
+                            $isApplicationsActive = false;
+                            $isRequestsActive = false;
+                            $isHSOActive = false;
+                            $isCompanyFilesActive = false;
+                            $isMemoActive = false;
+                            
+                            // Define submenu items for each category
+                            $applicationItems = [
+                                'dashboard.php?manageleave',
+                                'dashboard.php?applymissedlog',
+                                'dashboard.php?applyovertime',
+                                'dashboard.php?emergencyearlyout',
+                                'dashboard.php?wfh_form',
+                                'dashboard.php?manageemployee'
+                            ];
+                            
+                            $requestItems = [
+                                'dashboard.php?manageleaveapplication',
+                                'dashboard.php?managemissedlogapplication',
+                                'dashboard.php?manageovertimeapplication',
+                                'dashboard.php?managemonitoringmissedlogapplication',
+                                'dashboard.php?EEOapplication',
+                                'dashboard.php?manageEEOapplication',
+                                'dashboard.php?movementApp',
+                                'dashboard.php?manage_applications',
+                                'dashboard.php?manage_transferapplication'
+                            ];
+                            
+                            $hsoItems = [
+                                'dashboard.php?allow_employee',
+                                'dashboard.php?wfh_requests'
+                            ];
+                            
+                            $filesItems = [
+                                'dashboard.php?handbook',
+                                'dashboard.php?create_memo',
+                                'dashboard.php?memo_solutions',
+                                'dashboard.php?memo_strategies',
+                                'dashboard.php?memo_newind'
+                            ];
+                            
+                            $memoItems = [
+                                'dashboard.php?memo_admin',
+                                'dashboard.php?memo_hr',
+                                'dashboard.php?memo_it'
+                            ];
+                            
+                            // Check Applications submenu
+                            foreach ($applicationItems as $item) {
+                                if (strpos($item, '?') !== false) {
+                                    list($page, $param) = explode('?', $item);
+                                    if ($currentPage == $page && isset($queryParams[explode('=', $param)[0]])) {
+                                        $isApplicationsActive = true;
+                                        $isRequestsActive = false;
+                                        $isHSOActive = false;
+                                        $isCompanyFilesActive = false;
+                                        $isMemoActive = false;
+                                        break;
+                                    }
+                                } elseif ($currentPage == $item) {
+                                    $isApplicationsActive = true;
+                                    $isRequestsActive = false;
+                                    $isHSOActive = false;
+                                    $isCompanyFilesActive = false;
+                                    $isMemoActive = false;
+                                    break;
+                                }
+                            }
+                            
+                            // Check Requests submenu
+                            foreach ($requestItems as $item) {
+                                if (strpos($item, '?') !== false) {
+                                    list($page, $param) = explode('?', $item);
+                                    if ($currentPage == $page && isset($queryParams[explode('=', $param)[0]])) {
+                                        $isRequestsActive = true;
+                                        $isApplicationsActive = false;
+                                        $isHSOActive = false;
+                                        $isCompanyFilesActive = false;
+                                        $isMemoActive = false;
+                                        break;
+                                    }
+                                } elseif ($currentPage == $item) {
+                                    $isRequestsActive = true;
+                                    $isApplicationsActive = false;
+                                    $isHSOActive = false;
+                                    $isCompanyFilesActive = false;
+                                    $isMemoActive = false;
+                                    break;
+                                }
+                            }
+                            
+                            // Check HSO submenu
+                            foreach ($hsoItems as $item) {
+                                if (strpos($item, '?') !== false) {
+                                    list($page, $param) = explode('?', $item);
+                                    if ($currentPage == $page && isset($queryParams[explode('=', $param)[0]])) {
+                                        $isHSOActive = true;
+                                        $isRequestsActive = false;
+                                        $isApplicationsActive = false;
+                                        $isCompanyFilesActive = false;
+                                        $isMemoActive = false;
+                                        break;
+                                    }
+                                } elseif ($currentPage == $item) {
+                                    $isHSOActive = true;
+                                    $isRequestsActive = false;
+                                    $isApplicationsActive = false;
+                                    $isCompanyFilesActive = false;
+                                    $isMemoActive = false;
+                                    break;
+                                }
+                            }
+                            
+                            // Check Memo submenu (nested inside Company Files)
+                            foreach ($memoItems as $item) {
+                                if (strpos($item, '?') !== false) {
+                                    list($page, $param) = explode('?', $item);
+                                    if ($currentPage == $page && isset($queryParams[explode('=', $param)[0]])) {
+                                        $isCompanyFilesActive = true;
+                                        $isMemoActive = true; // only mark memo active here
+                                        $isHSOActive = $isRequestsActive = $isApplicationsActive = false;
+                                        break;
+                                    }
+                                } elseif ($currentPage == $item) {
+                                    $isCompanyFilesActive = true;
+                                    $isMemoActive = true;
+                                    $isHSOActive = $isRequestsActive = $isApplicationsActive = false;
+                                    break;
+                                }
+                            }
+                            
+                            // Check Company Files (excluding memos)
+                            foreach ($filesItems as $item) {
+                                // Skip memo-related items
+                                if (in_array($item, $memoItems)) continue;
+                            
+                                if (strpos($item, '?') !== false) {
+                                    list($page, $param) = explode('?', $item);
+                                    if ($currentPage == $page && isset($queryParams[explode('=', $param)[0]])) {
+                                        $isCompanyFilesActive = true;
+                                        $isHSOActive = $isRequestsActive = $isApplicationsActive = $isMemoActive = false;
+                                        break;
+                                    }
+                                } elseif ($currentPage == $item) {
+                                    $isCompanyFilesActive = true;
+                                    $isHSOActive = $isRequestsActive = $isApplicationsActive = $isMemoActive = false;
+                                    break;
+                                }
+                            }
+                        ?>
+                        <li class="sub-menu <?= $isApplicationsActive ? 'active open' : '' ?>">
                             <a href="#" class="menu-toggle" style="position: relative;">
                                 <i class="fa fa-envelope-open"></i>
                                 <span>Applications</span>
                                 <span id="app-menu-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 8px; right: 25px;"></span>
-                                <!--<i class="fa fa-caret-down" style="margin-left: 72px"></i>-->
                             </a>
-                            <ul class="sub">
-                                <li>
-                                    <a href="manageleave.php" class="submenu-item" onclick="markNotifseen('leave')" style="position: relative; display: inline-block;">
+                            <ul class="sub" style="display: <?= $isApplicationsActive ? 'block' : 'none' ?>;">
+                                <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['manageleave'])) ? 'active' : '' ?>">
+                                    <a href="dashboard.php?manageleave" class="submenu-item" onclick="markNotifseen('leave')" style="position: relative; display: inline-block;">
                                         Apply Leave
                                         <span id="leave-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
                                     </a>
                                 </li>
-                                <li>
-                                    <a href="applymissedlog.php" class="submenu-item" onclick="markNotifseen('missedlog')" style="position: relative; display: inline-block;">
+                                <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['applymissedlog'])) ? 'active' : '' ?>">
+                                    <a href="dashboard.php?applymissedlog" class="submenu-item" onclick="markNotifseen('missedlog')" style="position: relative; display: inline-block;">
                                         Apply Missed Log
                                         <span id="missedlog-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
                                     </a>
                                 </li>
-                                <li>
-                                    <a href="applyovertime.php" class="submenu-item" onclick="markNotifseen('overtime')" style="position: relative; display: inline-block;">
+                                <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['applyovertime'])) ? 'active' : '' ?>">
+                                    <a href="dashboard.php?applyovertime" class="submenu-item" onclick="markNotifseen('overtime')" style="position: relative; display: inline-block;">
                                         Apply Overtime
                                         <span id="overtime-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
                                     </a>
                                 </li>
-                                <li>
-                                    <a href="emergencyearlyout.php" class="submenu-item" onclick="markNotifseen('eeo')" style="position: relative; display: inline-block;">
+                                <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['emergencyearlyout'])) ? 'active' : '' ?>">
+                                    <a href="dashboard.php?emergencyearlyout" class="submenu-item" onclick="markNotifseen('eeo')" style="position: relative; display: inline-block;">
                                         Apply EEO
                                         <span id="eeo-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
                                     </a>
@@ -464,18 +693,20 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                                     if ($row = mysqli_fetch_assoc($sqlToggle)) {
                                         $allowWFH = ($row['status_toggle'] == 1);
                                     }
+                                    
+                                    $class = "";
                                 ?>
                                 <?php if ($allowWFH): ?>
-                                    <li>
+                                    <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['wfh_form'])) ? 'active' : '' ?>">
                                         <a href="dashboard.php?wfh_form" class="submenu-item" onclick="markNotifseen('wfh')" style="position: relative; display: inline-block;">
-                                            Apply WFH
+                                            Apply HSO
                                             <span id="wfh-notif" style="width: 10px; height: 10px; background: red; border-radius: 50%; display: none; position: absolute; top: 10px; left: 123px;"></span>
                                         </a>
                                     </li>
                                 <?php endif; ?>
                                 <?php if ($designation == 114): ?>
-                                    <li>
-                                        <a href="manageemployee.php" class="submenu-item" style="position: relative; display: inline-block;">
+                                    <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['manageemployee'])) ? 'active' : '' ?>">
+                                        <a href="dashboard.php?manageemployee" class="submenu-item" style="position: relative; display: inline-block;">
                                             Apply Leave for Employee
                                         </a>
                                     </li>
@@ -483,39 +714,70 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                             </ul>
                         </li>
                         <script>
-                            document.addEventListener("DOMContentLoaded", function() {
-                                let menuItems = document.querySelectorAll("ul.sidebar-menu li a");
+                            document.addEventListener('DOMContentLoaded', function() {
+                                // Handle menu toggle clicks
+                                document.querySelectorAll('.menu-toggle').forEach(toggle => {
+                                    toggle.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        const parent = this.closest('.sub-menu');
+                                        const parentLevel = parent.parentElement; // get level of UL
                             
-                                menuItems.forEach(item => {
-                                    item.addEventListener("click", function(event) {
-                                        let parentLi = this.parentElement; // Get the parent <li>
+                                        // Close only sibling sub-menus on the same level
+                                        parentLevel.querySelectorAll(':scope > .sub-menu').forEach(menu => {
+                                            if (menu !== parent) {
+                                                menu.classList.remove('open', 'active');
+                                                let sub = menu.querySelector(':scope > .sub');
+                                                if (sub) sub.style.display = 'none';
+                                            }
+                                        });
                             
-                                        // Check if it has a submenu
-                                        let submenu = parentLi.querySelector("ul.sub");
+                                        // Toggle current menu
+                                        parent.classList.toggle('open');
+                                        parent.classList.toggle('active');
+                            
+                                        // Toggle submenu visibility safely
+                                        const submenu = parent.querySelector(':scope > .sub');
                                         if (submenu) {
-                                            event.preventDefault(); // Prevent default link action
-                                            parentLi.classList.toggle("open"); // Toggle "open" class
+                                            if (submenu.style.display === '' || submenu.style.display === 'none') {
+                                                submenu.style.display = 'block';
+                                            } else {
+                                                submenu.style.display = 'none';
+                                            }
                                         }
-                            
-                                        // Store the active state in localStorage
-                                        let activeMenu = this.getAttribute("href"); // Get clicked menu link
-                                        localStorage.setItem("activeMenu", activeMenu);
                                     });
                                 });
                             
-                                // Restore active state on page load
-                                let activeMenu = localStorage.getItem("activeMenu");
-                                if (activeMenu) {
-                                    let activeItem = document.querySelector(`ul.sidebar-menu li a[href="${activeMenu}"]`);
-                                    if (activeItem) {
-                                        activeItem.parentElement.classList.add("open"); // Keep the parent <li> open
-                                        activeItem.classList.add("active"); // Add active styling
-                                    }
-                                }
+                                // Mark submenu as active when clicked
+                                document.querySelectorAll('.submenu-item').forEach(item => {
+                                    item.addEventListener('click', function() {
+                                        const parentMenu = this.closest('.sub-menu');
+                                        const parentLevel = parentMenu.parentElement;
+                            
+                                        // Close siblings on the same level
+                                        parentLevel.querySelectorAll(':scope > .sub-menu').forEach(menu => {
+                                            if (menu !== parentMenu) {
+                                                menu.classList.remove('open', 'active');
+                                                let sub = menu.querySelector(':scope > .sub');
+                                                if (sub) sub.style.display = 'none';
+                                            }
+                                        });
+                            
+                                        // Open current menu
+                                        parentMenu.classList.add('open', 'active');
+                                        parentMenu.querySelector(':scope > .sub').style.display = 'block';
+                            
+                                        // Update active state
+                                        document.querySelectorAll('.sub li').forEach(li => {
+                                            li.classList.remove('active');
+                                        });
+                                        this.closest('li').classList.add('active');
+                                    });
+                                });
                             });
                         </script>
-                        <li class="sub-menu">
-                            <a  <?= $view; ?> href="javascript:;">
+
+                        <li class="sub-menu <?= $isRequestsActive ? 'active open' : '' ?>">
+                            <a <?= $view; ?> href="#" class="menu-toggle" style="position: relative;">
                                 <i class="fa fa-archive"></i>
                                 <span>Requests</span>
                                 <?php if ($designation != 77  && $designation != 97): ?>
@@ -523,62 +785,82 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                                         <span id="credit-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 67px;"></span>
                                     <?php endif; ?>
                                 <?php endif; ?>
-                                <!--<i class="fa fa-caret-down" style="margin-left: 72px"></i>-->
                             </a>
-                            <ul class="sub">
+                            <ul class="sub" style="display: <?= $isRequestsActive ? 'block' : 'none' ?>;">
                                 <?php if ($designation != 77 && $designation != 78 && $designation != 116): ?>
-                                    <li <?= $view; ?>><a href="manageleaveapplication.php">Leave Requests 
-                                        <span id="leave-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 34px"></span>
-                                    </a></li>
-                                    <li <?= $view; ?>><a href="managemissedlogapplication.php">Missed Log Requests 
-                                        <span id="ml-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 6px"></span>
-                                    </a></li>
-                                    <li <?= $view; ?>><a href="manageovertimeapplication.php">Overtime Requests 
-                                        <span id="ot-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 17px"></span>
-                                    </a></li>
+                                    <li <?= $view; ?> class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['manageleaveapplication'])) ? 'active' : '' ?>">
+                                        <a href="dashboard.php?manageleaveapplication">Leave Requests 
+                                            <span id="leave-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 34px"></span>
+                                        </a>
+                                    </li>
+                                    <li <?= $view; ?> class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['managemissedlogapplication'])) ? 'active' : '' ?>">
+                                        <a href="dashboard.php?managemissedlogapplication">Missed Log Requests 
+                                            <span id="ml-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 6px"></span>
+                                        </a>
+                                    </li>
+                                    <li <?= $view; ?> class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['manageovertimeapplication'])) ? 'active' : '' ?>">
+                                        <a href="dashboard.php?manageovertimeapplication">Overtime Requests 
+                                            <span id="ot-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 17px"></span>
+                                        </a>
+                                    </li>
                                 <?php endif; ?>
                                 <?php if ($designation == 77 || $designation == 97): ?>
-                                    <li <?= $view; ?>><a href="dashboard.php?monitoringmanagemissedlogapplication">Missed Log Requests 
-                                        <span id="mml-notification-badge" class="badge" style="color: white; background-color: red;"></span>
-                                    </a></li>
+                                    <li <?= $view; ?> class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['monitoringmanagemissedlogapplication'])) ? 'active' : '' ?>">
+                                        <a href="dashboard.php?monitoringmanagemissedlogapplication">Missed Log Requests 
+                                            <span id="mml-notification-badge" class="badge" style="color: white; background-color: red;"></span>
+                                        </a>
+                                    </li>
                                 <?php endif; ?>
                                 <?php if ($designation == 78||$designation == 116):?>
-                                    <li><a href="dashboard.php?EEOapplication">EEO Requests 
-                                        <span id="eeo-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 40px"></span>
-                                    </a></li>
+                                    <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['EEOapplication'])) ? 'active' : '' ?>">
+                                        <a href="dashboard.php?EEOapplication">EEO Requests 
+                                            <span id="eeo-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 40px"></span>
+                                        </a>
+                                    </li>
                                 <?php endif; ?>
                                 <?php if (in_array($idno, $approvers) && $designation != 78 && $designation != 116 && $designation != 77 && $designation != 97): ?>
-                                    <li><a href="manageEEOapplication.php">EEO Requests 
-                                        <span id="eeo-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 40px"></span>
-                                    </a></li>
+                                    <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['manageEEOapplication'])) ? 'active' : '' ?>">
+                                        <a href="dashboard.php?manageEEOapplication">EEO Requests 
+                                            <span id="eeo-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 40px"></span>
+                                        </a>
+                                    </li>
                                 <?php endif; ?>
                                 <?php if ($designation == 97 || $designation == 50 || $designation == 65 || $designation == 89 || $designation == 104 || $designation == 105 || $designation == 114 || $designation == 93 || $designation == 115 || $designation == 94): ?>
-                                    <li><a href="movementApp.php">Movement Request</a></li>
+                                    <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['movementApp'])) ? 'active' : '' ?>">
+                                        <a href="dashboard.php?movementApp">Movement Request</a>
+                                    </li>
                                 <?php endif; ?>
                                 <?php if ($designation == 93): ?>
-                                    <li><a href="dashboard.php?manage_wfhapplications">WFH Requests 
-                                        <span id="wfh-it-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 40px"></span>
-                                    </a></li>
-                                    <li><a href="dashboard.php?manage_transferapplication">Transfer Requests 
-                                        <span id="transfer-it-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 22px"></span>
-                                    </a></li>
+                                    <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['manage_wfhapplications'])) ? 'active' : '' ?>">
+                                        <a href="dashboard.php?manage_wfhapplications">HSO Requests 
+                                            <span id="wfh-it-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 40px"></span>
+                                        </a>
+                                    </li>
+                                    <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['manage_transferapplication'])) ? 'active' : '' ?>">
+                                        <a href="dashboard.php?manage_transferapplication">Transfer Requests 
+                                            <span id="transfer-it-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 22px"></span>
+                                        </a>
+                                    </li>
                                 <?php endif; ?>
                             </ul>
                         </li>
                         <?php if ($idno == '111111' || $idno == '102215'):?>
-                            <li class="sub-menu">
-                                <a href="javascript:;">
+                            <li class="sub-menu <?= $isHSOActive ? 'active open' : '' ?>">
+                                <a href="#" class="menu-toggle" style="position: relative;">
                                         <i class="fa fa-map-marker"></i>
-                                        <span>WFH Setup</span>
+                                        <span>HSO Setup</span>
                                         <span id="wfh-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 62px;"></span>
                                 </a>
-                                <ul class="sub">
+                                <ul class="sub" style="display: <?= $isHSOActive ? 'block' : 'none' ?>;">
                                     <?php if ($idno == '111111' || $idno == '102215'):?>
-                                        <li><a href="dashboard.php?allow_employee">WFH Permission 
-                                        </a></li>
-                                        <li><a href="dashboard.php?wfh_requests">WFH Requests
-                                            <span id="wfh-req-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 40px"></span>
-                                        </a></li>
+                                        <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['allow_employee'])) ? 'active' : '' ?>">
+                                            <a href="dashboard.php?allow_employee">HSO Eligibility</a>
+                                        </li>
+                                        <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['wfh_requests'])) ? 'active' : '' ?>">
+                                            <a href="dashboard.php?wfh_requests">HSO Requests
+                                                <span id="wfh-req-notification-badge" class="badge" style="color: white; background-color: red; margin-left: 40px"></span>
+                                            </a>
+                                        </li>
                                     <?php endif; ?>
                                 </ul>
                             </li>
@@ -595,7 +877,7 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                             <li>
                                 <a href="dashboard.php?wfh_nurse_note">
                                     <i class="fa fa-map-marker"></i>
-                                    <span>WFH Nurse Notes</span>
+                                    <span>HSO Nurse Notes</span>
                                     <?php if ($note_count > 0):?>
                                         <span class="badge" style="color: white; background-color: red; margin-left: 22px;"><?php echo $note_count; ?></span>
                                     <?php endif; ?>
@@ -636,7 +918,7 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                             <?php endif; ?>
                         </li>
                         <li>
-                            <?php if ($designation == 97||$designation == 77 ||$designation ==93):?>
+                            <?php if ($designation == 97||$designation == 77 ||$designation == 93):?>
                                 <a href="dashboard.php?errorcatching">
                                     <i class="fa fa-eye"></i>
                                     <span>HRIS Monitoring</span>
@@ -653,40 +935,56 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                             <?php if ($idno == '111111' || $idno == '102215'):?>
                                 <a href="dashboard.php?transfer_form">
                                     <i class="fa fa-plane"></i>
-                                    <span>Work Setting Transfer</span>
+                                    <span>Site Transfer</span>
                                 </a>
                             <?php endif; ?>
                         </li>
                         <?php if (in_array($designation, ['97', '114', '105', '93', '89'])): ?>
-                            <li class="sub-menu">
-                                <a href="javascript:;">
+                            <li class="sub-menu <?= $isCompanyFilesActive ? 'active open' : '' ?>">
+                                <a href="#" class="menu-toggle" style="position: relative;">
                                     <i class="fa fa-book"></i>
                                     <span>Company Files</span>
                                 </a>
-                                <ul class="sub">
-                                    <li><a href="dashboard.php?handbook">Company Handbook</a></li>
+                                <ul class="sub" style="display: <?= $isCompanyFilesActive ? 'block' : 'none' ?>;">
+                                    <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['handbook'])) ? 'active' : '' ?>">
+                                        <a href="dashboard.php?handbook">Company Handbook</a>
+                                    </li>
                             
                                     <?php if (in_array($designation, ['97', '114', '105', '93', '89', '50'])): ?>
-                                        <li><a href="dashboard.php?create_memo">Create Memo</a></li>
+                                        <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['create_memo'])) ? 'active' : '' ?>">
+                                            <a href="dashboard.php?create_memo">Create Memo</a>
+                                        </li>
                                     <?php endif; ?>
                             
-                                    <li class="submenu">
-                                        <a href="javascript:;">Memorandum</a>
-                                        <ul class="sub">
-                                            <li><a href="dashboard.php?memo_admin" class="submenu-item">Admin</a></li>
-                                            <li><a href="dashboard.php?memo_hr" class="submenu-item">HR</a></li>
-                                            <li><a href="dashboard.php?memo_it" class="submenu-item">IT</a></li>
+                                    <li class="sub-menu <?= $isMemoActive ? 'active open' : '' ?>">
+                                        <a href="#" class="menu-toggle">Memorandum</a>
+                                        <ul class="sub" style="display: <?= $isMemoActive ? 'block' : 'none' ?>;">
+                                            <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['memo_admin'])) ? 'active' : '' ?>">
+                                                <a href="dashboard.php?memo_admin" class="submenu-item">Admin</a>
+                                            </li>
+                                            <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['memo_hr'])) ? 'active' : '' ?>">
+                                                <a href="dashboard.php?memo_hr" class="submenu-item">HR</a>
+                                            </li>
+                                            <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['memo_it'])) ? 'active' : '' ?>">
+                                                <a href="dashboard.php?memo_it" class="submenu-item">IT</a>
+                                            </li>
                                         </ul>
                                     </li>
                                     
                                     <?php if ($company == 'NESI1'): ?>
-                                        <li><a href="dashboard.php?memo_solutions">Operations Memo</a></li>
+                                        <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['memo_solutions'])) ? 'active' : '' ?>">
+                                            <a href="dashboard.php?memo_solutions">Operations Memo</a>
+                                        </li>
                                     <?php endif; ?>
                                     <?php if ($company == 'NESI2'): ?>
-                                        <li><a href="dashboard.php?memo_strategies">Operations Memo</a></li>
+                                        <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['memo_strategies'])) ? 'active' : '' ?>">
+                                            <a href="dashboard.php?memo_strategies">Operations Memo</a>
+                                        </li>
                                     <?php endif; ?>
                                     <?php if ($company == 'NEWIND'): ?>
-                                        <li><a href="dashboard.php?memo_newind">Operations Memo</a></li>
+                                        <li class="<?= ($currentPage == 'dashboard.php' && isset($queryParams['memo_newind'])) ? 'active' : '' ?>">
+                                            <a href="dashboard.php?memo_newind">Operations Memo</a>
+                                        </li>
                                     <?php endif; ?>
                                 </ul>
                             </li>
@@ -696,6 +994,14 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                                 <a href="dashboard.php?monitoringattendance">
                                     <i class="fa fa-key"></i>
                                     <span>Employee`s logs</span>
+                                </a>
+                            </li>
+                        <?php endif; ?>
+                        <?php if ($idno == 111111): ?>
+                            <li>
+                                <a href="dashboard.php?trial_file">
+                                    <i class="fa fa-key"></i>
+                                    <span>TRIAL FILE</span>
                                 </a>
                             </li>
                         <?php endif; ?>
@@ -831,6 +1137,7 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
                             if(isset($_GET['wfh_requests'])){include('wfh_requests.php');}
                             if(isset($_GET['wfh_nurse_note'])){include('wfh_nurse_note.php');}
                             if(isset($_GET['contact_person'])){include('contact_person.php');}
+                            if(isset($_GET['trial_file'])){include('trial_file.php');}
                         ?>
                     </div>
                 </section>
@@ -1373,142 +1680,81 @@ $showModal = empty($phone_number) || empty($comp_email) || empty($email_password
             setInterval(AppNotif, 5000);
             AppNotif(); // Run immediately on page load
         </script>
-         <!-- Right before closing </body> tag -->
-<div class="modal fade" id="contactInfoModal" tabindex="-1" role="dialog" aria-labelledby="contactInfoModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content1">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title" id="contactInfoModalLabel">
-                    <i class="fa fa-exclamation-triangle"></i> Complete Your Profile
-                </h5>
-            </div>
-            <div class="modal-body">
-                <form id="contactInfoForm" method="post" autocomplete="off">
-                    <div class="form-group">
-                        <label for="phone_number">Phone Number</label>
-                        <input type="text" class="form-control" id="phone_number" name="phone_number" 
-                               value="<?= htmlspecialchars($phone_number) ?>" 
-                               placeholder="Enter your phone number" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="comp_email">Company Email</label>
-                        <input type="email" class="form-control" id="comp_email" name="comp_email" 
-                                       value="<?= htmlspecialchars($comp_email) ?>" 
-                                       placeholder="(ex: name.nesi@gmail.com)" 
-                                       autocomplete="off" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="email_password">Email Password</label>
-                       <input type="password" class="form-control" id="email_password" name="email_password" 
-                                   value="<?= htmlspecialchars($email_password) ?>" 
-                                   placeholder="Enter your email password" 
-                                   autocomplete="new-password" required>
-                        <small class="form-text text-muted"></small>
-                    </div>
-                    
-                    <input type="hidden" name="idno" value="<?= $idno ?>">
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary1" onclick="document.getElementById('contactInfoForm').submit()">Save</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<?php if ($showModal): ?>
-<script>
-$(document).ready(function() {
-    // Initialize modal
-    $('#contactInfoModal').modal({
-        backdrop: 'static', // Prevent closing by clicking outside
-        keyboard: false     // Prevent closing with ESC key
-    });
-    
-    // Focus on first input field
-    $('#contactInfoModal').on('shown.bs.modal', function () {
-        $('#phone_number').focus();
-    });
-});
-</script>
-<?php endif; ?>
-<style>
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  display: none;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1050;
-  justify-content: center;
-  align-items: center;
-}
-.modal-content1 {
-    background-color: #fefefe;
-    margin: 30% auto;
-    padding: 5px;
-    border-radius: 8px;
-    width: 50%;
-    max-width: 800px;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-}
-.modal-header {
-  padding: 14px 20px;
-  background-color: #ffc107;
-  color: #000;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  font-size: 18px;
-}
-
-.modal-body {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 20px;
-  gap: 20px;
-  justify-content: space-between;
-}
-
-.form-group {
-  flex: 1 1 45%;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-body input[type="text"],
-.modal-body input[type="email"],
-.modal-body input[type="password"] {
-  padding: 8px;
-  font-size: 14px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-}
-
-.modal-footer {
-  padding: 10px 20px;
-  text-align: right;
-  border-top: 1px solid #ddd;
-}
-
-.btn-primary1 {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.btn-primary1:hover {
-  background-color: #0056b3;
-}
-</style>
+        <style>
+        .modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          display: none;
+          background-color: rgba(0, 0, 0, 0.5);
+          z-index: 1050;
+          justify-content: center;
+          align-items: center;
+        }
+        .modal-content1 {
+            background-color: #fefefe;
+            margin: 30% auto;
+            padding: 5px;
+            border-radius: 8px;
+            width: 50%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        .modal-header {
+          padding: 14px 20px;
+          background-color: #ffc107;
+          color: #000;
+          border-top-left-radius: 10px;
+          border-top-right-radius: 10px;
+          font-size: 18px;
+        }
+        
+        .modal-body {
+          display: flex;
+          flex-wrap: wrap;
+          padding: 20px;
+          gap: 20px;
+          justify-content: space-between;
+        }
+        
+        .form-group {
+          flex: 1 1 45%;
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .modal-body input[type="text"],
+        .modal-body input[type="email"],
+        .modal-body input[type="password"] {
+          padding: 8px;
+          font-size: 14px;
+          border-radius: 4px;
+          border: 1px solid #ccc;
+        }
+        
+        .modal-footer {
+          padding: 10px 20px;
+          text-align: right;
+          border-top: 1px solid #ddd;
+        }
+        
+        .btn-primary1 {
+          background-color: #007bff;
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 4px;
+          font-size: 14px;
+          cursor: pointer;
+        }
+        
+        .btn-primary1:hover {
+          background-color: #0056b3;
+        }
+        </style>
     </body>
 </html>
